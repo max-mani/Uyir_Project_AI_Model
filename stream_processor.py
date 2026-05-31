@@ -193,7 +193,7 @@ if __name__ == "__main__":
     parser.add_argument("--location",  default="Coimbatore Junction",
                         help="Camera location name")
     parser.add_argument("--model",     default=str(DEFAULT_YOLO_MODEL),
-                        help="YOLO model path (default: models/yolov8m.pt)")
+                        help="YOLO model path (default: models/yolov8n.pt)")
     parser.add_argument("--firebase",  action="store_true",
                         help="Enable Firebase upload (needs firebase_key.json)")
     parser.add_argument("--no_window", action="store_true",

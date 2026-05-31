@@ -13,7 +13,7 @@ from paths import DEFAULT_YOLO_MODEL, ensure_dirs
 
 
 # ── Class names matching pre-trained COCO classes ──────────────────────────
-# When Kishore's custom model is ready, swap models/yolov8m.pt with models/best.pt
+# When Kishore's custom model is ready, swap models/yolov8n.pt with models/best.pt
 # These COCO IDs cover our needed vehicle types
 VEHICLE_CLASSES = {
     0:  "person",
@@ -111,9 +111,9 @@ class VehicleTracker:
 
     def __init__(self, model_path=None, confidence=0.5):
         """
-        model_path: Path under models/ (default: yolov8m.pt).
+        model_path: Path under models/ (default: yolov8n.pt).
                     When Kishore finishes training, change to models/best.pt
-        confidence: Detection confidence threshold (0.5 recommended)
+        confidence: Detection threshold (0.45 default; use 0.30 for more boxes on laptop)
         """
         ensure_dirs()
         if model_path is None:

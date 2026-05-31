@@ -1,5 +1,7 @@
 # Dataset (local only)
 
+See the main [README](../README.md) for setup and usage.
+
 Video clips are stored here but are **not** pushed to GitHub (file size limits).
 
 Place your clips under:

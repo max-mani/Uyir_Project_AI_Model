@@ -12,7 +12,7 @@ SNAPSHOTS_DIR = ROOT / "snapshots"
 OUTPUTS_DIR = ROOT / "outputs"
 LOCAL_EVENTS_DIR = ROOT / "local_events"
 
-DEFAULT_YOLO_MODEL = MODELS_DIR / "yolov8m.pt"
+DEFAULT_YOLO_MODEL = MODELS_DIR / "yolov8n.pt"
 DEFAULT_DATA_LOG = DATA_LOGS_DIR / "uyir_data_log.csv"
 
 
