@@ -1,0 +1,36 @@
+# Local video dataset (too large for GitHub; keep on disk only)
+dataset/*
+!dataset/README.md
+
+# Virtual environment
+uyir_env/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Secrets
+firebase_key.json
+.env
+*.pem
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Large model weights (optional — remove line to track models in git)
+# models/*.pt
+
+# Runtime outputs
+snapshots/
+local_events/
+outputs/*.png
+
+# Duplicate downloads at project root only
+/yolov8*.pt
