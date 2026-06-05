@@ -109,7 +109,7 @@ class VehicleTracker:
     Runs YOLOv8n + ByteTrack and returns TrackedVehicle objects.
     """
 
-    def __init__(self, model_path=None, confidence=0.5):
+    def __init__(self, model_path=None, confidence=0.1):
         """
         model_path: Path under models/ (default: yolov8n.pt).
                     When Kishore finishes training, change to models/best.pt
@@ -137,6 +137,7 @@ class VehicleTracker:
             frame,
             persist=True,               # keeps track IDs across frames
             conf=self.confidence,
+            imgsz=1024,
             classes=list(VEHICLE_CLASSES.keys()),
             tracker="bytetrack.yaml",
             verbose=False

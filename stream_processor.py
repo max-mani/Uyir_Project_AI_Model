@@ -49,7 +49,7 @@ class StreamProcessor:
 
         if model_path is None:
             model_path = str(DEFAULT_YOLO_MODEL)
-        self.tracker   = VehicleTracker(model_path=model_path, confidence=0.45)
+        self.tracker   = VehicleTracker(model_path=model_path, confidence=0.05)
         self.detector  = AccidentDetector(camera_id=camera_id)
         self.uploader  = FirebaseUploader(camera_id, location) if use_firebase else None
 
