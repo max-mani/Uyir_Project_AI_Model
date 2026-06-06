@@ -22,9 +22,56 @@ def compute_iou(box1, box2):
         return 0.0
     return float(inter_area / union_area)
 
+def is_stationary(track, frames=10, speed_thresh=1.2, displacement_thresh=8.0):
+    """
+    Checks if a vehicle track has been stationary (speed near zero or very low displacement)
+    over its history to prevent false triggers from tracking jitter.
+    """
+    if not track.velocities:
+        return True
+        
+    # Check current mean speed over recent frames
+    check_len = min(len(track.velocities), frames)
+    speeds = [math.sqrt(vx**2 + vy**2) for vx, vy in track.velocities[-check_len:]]
+    mean_speed = sum(speeds) / len(speeds)
+    
+    if mean_speed < speed_thresh:
+        return True
+        
+    # Check total displacement over the history window
+    if len(track.history) >= 2:
+        hist_len = min(len(track.history), frames)
+        p_start = track.history[-hist_len]
+        p_end = track.history[-1]
+        disp = math.sqrt((p_end[0] - p_start[0])**2 + (p_end[1] - p_start[1])**2)
+        if disp < displacement_thresh:
+            return True
+            
+    return False
+
+def is_smooth_stopping(track):
+    """
+    Evaluates if the vehicle is slowing down gradually (smooth braking curve)
+    rather than experiencing an abrupt impact-induced stop.
+    """
+    if len(track.velocities) < 8:
+        return False
+        
+    speeds = [math.sqrt(vx**2 + vy**2) for vx, vy in track.velocities[-8:]]
+    
+    # Count how many steps the speed was gradually decreasing
+    decreases = 0
+    for i in range(len(speeds) - 1):
+        if speeds[i] > speeds[i+1] or abs(speeds[i] - speeds[i+1]) < 0.2:
+            decreases += 1
+            
+    # If speed decreases or remains near-constant-slowing in 6 out of 7 steps, it's a smooth stop
+    return decreases >= 5
+
 def check_ke_drop(track):
     """
     Checks if there is a sudden Kinetic Energy drop (area * speed^2) > 80% in 3-4 frames.
+    Suppresses normal gradual stopping curves and low speed changes.
     Returns: (is_dropped, drop_ratio)
     """
     if len(track.bbox_history) < 4 or len(track.velocities) < 4:
@@ -35,6 +82,7 @@ def check_ke_drop(track):
     v_past = track.velocities[-4]
     area_past = (box_past[2] - box_past[0]) * (box_past[3] - box_past[1])
     speed_past_sq = v_past[0]**2 + v_past[1]**2
+    speed_past = math.sqrt(speed_past_sq)
     ke_past = area_past * speed_past_sq
 
     # Current stats
@@ -44,8 +92,16 @@ def check_ke_drop(track):
     speed_curr_sq = v_curr[0]**2 + v_curr[1]**2
     ke_curr = area_curr * speed_curr_sq
     
-    # We only count drops from active movement (ke_past > 200 pixels^3 / frame^2)
-    if ke_past > 200.0:
+    # 1. Require substantial initial speed (at least 2.5 pixels/frame) to prevent noise triggers
+    if speed_past < 2.5:
+        return False, 0.0
+
+    # 2. Suppress gradual stops (braking pattern check)
+    if is_smooth_stopping(track):
+        return False, 0.0
+
+    # 3. Check for sudden energy collapse
+    if ke_past > 300.0:
         drop = (ke_past - ke_curr) / ke_past
         if drop > 0.80:
             return True, float(drop)
@@ -81,6 +137,40 @@ def analyze_trajectory_conflict(track1, track2):
     """
     Performs full multi-stage kinematic conflict checks for a close pair of vehicles.
     """
+    # If BOTH vehicles are stationary (standing still in traffic), they cannot be colliding.
+    # Suppress all pairwise interaction indicators to 0.0.
+    if is_stationary(track1) and is_stationary(track2):
+        return {
+            "class": "Normal",
+            "score": 0.0,
+            "intersected": False,
+            "energy_dropped": False,
+            "spinning": False,
+            "merged": False,
+            "occluded": False,
+            "containment": 0.0,
+            "max_ke_drop": 0.0,
+            "max_spin_var": 0.0
+        }
+
+    # Creeping / Slow Traffic check: If both vehicles are moving very slowly,
+    # they cannot cause a high-energy collision. Suppress score and mark as Normal.
+    s1 = math.sqrt(track1.velocities[-1][0]**2 + track1.velocities[-1][1]**2) if track1.velocities else 0.0
+    s2 = math.sqrt(track2.velocities[-1][0]**2 + track2.velocities[-1][1]**2) if track2.velocities else 0.0
+    if max(s1, s2) < 2.5:
+        return {
+            "class": "Normal",
+            "score": 0.05,
+            "intersected": False,
+            "energy_dropped": False,
+            "spinning": False,
+            "merged": False,
+            "occluded": False,
+            "containment": 0.0,
+            "max_ke_drop": 0.0,
+            "max_spin_var": 0.0
+        }
+
     # 1. Trajectory line intersection
     hist1 = track1.history[-15:]
     hist2 = track2.history[-15:]

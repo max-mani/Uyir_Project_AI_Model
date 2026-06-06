@@ -432,6 +432,33 @@
             font-size: 0.85rem;
             text-align: center;
         }
+
+        /* Custom Premium Slider Styling */
+        #threshold-slider {
+            transition: opacity 0.2s;
+        }
+        #threshold-slider::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        #threshold-slider::-webkit-slider-thumb {
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-secondary) 0%, #22d3ee 100%);
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        #threshold-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.25);
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.8);
+        }
     </style>
 </head>
 <body>
@@ -512,6 +539,18 @@
             </div>
             <div class="meter-bg">
                 <div class="meter-fill" id="confidence-bar"></div>
+            </div>
+        </div>
+
+        <!-- Adjustable Threshold Controls -->
+        <div style="width: 100%; max-width: 320px; margin-top: 1.25rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 1rem; border-radius: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem; text-align: left;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">
+                <span>Accident Alarm Threshold</span>
+                <span id="threshold-val" style="color: var(--accent-secondary); font-weight: 700;">55%</span>
+            </div>
+            <input type="range" id="threshold-slider" min="10" max="95" value="55" step="1" style="width: 100%; -webkit-appearance: none; background: rgba(255,255,255,0.08); height: 6px; border-radius: 3px; outline: none; cursor: pointer; display: block; margin: 0.5rem 0;">
+            <div style="font-size: 0.75rem; color: var(--text-secondary); opacity: 0.8; line-height: 1.3;">
+                💡 <em>Drag the slider to adjust the threshold. Bounding box overlay annotations are compiled on the server based on the slider threshold.</em>
             </div>
         </div>
 
@@ -731,7 +770,8 @@
         formData.append("file", selectedImage);
 
         try {
-            const response = await fetch("/predict-image", {
+            const threshold = parseFloat(document.getElementById('threshold-slider').value) / 100.0;
+            const response = await fetch(`/predict-image?threshold=${threshold}`, {
                 method: "POST",
                 body: formData
             });
@@ -765,7 +805,8 @@
         formData.append("file", selectedVideo);
 
         try {
-            const response = await fetch("/predict-video", {
+            const threshold = parseFloat(document.getElementById('threshold-slider').value) / 100.0;
+            const response = await fetch(`/predict-video?threshold=${threshold}`, {
                 method: "POST",
                 body: formData
             });
@@ -785,22 +826,24 @@
         }
     }
 
-    // Result displays
-    function displayResults(data, type) {
-        if (!data || data.class === undefined || data.confidence === undefined) {
-            showError("Invalid prediction data returned from the server.");
-            return;
+    // Global state for thresholding
+    let lastConfidence = 0.0;
+    const thresholdSlider = document.getElementById('threshold-slider');
+    const thresholdVal = document.getElementById('threshold-val');
+
+    thresholdSlider.addEventListener('input', () => {
+        const threshold = parseInt(thresholdSlider.value);
+        thresholdVal.textContent = threshold + '%';
+        if (resultsPanel.style.display !== 'none') {
+            applyThresholdClassification(lastConfidence, threshold);
         }
+    });
 
-        const classification = data.class;
-        const confidenceVal = parseFloat(data.confidence);
-
-        // Update Text & Color scheme based on classification
-        resultBadge.textContent = classification;
+    function applyThresholdClassification(confidence, threshold) {
         resultBadge.className = 'status-badge'; // reset
         confidenceBar.className = 'meter-fill'; // reset
 
-        if (classification === 'ACCIDENT') {
+        if (confidence >= threshold) {
             resultBadge.classList.add('status-danger');
             resultBadge.innerHTML = '🚨 ACCIDENT DETECTED';
             confidenceBar.classList.add('danger');
@@ -809,6 +852,21 @@
             resultBadge.innerHTML = '✅ NO ACCIDENT';
             confidenceBar.classList.add('success');
         }
+    }
+
+    // Result displays
+    function displayResults(data, type) {
+        if (!data || data.class === undefined || data.confidence === undefined) {
+            showError("Invalid prediction data returned from the server.");
+            return;
+        }
+
+        const confidenceVal = parseFloat(data.confidence);
+        lastConfidence = confidenceVal;
+
+        // Apply thresholding based on slider value
+        const currentThreshold = parseInt(thresholdSlider.value);
+        applyThresholdClassification(confidenceVal, currentThreshold);
 
         // Animated Confidence Level
         confidencePercentage.textContent = confidenceVal.toFixed(2) + '%';

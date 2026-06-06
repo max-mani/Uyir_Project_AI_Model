@@ -16,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from detection.yolo_module import YOLODetector
 from tracking.deepsort_module import VehicleTracker
 from phases.phase_a_proximity import proximity_filter
-from phases.phase_b_trajectory import analyze_trajectory_conflict
+from phases.phase_b_trajectory import analyze_trajectory_conflict, is_stationary, compute_iou
 from phases.phase_c_anomaly import analyze_anomaly
 from utils.optical_flow import compute_optical_flow, calculate_frame_diff_ratio
 from utils.geometry import calculate_bbox_containment_ratio
@@ -51,7 +51,7 @@ def home(request: Request):
 
 # ================= IMAGE PREDICTION =================
 @app.post("/predict-image")
-async def predict_image_api(file: UploadFile = File(...)):
+async def predict_image_api(file: UploadFile = File(...), threshold: float = 0.50):
     try:
         # Validate file type
         if file.content_type not in ["image/jpeg", "image/png", "image/jpg", "image/webp"]:
@@ -102,10 +102,30 @@ async def predict_image_api(file: UploadFile = File(...)):
                 containment = calculate_bbox_containment_ratio(t2.bbox, t1.bbox)
             occlusion_score = max(occlusion_score, containment)
 
+        # Apply suppression for standing/queuing vehicles in static images
+        max_iou = 0.0
+        if len(tracks) >= 2:
+            for i in range(len(tracks)):
+                for j in range(i + 1, len(tracks)):
+                    iou = compute_iou(tracks[i].bbox, tracks[j].bbox)
+                    max_iou = max(max_iou, iou)
+
+        if len(tracks) >= 2:
+            # If the overlap is not extreme (not a physical crash geometry), suppress to prevent false alerts on standing traffic
+            if max_iou < 0.40 and occlusion_score < 0.70:
+                print(f"Standing traffic/parking detected ({len(tracks)} vehicles, IoU={max_iou:.2f}, Occlusion={occlusion_score:.2f}). Suppressing proximity and occlusion scores.")
+                proximity_score = proximity_score * 0.15
+                occlusion_score = occlusion_score * 0.15
+            elif len(tracks) > 4:
+                # Dense queue / parking lot
+                print(f"Dense image queue detected ({len(tracks)} vehicles). Suppressing scores.")
+                proximity_score = proximity_score * 0.25
+                occlusion_score = occlusion_score * 0.25
+
         # 4. Score Fusion for Static Image
         # Blend Proximity, Occlusion, and CNN-LSTM
         final_score = 0.2 * proximity_score + 0.2 * occlusion_score + 0.6 * cnn_lstm_prob
-        is_accident = final_score >= 0.50  
+        is_accident = final_score >= threshold  
         final_class = "ACCIDENT" if is_accident else "NO ACCIDENT"
 
         # 5. Annotate Image
@@ -164,7 +184,7 @@ async def predict_image_api(file: UploadFile = File(...)):
 
 # ================= VIDEO PREDICTION =================
 @app.post("/predict-video")
-async def predict_video_api(file: UploadFile = File(...)):
+async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.55):
     try:
         # Validate file type
         if file.content_type not in ["video/mp4", "video/avi", "video/mov", "video/quicktime"]:
@@ -320,6 +340,10 @@ async def predict_video_api(file: UploadFile = File(...)):
 
             # Evaluate Candidate Trajectory Conflicts (Phase B)
             for t1, t2, dist in candidate_pairs:
+                if is_stationary(t1) and is_stationary(t2):
+                    # Skip stationary vehicle interactions (standing still in traffic) to prevent false alerts
+                    continue
+
                 prox_s = max(0.0, 1.0 - (dist / 120.0))
                 proximity_score = max(proximity_score, prox_s)
 
@@ -350,7 +374,7 @@ async def predict_video_api(file: UploadFile = File(...)):
             # Store gray frame reference
             prev_gray = frame_gray
 
-            # Fused Scores for this frame (threshold=0.55 for early warnings)
+            # Fused Scores for this frame (threshold=threshold for early warnings)
             fuse_res = fuse_scores(
                 proximity=proximity_score,
                 trajectory=trajectory_score,
@@ -363,7 +387,9 @@ async def predict_video_api(file: UploadFile = File(...)):
                 scene_interruption=scene_interruption_score,
                 diff_burst=diff_burst_score,
                 flow_dispersion=flow_dispersion_score,
-                threshold=0.55
+                scene_density=len(active_tracks),
+                avg_scene_speed=mean_current_speed,
+                threshold=threshold
             )
 
             frame_accident = fuse_res["is_accident"]
@@ -373,7 +399,7 @@ async def predict_video_api(file: UploadFile = File(...)):
             # Zone Risk weighting multiplier (1.2x score bump in high-risk zones)
             if is_in_intersection_zone:
                 multiplied_score = min(1.0, frame_score * 1.2)
-                if multiplied_score >= 0.55:
+                if multiplied_score >= threshold:
                     frame_accident = True
                     frame_score = multiplied_score
                     frame_trigger += " & Risk Zone"
@@ -395,8 +421,14 @@ async def predict_video_api(file: UploadFile = File(...)):
             # Draw tracks
             for track in active_tracks:
                 x1, y1, x2, y2 = map(int, track.bbox)
-                label = f"ID {track.track_id}: {track.label.upper()} {track.confidence:.2f}"
-                color = (0, 255, 0)
+                
+                # Check if vehicle is stationary
+                if is_stationary(track):
+                    label = f"ID {track.track_id}: {track.label.upper()} (STATIONARY)"
+                    color = (0, 180, 0) # slightly darker green for stationary/parked vehicles
+                else:
+                    label = f"ID {track.track_id}: {track.label.upper()} {track.confidence:.2f}"
+                    color = (0, 255, 0) # bright green for moving vehicles
 
                 # sus or confirmed anomaly highlighting
                 if hasattr(track, "anomaly_streak") and track.anomaly_streak > 0:

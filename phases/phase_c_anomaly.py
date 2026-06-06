@@ -33,8 +33,11 @@ def analyze_anomaly(track, flow):
         avg_past_flow = sum(track.flow_history[-5:]) / len(track.flow_history[-5:])
         if curr_flow > 2.5 * avg_past_flow and curr_flow > 4.0:
             flow_spike = True
-    elif curr_flow > 8.0:
-        flow_spike = True
+    else:
+        # Prevent new tracks (or track ID resets) from triggering a flow spike on normal motion.
+        # Only trigger for exceptionally high motion (e.g. > 20.0 pixels/frame) on startup.
+        if curr_flow > 20.0:
+            flow_spike = True
         
     track.flow_history.append(curr_flow)
     if len(track.flow_history) > 30:
