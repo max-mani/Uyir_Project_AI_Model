@@ -4,6 +4,7 @@ import math
 import cv2
 import torch
 import numpy as np
+import csv
 from pathlib import Path
 from PIL import Image
 
@@ -11,6 +12,7 @@ from fastapi import FastAPI, File, UploadFile, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
 # Import custom modules
 from detection.yolo_module import YOLODetector
@@ -24,6 +26,61 @@ from fusion.scoring import fuse_scores
 from model import model, transform, DEVICE, predict_image
 
 app = FastAPI()
+
+# ================= XGBOOST MODEL INTEGRATION =================
+CSV_FILE = "accident_features.csv"
+XGB_MODEL_PATH = "model_output/accident_xgboost.json"
+xgb_clf = None
+
+def init_csv_file():
+    if not os.path.exists(CSV_FILE):
+        with open(CSV_FILE, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow([
+                "proximity",
+                "trajectory",
+                "anomaly",
+                "cnn",
+                "occlusion",
+                "merge",
+                "kinetic",
+                "density",
+                "avg_speed",
+                "stopped_ratio",
+                "label"
+            ])
+
+def load_xgboost_model():
+    global xgb_clf
+    if os.path.exists(XGB_MODEL_PATH):
+        try:
+            from xgboost import XGBClassifier
+            XGBClassifier._estimator_type = "classifier"
+            xgb_clf = XGBClassifier()
+            xgb_clf.load_model(XGB_MODEL_PATH)
+            print("[SUCCESS] Loaded XGBoost classifier from", XGB_MODEL_PATH)
+        except Exception as e:
+            print("[ERROR] Failed to load XGBoost model:", e)
+            xgb_clf = None
+    else:
+        xgb_clf = None
+
+# Initialize files and models on startup
+init_csv_file()
+load_xgboost_model()
+
+class FeatureLog(BaseModel):
+    proximity: float
+    trajectory: float
+    anomaly: float
+    cnn: float
+    occlusion: float
+    merge: float
+    kinetic: float
+    density: float
+    avg_speed: float
+    stopped_ratio: float
+    label: int
 
 # ================= BASE PATH =================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -122,11 +179,42 @@ async def predict_image_api(file: UploadFile = File(...), threshold: float = 0.5
                 proximity_score = proximity_score * 0.25
                 occlusion_score = occlusion_score * 0.25
 
-        # 4. Score Fusion for Static Image
-        # Blend Proximity, Occlusion, and CNN-LSTM
-        final_score = 0.2 * proximity_score + 0.2 * occlusion_score + 0.6 * cnn_lstm_prob
-        is_accident = final_score >= threshold  
-        final_class = "ACCIDENT" if is_accident else "NO ACCIDENT"
+        # Calculate traffic features for static image
+        vehicle_count = len(tracks)
+        traffic_density = min(vehicle_count / 20.0, 1.0)
+        avg_speed = 0.0
+        stopped_ratio = 1.0 if vehicle_count > 0 else 0.0
+
+        # Stage 3: Phase C + CNN Gate (Phase C flow is 0.0 for static images)
+        if cnn_lstm_prob < 0.40:
+            final_score = 0.0
+            is_accident = False
+            final_class = "NO ACCIDENT"
+        else:
+            # 4. Score Fusion for Static Image (Fallback Heuristic)
+            final_score = 0.2 * proximity_score + 0.2 * occlusion_score + 0.6 * cnn_lstm_prob
+            
+            # Use XGBoost model if available
+            if xgb_clf is not None:
+                feats = [[
+                    float(proximity_score),
+                    0.0, # no trajectory in static image
+                    0.0, # no flow in static image
+                    float(cnn_lstm_prob),
+                    float(occlusion_score),
+                    0.0, # no merge in static image
+                    0.0, # no energy drop in static image
+                    float(traffic_density),
+                    float(avg_speed),
+                    float(stopped_ratio)
+                ]]
+                try:
+                    final_score = float(xgb_clf.predict_proba(feats)[0][1])
+                except Exception as e:
+                    print("XGBoost image predict error, falling back:", e)
+            
+            is_accident = final_score >= threshold  
+            final_class = "ACCIDENT" if is_accident else "NO ACCIDENT"
 
         # 5. Annotate Image
         for track in tracks:
@@ -165,14 +253,17 @@ async def predict_image_api(file: UploadFile = File(...), threshold: float = 0.5
         return {
             "class": final_class,
             "confidence": float(final_score * 100),
-            "trigger_phase": "Phase A (Proximity) & Occlusion-Containment & CNN-LSTM DL Module" if is_accident else "None",
+            "trigger_phase": "XGBoost Classifier Model" if xgb_clf is not None else ("Phase A (Proximity) & Occlusion-Containment & CNN-LSTM DL Module" if is_accident else "None"),
             "processed_image_url": f"/static/uploads/{processed_filename}",
             "details": {
                 "proximity_score": float(proximity_score),
                 "occlusion_score": float(occlusion_score),
                 "trajectory_score": 0.0,
                 "anomaly_score": 0.0,
-                "cnn_lstm_prob": float(cnn_lstm_prob)
+                "cnn_lstm_prob": float(cnn_lstm_prob),
+                "traffic_density": float(traffic_density),
+                "avg_speed": float(avg_speed),
+                "stopped_ratio": float(stopped_ratio)
             }
         }
 
@@ -374,6 +465,20 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
             # Store gray frame reference
             prev_gray = frame_gray
 
+            # Calculate stopped ratio for the frame
+            stopped = 0
+            if active_tracks:
+                for track in active_tracks:
+                    vx, vy = track.velocities[-1]
+                    track_speed = math.sqrt(vx**2 + vy**2)
+                    if track_speed < 2.0: # stopped threshold = 2.0
+                        stopped += 1
+                stopped_ratio = stopped / len(active_tracks)
+            else:
+                stopped_ratio = 0.0
+            
+            traffic_density = min(len(active_tracks) / 20.0, 1.0)
+
             # Fused Scores for this frame (threshold=threshold for early warnings)
             fuse_res = fuse_scores(
                 proximity=proximity_score,
@@ -389,12 +494,61 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                 flow_dispersion=flow_dispersion_score,
                 scene_density=len(active_tracks),
                 avg_scene_speed=mean_current_speed,
+                stopped_ratio=stopped_ratio,
                 threshold=threshold
             )
 
-            frame_accident = fuse_res["is_accident"]
-            frame_score = fuse_res["score"]
-            frame_trigger = fuse_res["trigger_phase"]
+            # Integrate XGBoost prediction if loaded
+            if xgb_clf is not None:
+                # Stage 3 check first
+                if anomaly_score < 0.20 and lstm_peak < 0.40:
+                    frame_score = 0.0
+                    frame_accident = False
+                    frame_trigger = "Suppressed (Phase C & CNN low)"
+                    frame_details = fuse_res["details"]
+                else:
+                    feats = [[
+                        float(proximity_score),
+                        float(trajectory_score),
+                        float(anomaly_score),
+                        float(lstm_peak),
+                        float(occlusion_score),
+                        float(merge_score),
+                        float(energy_drop_score),
+                        float(traffic_density),
+                        float(mean_current_speed),
+                        float(stopped_ratio)
+                    ]]
+                    try:
+                        prob = float(xgb_clf.predict_proba(feats)[0][1])
+                        frame_score = prob
+                    except Exception as e:
+                        print("XGBoost video predict error, falling back:", e)
+                        frame_score = fuse_res["score"]
+                    
+                    frame_accident = frame_score >= threshold
+                    frame_trigger = "XGBoost Classifier Model"
+                    frame_details = {
+                        "proximity_score": float(proximity_score),
+                        "trajectory_score": float(trajectory_score),
+                        "flow_score": float(anomaly_score),
+                        "lstm_peak": float(lstm_peak),
+                        "occlusion_score": float(occlusion_score),
+                        "merge_score": float(merge_score),
+                        "energy_drop": float(energy_drop_score),
+                        "spin_score": float(spin_score),
+                        "scene_interruption": float(scene_interruption_score),
+                        "diff_burst": float(diff_burst_score),
+                        "flow_dispersion": float(flow_dispersion_score),
+                        "traffic_density": float(traffic_density),
+                        "avg_speed": float(mean_current_speed),
+                        "stopped_ratio": float(stopped_ratio)
+                    }
+            else:
+                frame_accident = fuse_res["is_accident"]
+                frame_score = fuse_res["score"]
+                frame_trigger = fuse_res["trigger_phase"]
+                frame_details = fuse_res["details"]
 
             # Zone Risk weighting multiplier (1.2x score bump in high-risk zones)
             if is_in_intersection_zone:
@@ -402,13 +556,14 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                 if multiplied_score >= threshold:
                     frame_accident = True
                     frame_score = multiplied_score
-                    frame_trigger += " & Risk Zone"
+                    if "Risk Zone" not in frame_trigger:
+                        frame_trigger += " & Risk Zone"
 
             # Log max statistics
             if frame_score > max_accident_score:
                 max_accident_score = frame_score
                 triggering_phase_globally = frame_trigger
-                accident_details = fuse_res["details"]
+                accident_details = frame_details
 
             if frame_accident:
                 accident_detected_globally = True
@@ -514,6 +669,132 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
         import traceback
         traceback.print_exc()
         return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+# ================= LOG FEATURES ENDPOINT =================
+@app.post("/log-feature")
+async def log_feature(data: FeatureLog):
+    try:
+        import csv
+        init_csv_file()
+        with open(CSV_FILE, "a", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow([
+                data.proximity,
+                data.trajectory,
+                data.anomaly,
+                data.cnn,
+                data.occlusion,
+                data.merge,
+                data.kinetic,
+                data.density,
+                data.avg_speed,
+                data.stopped_ratio,
+                data.label
+            ])
+        
+        # Get total logged row count
+        row_count = 0
+        if os.path.exists(CSV_FILE):
+            with open(CSV_FILE, "r") as f:
+                row_count = sum(1 for line in f) - 1 # exclude header
+                
+        return {"success": True, "message": "Features logged successfully", "total_rows": row_count}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+# ================= TRAIN XGBOOST MODEL =================
+@app.post("/train-model")
+async def train_model():
+    try:
+        import pandas as pd
+        import os
+        from xgboost import XGBClassifier
+        XGBClassifier._estimator_type = "classifier"
+        from sklearn.model_selection import train_test_split
+        from sklearn.metrics import accuracy_score
+        
+        if not os.path.exists(CSV_FILE):
+            return JSONResponse(status_code=400, content={"error": "Dataset file accident_features.csv does not exist. Log some samples first."})
+            
+        df = pd.read_csv(CSV_FILE)
+        if len(df) < 5:
+            return JSONResponse(status_code=400, content={"error": f"Insufficient data: only {len(df)} rows. Please log at least 5 rows to train."})
+            
+        X = df.drop("label", axis=1)
+        y = df["label"]
+        
+        if len(y.unique()) < 2:
+            return JSONResponse(status_code=400, content={"error": "Dataset must contain both classes (0 and 1) to train the classifier."})
+            
+        X_train, X_test, y_train, y_test = train_test_split(
+            X,
+            y,
+            test_size=0.2,
+            random_state=42,
+            stratify=y
+        )
+        
+        model = XGBClassifier(
+            n_estimators=100,
+            max_depth=4,
+            learning_rate=0.1,
+            eval_metric="logloss"
+        )
+        
+        model.fit(X_train, y_train)
+        pred = model.predict(X_test)
+        acc = accuracy_score(y_test, pred)
+        
+        # Save model
+        os.makedirs(os.path.dirname(XGB_MODEL_PATH), exist_ok=True)
+        model.save_model(XGB_MODEL_PATH)
+        
+        # Reload active classifier on server
+        load_xgboost_model()
+        
+        return {
+            "success": True,
+            "accuracy": float(acc),
+            "train_size": len(X_train),
+            "test_size": len(X_test),
+            "total_rows": len(df)
+        }
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+# ================= DATASET STATUS =================
+@app.get("/dataset-status")
+def dataset_status():
+    import os
+    import pandas as pd
+    
+    total_rows = 0
+    class_0_count = 0
+    class_1_count = 0
+    
+    if os.path.exists(CSV_FILE):
+        try:
+            df = pd.read_csv(CSV_FILE)
+            total_rows = len(df)
+            if "label" in df.columns:
+                counts = df["label"].value_counts()
+                class_0_count = int(counts.get(0, 0))
+                class_1_count = int(counts.get(1, 0))
+        except Exception as e:
+            print("Error reading CSV status:", e)
+            
+    return {
+        "total_rows": total_rows,
+        "class_0": class_0_count,
+        "class_1": class_1_count,
+        "xgboost_active": xgb_clf is not None
+    }
 
 
 # ================= RUN APP =================

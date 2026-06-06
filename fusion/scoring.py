@@ -1,69 +1,67 @@
 def fuse_scores(proximity, trajectory, flow, lstm_peak, occlusion, merge, energy_drop, spin, scene_interruption, diff_burst, flow_dispersion,
-                scene_density=0, avg_scene_speed=10.0,
-                w1=0.10, w2=0.15, w3=0.10, w4=0.25, w5=0.20, w7=0.10, w8=0.05, w9=0.05, threshold=0.55):
+                scene_density=0, avg_scene_speed=10.0, stopped_ratio=0.0,
+                w1=0.10, w2=0.15, w3=0.30, w4=0.25, w5=0.05, w6=0.05, w7=0.10, threshold=0.55):
     """
-    Fuses 11 multi-stage spatio-temporal signals with Context-Aware Suppression and a Physical Anomaly Guard.
-    
-    Weights:
-    w1: Proximity (0.10)
-    w2: Trajectory conflict + Spin (0.15)
-    w3: Optical flow magnitude (0.10)
-    w4: CNN-LSTM DL peak (0.25)
-    w5: Spatial Entanglement (occlusion + merge) (0.20)
-    w7: Kinetic Energy drop (0.10)
-    w8: Scene-level traffic interruption (0.05)
-    w9: Visual burst / Flow angular dispersion (0.05)
+    Fuses multi-stage spatio-temporal signals with:
+    1. Stage 2: Congestion Gate hard suppression
+    2. Stage 3: Phase C + CNN threshold gate
+    3. Stage 4: Weighted voting using exact requested weights:
+       - Proximity: 10% (w1)
+       - Trajectory: 15% (w2)
+       - Anomaly (Phase C flow): 30% (w3)
+       - CNN-LSTM (DL peak): 25% (w4)
+       - Occlusion: 5% (w5)
+       - Merge: 5% (w6)
+       - Kinetic Energy Drop: 10% (w7)
     """
-    # Blend trajectory conflict and spin instability
-    traj_blended = 0.6 * trajectory + 0.4 * spin
-    # Blend visual bursts
-    burst_blended = max(diff_burst, flow_dispersion)
-    # Combine occlusion and merge
-    entangle_score = max(occlusion, merge)
+    # ================= Stage 3: Phase-C + CNN Gate =================
+    # Reject immediately if physical anomaly (Phase C flow) and deep learning confidence are both low
+    if flow < 0.20 and lstm_peak < 0.40:
+        return {
+            "is_accident": False,
+            "score": 0.0,
+            "trigger_phase": "Suppressed (Phase C & CNN low)",
+            "details": {
+                "proximity_score": float(proximity),
+                "trajectory_score": float(trajectory),
+                "flow_score": float(flow),
+                "lstm_peak": float(lstm_peak),
+                "occlusion_score": float(occlusion),
+                "merge_score": float(merge),
+                "energy_drop": float(energy_drop),
+                "spin_score": float(spin),
+                "scene_interruption": float(scene_interruption),
+                "diff_burst": float(diff_burst),
+                "flow_dispersion": float(flow_dispersion),
+                "traffic_density": float(min(scene_density / 20.0, 1.0)),
+                "avg_speed": float(avg_scene_speed),
+                "stopped_ratio": float(stopped_ratio)
+            }
+        }
 
-    # ================= 1. DYNAMIC IMPACT CHECK =================
-    # A real physical collision always produces a dynamic impact signature (flow spike, visual burst, or kinetic energy collapse).
-    is_impact_event = flow >= 0.35 or burst_blended >= 0.35 or energy_drop >= 0.60
+    # ================= Stage 2: Congestion Gate =================
+    traffic_density = min(scene_density / 20.0, 1.0)
+    is_congested = (
+        traffic_density > 0.50 and
+        stopped_ratio > 0.80 and
+        avg_scene_speed < 3.0
+    )
 
-    # ================= 2. TRAFFIC CONTEXT SUPPRESSION =================
-    # In slow-moving or parked traffic, if there is NO active physical impact event,
-    # we heavily suppress geometric features to avoid false positives.
-    if not is_impact_event:
-        if avg_scene_speed < 4.0 or scene_density > 4:
-            # Scale suppression based on how slow the traffic is
-            speed_factor = max(0.15, min(1.0, avg_scene_speed / 4.0)) if avg_scene_speed < 4.0 else 1.0
-            
-            # Scale suppression based on how dense the traffic is
-            density_factor = 0.4 if scene_density > 5 else (0.6 if scene_density >= 3 else 1.0)
-            
-            suppress_coef = speed_factor * density_factor
-            
-            proximity = proximity * suppress_coef
-            occlusion = occlusion * suppress_coef
-            merge = merge * suppress_coef
-            entangle_score = entangle_score * suppress_coef
-            trajectory = trajectory * suppress_coef
-            traj_blended = traj_blended * suppress_coef
-            energy_drop = energy_drop * speed_factor
+    if is_congested:
+        proximity = proximity * 0.20
+        occlusion = occlusion * 0.20
+        merge = merge * 0.20
+        trajectory = trajectory * 0.20  # also suppress trajectory conflicts in a traffic jam
 
-    # ================= 3. WEIGHTED FUSION FUSION =================
+    # ================= Stage 4: Weighted Voting =================
+    # Use exact weights: 0.10, 0.15, 0.30, 0.25, 0.05, 0.05, 0.10
     final_score = (w1 * proximity) + \
-                  (w2 * traj_blended) + \
+                  (w2 * trajectory) + \
                   (w3 * flow) + \
                   (w4 * lstm_peak) + \
-                  (w5 * entangle_score) + \
-                  (w7 * energy_drop) + \
-                  (w8 * scene_interruption) + \
-                  (w9 * burst_blended)
-
-    # ================= 4. PHYSICAL ANOMALY GUARD =================
-    # Heuristic geometry overlaps should never trigger an accident alert on their own
-    # if there is no physical anomaly (optical flow spike or visual burst) AND the DL model
-    # is not extremely confident.
-    physical_anomaly_present = flow >= 0.20 or burst_blended >= 0.20 or lstm_peak >= 0.75
-    
-    if not physical_anomaly_present:
-        final_score = final_score * 0.30
+                  (w5 * occlusion) + \
+                  (w6 * merge) + \
+                  (w7 * energy_drop)
 
     # Clip final score to [0.0, 1.0]
     final_score = max(0.0, min(1.0, final_score))
@@ -71,6 +69,8 @@ def fuse_scores(proximity, trajectory, flow, lstm_peak, occlusion, merge, energy
 
     # Identify active triggering phases for explanation
     triggers = []
+    if is_congested:
+        triggers.append("Congested")
     if proximity > 0.7:
         triggers.append("Proximity")
     if trajectory > 0.6 or spin > 0.5:
@@ -79,17 +79,10 @@ def fuse_scores(proximity, trajectory, flow, lstm_peak, occlusion, merge, energy
         triggers.append("Flow Spike")
     if lstm_peak > 0.6:
         triggers.append("CNN-LSTM Peak")
-    if entangle_score > 0.7:
+    if max(occlusion, merge) > 0.7:
         triggers.append("Spatial Entanglement")
     if energy_drop > 0.7:
         triggers.append("Kinetic Energy Drop")
-    if scene_interruption > 0.7:
-        triggers.append("Traffic Interruption")
-    if burst_blended > 0.6:
-        triggers.append("Visual Burst/Scatter")
-
-    if not physical_anomaly_present:
-        triggers.append("Suppressed (No Physics/DL)")
 
     if not triggers:
         triggers.append("Weighted Fusion")
@@ -111,6 +104,9 @@ def fuse_scores(proximity, trajectory, flow, lstm_peak, occlusion, merge, energy
             "spin_score": float(spin),
             "scene_interruption": float(scene_interruption),
             "diff_burst": float(diff_burst),
-            "flow_dispersion": float(flow_dispersion)
+            "flow_dispersion": float(flow_dispersion),
+            "traffic_density": float(traffic_density),
+            "avg_speed": float(avg_scene_speed),
+            "stopped_ratio": float(stopped_ratio)
         }
     }

@@ -548,7 +548,7 @@
                 <span>Accident Alarm Threshold</span>
                 <span id="threshold-val" style="color: var(--accent-secondary); font-weight: 700;">55%</span>
             </div>
-            <input type="range" id="threshold-slider" min="10" max="95" value="55" step="1" style="width: 100%; -webkit-appearance: none; background: rgba(255,255,255,0.08); height: 6px; border-radius: 3px; outline: none; cursor: pointer; display: block; margin: 0.5rem 0;">
+            <input type="range" id="threshold-slider" min="10" max="95" value="55" step="1" style="width: 100%; appearance: none; -webkit-appearance: none; background: rgba(255,255,255,0.08); height: 6px; border-radius: 3px; outline: none; cursor: pointer; display: block; margin: 0.5rem 0;">
             <div style="font-size: 0.75rem; color: var(--text-secondary); opacity: 0.8; line-height: 1.3;">
                 💡 <em>Drag the slider to adjust the threshold. Bounding box overlay annotations are compiled on the server based on the slider threshold.</em>
             </div>
@@ -557,6 +557,22 @@
         <!-- Triggering Phase Details -->
         <div style="margin-top: 1rem; font-size: 0.95rem; color: var(--text-secondary); background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 0.75rem 1.5rem; border-radius: 0.5rem; width: 100%; max-width: 500px; text-align: center;">
             <strong>Triggering Signal:</strong> <span id="trigger-phase-text" style="color: var(--text-primary); font-weight: 600;">None</span>
+        </div>
+
+        <!-- Traffic Telemetry Panel -->
+        <div style="display: flex; gap: 1rem; width: 100%; max-width: 500px; margin-top: 1rem; justify-content: center;">
+            <div style="flex: 1; background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.2); padding: 0.75rem; border-radius: 0.5rem; text-align: center;">
+                <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Traffic Density</div>
+                <div id="metric-density" style="font-size: 1.15rem; font-weight: 800; color: var(--accent-secondary); margin-top: 0.25rem;">0.00</div>
+            </div>
+            <div style="flex: 1; background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2); padding: 0.75rem; border-radius: 0.5rem; text-align: center;">
+                <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Avg Speed</div>
+                <div id="metric-speed" style="font-size: 1.15rem; font-weight: 800; color: #a5b4fc; margin-top: 0.25rem;">0.00 px/f</div>
+            </div>
+            <div style="flex: 1; background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); padding: 0.75rem; border-radius: 0.5rem; text-align: center;">
+                <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Stopped Ratio</div>
+                <div id="metric-stopped" style="font-size: 1.15rem; font-weight: 800; color: #f59e0b; margin-top: 0.25rem;">0%</div>
+            </div>
         </div>
 
         <!-- Multi-Stage Fusion Breakdown -->
@@ -600,6 +616,61 @@
         <div id="visual-output-container" style="width: 100%; max-width: 640px; border-radius: 1rem; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); background: #060913; box-shadow: 0 10px 40px rgba(0,0,0,0.8);">
             <video id="processed-video-preview" style="width: 100%; display: none;" controls autoplay loop></video>
             <img id="processed-image-preview" style="width: 100%; display: none;" alt="Processed Output Image">
+        </div>
+
+        <!-- Logging Feedback Buttons -->
+        <div style="width: 100%; max-width: 500px; margin-top: 1.5rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 0.85rem; text-align: center; display: flex; flex-direction: column; gap: 0.75rem;">
+            <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">
+                🛠️ Active Learning: Log features of this event to dataset
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <button onclick="submitFeatureLog(0)" class="action-btn" style="background: rgba(16, 185, 129, 0.15); border: 1px solid var(--success); color: var(--success); box-shadow: none; flex: 1; padding: 0.6rem; font-size: 0.85rem;">
+                    ➕ Log as No Accident (0)
+                </button>
+                <button onclick="submitFeatureLog(1)" class="action-btn" style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: var(--danger); box-shadow: none; flex: 1; padding: 0.6rem; font-size: 0.85rem;">
+                    🚨 Log as Accident (1)
+                </button>
+            </div>
+            <div id="log-status-msg" style="font-size: 0.8rem; color: var(--success); font-weight: 600;"></div>
+        </div>
+    </div>
+
+    <!-- XGBoost Active Learning Management Panel -->
+    <div class="card" id="xgboost-mgmt-panel" style="width: 100%; max-width: 1000px; margin-top: 1rem; align-self: center;">
+        <div class="card-header">
+            <div class="card-icon">🧠</div>
+            <h2>XGBoost Active Learning Model Management</h2>
+        </div>
+        
+        <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 1.5rem; border-radius: 1rem; width: 100%;">
+            <!-- Left Side: Dataset Stats -->
+            <div style="flex: 1; min-width: 280px; display: flex; flex-direction: column; gap: 0.75rem;">
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-primary);">Dataset Collection Progress</h3>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary);">
+                    <span>Total Rows Logged:</span>
+                    <span id="ds-total-rows" style="font-weight: 700; color: var(--text-primary);">0</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary);">
+                    <span>Accident Rows (Label 1):</span>
+                    <span id="ds-accident-rows" style="font-weight: 700; color: var(--danger);">0 / 200</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary);">
+                    <span>Non-Accident Rows (Label 0):</span>
+                    <span id="ds-normal-rows" style="font-weight: 700; color: var(--success);">0 / 200</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary);">
+                    <span>XGBoost Model Status:</span>
+                    <span id="ds-xgb-status" style="font-weight: 700; color: #64748b;">Inactive (Using Heuristic fallback)</span>
+                </div>
+            </div>
+
+            <!-- Right Side: Action Buttons -->
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; min-width: 200px;">
+                <button class="action-btn" id="train-xgb-btn" onclick="trainXGBoost()" style="background: linear-gradient(135deg, #ec4899 0%, #d946ef 100%); box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);">
+                    <span>⚙️</span> Train XGBoost Model
+                </button>
+                <div id="train-result-info" style="font-size: 0.8rem; color: var(--text-secondary); text-align: center;"></div>
+            </div>
         </div>
     </div>
 
@@ -826,7 +897,8 @@
         }
     }
 
-    // Global state for thresholding
+    // Global    // Global state for active learning dataset building
+    let currentFeatures = null;
     let lastConfidence = 0.0;
     const thresholdSlider = document.getElementById('threshold-slider');
     const thresholdVal = document.getElementById('threshold-val');
@@ -864,6 +936,9 @@
         const confidenceVal = parseFloat(data.confidence);
         lastConfidence = confidenceVal;
 
+        // Reset logging status message
+        document.getElementById('log-status-msg').textContent = "";
+
         // Apply thresholding based on slider value
         const currentThreshold = parseInt(thresholdSlider.value);
         applyThresholdClassification(confidenceVal, currentThreshold);
@@ -874,11 +949,32 @@
         // Update triggering phase
         triggerPhaseText.textContent = data.trigger_phase || "None";
 
+        // Save current features globally for logging
+        if (data.details) {
+            currentFeatures = {
+                proximity: data.details.proximity_score || 0.0,
+                trajectory: data.details.trajectory_score || 0.0,
+                anomaly: data.details.flow_score || 0.0,
+                cnn: data.details.lstm_peak || data.details.cnn_lstm_prob || 0.0,
+                occlusion: data.details.occlusion_score || 0.0,
+                merge: data.details.merge_score || 0.0,
+                kinetic: data.details.energy_drop || 0.0,
+                density: data.details.traffic_density || 0.0,
+                avg_speed: data.details.avg_speed || 0.0,
+                stopped_ratio: data.details.stopped_ratio || 0.0
+            };
+
+            // Update traffic telemetry labels
+            document.getElementById('metric-density').textContent = (data.details.traffic_density || 0.0).toFixed(2);
+            document.getElementById('metric-speed').textContent = (data.details.avg_speed || 0.0).toFixed(2) + ' px/f';
+            document.getElementById('metric-stopped').textContent = Math.round((data.details.stopped_ratio || 0.0) * 100) + '%';
+        }
+
         // Update details breakdown
         if (data.details) {
             scoreProx.textContent = (data.details.proximity_score || 0).toFixed(2);
             scoreTraj.textContent = (data.details.trajectory_score || 0).toFixed(2);
-            scoreAnom.textContent = (data.details.anomaly_score || 0).toFixed(2);
+            scoreAnom.textContent = (data.details.flow_score || 0).toFixed(2);
             scoreDl.textContent = (data.details.lstm_peak || data.details.cnn_lstm_prob || 0).toFixed(2);
             scoreOccl.textContent = (data.details.occlusion_score || 0).toFixed(2);
             scoreMerge.textContent = (data.details.merge_score || 0).toFixed(2);
@@ -920,6 +1016,92 @@
         // Smooth scroll to results
         resultsPanel.scrollIntoView({ behavior: 'smooth' });
     }
+
+    // Active learning submit log
+    async function submitFeatureLog(label) {
+        if (!currentFeatures) return;
+        
+        const logStatusMsg = document.getElementById('log-status-msg');
+        logStatusMsg.style.color = 'var(--text-secondary)';
+        logStatusMsg.textContent = "Logging features to server...";
+        
+        const payload = { ...currentFeatures, label: label };
+        
+        try {
+            const response = await fetch("/log-feature", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            
+            if (!response.ok) throw new Error("Failed to log features.");
+            
+            const data = await response.json();
+            logStatusMsg.style.color = 'var(--success)';
+            logStatusMsg.textContent = `✅ Successfully logged features (Total dataset size: ${data.total_rows} rows)`;
+            
+            // Refresh dataset status panel
+            await refreshDatasetStatus();
+        } catch (error) {
+            logStatusMsg.style.color = 'var(--danger)';
+            logStatusMsg.textContent = "❌ Error: " + error.message;
+        }
+    }
+
+    // Refresh model dataset statistics
+    async function refreshDatasetStatus() {
+        try {
+            const response = await fetch("/dataset-status");
+            if (!response.ok) return;
+            const data = await response.json();
+            
+            document.getElementById('ds-total-rows').textContent = data.total_rows;
+            document.getElementById('ds-accident-rows').textContent = `${data.class_1} / 200`;
+            document.getElementById('ds-normal-rows').textContent = `${data.class_0} / 200`;
+            
+            const statusBadgeEl = document.getElementById('ds-xgb-status');
+            if (data.xgboost_active) {
+                statusBadgeEl.textContent = "Active (XGBoost Classifier deployed)";
+                statusBadgeEl.style.color = "var(--success)";
+            } else {
+                statusBadgeEl.textContent = "Inactive (Using Heuristic fallback)";
+                statusBadgeEl.style.color = "var(--text-secondary)";
+            }
+        } catch (e) {
+            console.error("Error fetching dataset status:", e);
+        }
+    }
+
+    // Train the XGBoost model
+    async function trainXGBoost() {
+        const trainBtn = document.getElementById('train-xgb-btn');
+        const resultInfo = document.getElementById('train-result-info');
+        
+        trainBtn.disabled = true;
+        resultInfo.style.color = 'var(--text-secondary)';
+        resultInfo.textContent = "Training XGBoost Classifier on logged CSV dataset...";
+        
+        try {
+            const response = await fetch("/train-model", { method: "POST" });
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || "Training failed.");
+            }
+            
+            resultInfo.style.color = 'var(--success)';
+            resultInfo.innerHTML = `<strong>Success!</strong> Model trained.<br>Accuracy: ${(data.accuracy * 100).toFixed(2)}% | Rows: ${data.total_rows}`;
+            
+            await refreshDatasetStatus();
+        } catch (error) {
+            resultInfo.style.color = 'var(--danger)';
+            resultInfo.textContent = "❌ " + error.message;
+        } finally {
+            trainBtn.disabled = false;
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', refreshDatasetStatus);
 </script>
 </body>
 </html>
