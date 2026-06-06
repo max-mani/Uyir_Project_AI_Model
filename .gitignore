@@ -1,0 +1,96 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+.venv
+env.bak/
+venv.bak/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# OS
+Thumbs.db
+.env
+.env.local
+
+
+
+# Uploaded files and temporary uploads
+static/uploads/*
+!static/uploads/.gitkeep
+temp/
+tmp/
+
+# Video files
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.flv
+*.wmv
+*.webm
+
+# Logs and outputs
+*.log
+logs/
+output/
+results/
+*.json
+!package.json
+!training_history.json
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache
+.cache/
+.pytest_cache/
+.coverage
+
+# IDE
+.pylintrc
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Mac specific
+.AppleDouble
+.LSOverride
+
+# Windows specific
+*.lnk
