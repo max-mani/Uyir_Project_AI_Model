@@ -310,11 +310,22 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
             fps = 30.0
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
+        # --- OPTIMIZATION: Frame Resizing ---
+        MAX_WIDTH = 800
+        if width > MAX_WIDTH:
+            scale = MAX_WIDTH / float(width)
+            width = MAX_WIDTH
+            height = int(height * scale)
+            
+        # --- OPTIMIZATION: Frame Skipping ---
+        PROCESS_EVERY_N_FRAMES = 2  # Process every 2nd frame (cuts time by 50%)
+        output_fps = fps / PROCESS_EVERY_N_FRAMES
+
         # Create Video Writer (H.264 MSMF on Windows)
         processed_filename = f"processed_{uuid.uuid4()}.mp4"
         output_path = os.path.join(UPLOAD_DIR, processed_filename)
         fourcc = cv2.VideoWriter_fourcc(*'avc1')
-        out_writer = cv2.VideoWriter(output_path, cv2.CAP_MSMF, fourcc, fps, (width, height))
+        out_writer = cv2.VideoWriter(output_path, cv2.CAP_MSMF, fourcc, output_fps, (width, height))
 
         # Instantiate modules
         detector = YOLODetector()
@@ -337,10 +348,20 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
         zone_y_min, zone_y_max = int(height * 0.25), int(height * 0.75)
 
         # Main frame loop
+        raw_frame_idx = 0
         while True:
             ret, frame = cap.read()
             if not ret:
                 break
+                
+            if raw_frame_idx % PROCESS_EVERY_N_FRAMES != 0:
+                raw_frame_idx += 1
+                continue
+                
+            raw_frame_idx += 1
+
+            if frame.shape[1] > MAX_WIDTH:
+                frame = cv2.resize(frame, (width, height))
 
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -584,11 +605,12 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                         frame_trigger += " & Risk Zone"
 
             # Log max statistics
+            is_max_frame = False
             if frame_score > max_accident_score:
                 max_accident_score = frame_score
                 triggering_phase_globally = frame_trigger
                 accident_details = frame_details
-                max_accident_frame_image = frame.copy()
+                is_max_frame = True
 
             if frame_accident:
                 accident_detected_globally = True
@@ -636,6 +658,9 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                 cv2.circle(frame, (center_x, center_y), 15, (0, 0, 255), 2)
                 cv2.putText(frame, f"IMPACT ({status})", (center_x - 50, center_y - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
+            if is_max_frame:
+                max_accident_frame_image = frame.copy()
+
             # Flashing banner alert
             if frame_accident:
                 overlay = frame.copy()
@@ -654,7 +679,7 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
             cv2.rectangle(frame, (panel_x, panel_y), (panel_x + panel_w, panel_y + panel_h), (255, 255, 255), 1)
 
             cv2.putText(frame, "ITS SYSTEM MONITOR v2", (panel_x + 10, panel_y + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-            cv2.putText(frame, f"Frame: {frame_idx}/{total_frames} | Active: {len(active_tracks)}", (panel_x + 10, panel_y + 40), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (200, 200, 200), 1)
+            cv2.putText(frame, f"Frame: {raw_frame_idx}/{total_frames} | Active: {len(active_tracks)}", (panel_x + 10, panel_y + 40), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (200, 200, 200), 1)
             
             # Draw scores list
             cv2.putText(frame, f"Phase A Proximity: {proximity_score:.2f}", (panel_x + 10, panel_y + 65), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255) if proximity_score > 0 else (200, 200, 200), 1)
