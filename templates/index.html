@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accident Detection AI Dashboard</title>
-    <!-- Google Fonts: Plus Jakarta Sans for premium typography -->
+    <title>UYIR - Road Accident Detection System</title>
+    <meta name="description" content="Automated Road Accident Detection and Analysis System for Tamil Nadu Traffic Surveillance">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
+
             --bg-color: #0f172a;
             --card-bg: #1e293b;
             --border-color: #334155;
@@ -22,6 +23,8 @@
             --danger: #ef4444;
             --danger-bg: rgba(239, 68, 68, 0.1);
             --success-bg: rgba(16, 185, 129, 0.1);
+
+            
         }
 
         * {
@@ -31,7 +34,7 @@
         }
 
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: 'Inter', sans-serif;
             background: var(--bg-color);
             color: var(--text-primary);
             min-height: 100vh;
@@ -444,8 +447,12 @@
 
 <div class="container">
     <header>
-        <h1>Traffic Incident Analysis System</h1>
-        <p>Intelligent Monitoring Dashboard</p>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 0.5rem;">
+            <div style="width: 44px; height: 44px; background: var(--accent-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; color: #fff; letter-spacing: 1px;">U</div>
+            <h1 style="font-size: 1.8rem;">UYIR Road Safety - Accident Detection System</h1>
+        </div>
+        <p>Automated Surveillance Analysis for Tamil Nadu Traffic Monitoring</p>
+        <p style="color: #64748b; font-size: 0.8rem; margin-top: 0.25rem;">Multi-stage Computer Vision Pipeline &middot; Pilot Version</p>
     </header>
 
     <div class="alert-banner" id="error-alert"></div>
@@ -674,7 +681,7 @@
     </div>
 
     <footer>
-        Traffic Incident Analysis System - Internal Pilot
+        UYIR Foundation &middot; Road Accident Detection System &middot; Tamil Nadu Police Pilot Programme
     </footer>
 </div>
 
@@ -833,7 +840,7 @@
         hideResults();
         
         loadingPanel.style.display = 'flex';
-        loaderStatus.textContent = "Processing image (YOLOv8 vehicle detection + proximity analysis + CNN-LSTM)...";
+        loaderStatus.textContent = "Analyzing image. Please wait...";
         predictImageBtn.disabled = true;
 
         let formData = new FormData();
@@ -868,7 +875,7 @@
         hideResults();
 
         loadingPanel.style.display = 'flex';
-        loaderStatus.textContent = "Analyzing video frame-by-frame (YOLOv8 + Custom Tracking + Proximity + Trajectory Analysis + Optical Flow + CNN-LSTM)... This may take a minute.";
+        loaderStatus.textContent = "Processing video footage. This may take a moment...";
         predictVideoBtn.disabled = true;
 
         let formData = new FormData();
@@ -1050,13 +1057,13 @@
             
             const data = await response.json();
             logStatusMsg.style.color = 'var(--success)';
-            logStatusMsg.textContent = `✅ Successfully logged features (Total dataset size: ${data.total_rows} rows)`;
+            logStatusMsg.textContent = `Logged successfully (Total: ${data.total_rows} rows)`;
             
             // Refresh dataset status panel
             await refreshDatasetStatus();
         } catch (error) {
             logStatusMsg.style.color = 'var(--danger)';
-            logStatusMsg.textContent = "❌ Error: " + error.message;
+            logStatusMsg.textContent = "Error: " + error.message;
         }
     }
 
@@ -1107,7 +1114,7 @@
             await refreshDatasetStatus();
         } catch (error) {
             resultInfo.style.color = 'var(--danger)';
-            resultInfo.textContent = "❌ " + error.message;
+            resultInfo.textContent = "Error: " + error.message;
         } finally {
             trainBtn.disabled = false;
         }
