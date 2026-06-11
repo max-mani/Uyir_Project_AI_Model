@@ -144,10 +144,17 @@ async def predict_image_api(file: UploadFile = File(...), threshold: float = 0.5
 
         proximity_score = 0.0
         occlusion_score = 0.0
-        candidate_pairs = proximity_filter(tracks, threshold=120.0)
+        
+        dynamic_threshold = 120.0
+        if len(tracks) >= 8:
+            dynamic_threshold = 60.0
+        elif len(tracks) >= 4:
+            dynamic_threshold = 90.0
+            
+        candidate_pairs = proximity_filter(tracks, threshold=dynamic_threshold)
         
         for t1, t2, dist in candidate_pairs:
-            prox_s = max(0.0, 1.0 - (dist / 120.0))
+            prox_s = max(0.0, 1.0 - (dist / dynamic_threshold))
             proximity_score = max(proximity_score, prox_s)
             
             # Static containment check for occlusion
@@ -402,7 +409,13 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                         scene_interruption_score = max(0.0, float(speed_drop / 0.60))
 
             # --- Phase A: Proximity Filtering ---
-            candidate_pairs = proximity_filter(active_tracks, threshold=120.0)
+            dynamic_threshold = 120.0
+            if len(active_tracks) >= 8:
+                dynamic_threshold = 60.0
+            elif len(active_tracks) >= 4:
+                dynamic_threshold = 90.0
+                
+            candidate_pairs = proximity_filter(active_tracks, threshold=dynamic_threshold)
 
             # --- Score Accumulators ---
             proximity_score = 0.0
@@ -414,6 +427,7 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
             spin_score = 0.0
             diff_burst_score = 0.0
             flow_dispersion_score = 0.0
+            post_intersect_static_score = False
 
             frame_collision_pairs = []
             is_in_intersection_zone = False
@@ -431,11 +445,15 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
 
             # Evaluate Candidate Trajectory Conflicts (Phase B)
             for t1, t2, dist in candidate_pairs:
+                if t1.age < 5 or t2.age < 5:
+                    # Ignore interactions involving brand new tracks to prevent false alarms from erratic initial vectors
+                    continue
+                    
                 if is_stationary(t1) and is_stationary(t2):
                     # Skip stationary vehicle interactions (standing still in traffic) to prevent false alerts
                     continue
 
-                prox_s = max(0.0, 1.0 - (dist / 120.0))
+                prox_s = max(0.0, 1.0 - (dist / dynamic_threshold))
                 proximity_score = max(proximity_score, prox_s)
 
                 traj_res = analyze_trajectory_conflict(t1, t2)
@@ -452,6 +470,9 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                 
                 energy_drop_score = max(energy_drop_score, traj_res["max_ke_drop"])
                 spin_score = max(spin_score, traj_res["max_spin_var"])
+                
+                if traj_res.get("post_intersect_static", False):
+                    post_intersect_static_score = True
 
                 # Determine if collision center point lies inside high-risk zone
                 c1, c2 = t1.get_centroid(), t2.get_centroid()
@@ -492,6 +513,7 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                 scene_interruption=scene_interruption_score,
                 diff_burst=diff_burst_score,
                 flow_dispersion=flow_dispersion_score,
+                post_intersect_static=post_intersect_static_score,
                 scene_density=len(active_tracks),
                 avg_scene_speed=mean_current_speed,
                 stopped_ratio=stopped_ratio,

@@ -144,6 +144,7 @@ def analyze_trajectory_conflict(track1, track2):
             "class": "Normal",
             "score": 0.0,
             "intersected": False,
+            "post_intersect_static": False,
             "energy_dropped": False,
             "spinning": False,
             "merged": False,
@@ -162,6 +163,7 @@ def analyze_trajectory_conflict(track1, track2):
             "class": "Normal",
             "score": 0.05,
             "intersected": False,
+            "post_intersect_static": False,
             "energy_dropped": False,
             "spinning": False,
             "merged": False,
@@ -186,6 +188,11 @@ def analyze_trajectory_conflict(track1, track2):
                     break
             if intersected:
                 break
+                
+    post_intersect_static = False
+    if intersected:
+        if is_stationary(track1, frames=5) or is_stationary(track2, frames=5):
+            post_intersect_static = True
 
     # 2. Kinetic Energy Drops
     ke_drop1, val_ke1 = check_ke_drop(track1)
@@ -219,7 +226,7 @@ def analyze_trajectory_conflict(track1, track2):
     
     # Calculate weighted heuristics
     if intersected or merged or occluded:
-        if energy_dropped or spinning:
+        if energy_dropped or spinning or post_intersect_static:
             conflict_class = "Collision"
             score = 0.95
         elif occluded and not energy_dropped:
@@ -243,6 +250,7 @@ def analyze_trajectory_conflict(track1, track2):
         "class": conflict_class,
         "score": float(score),
         "intersected": intersected,
+        "post_intersect_static": post_intersect_static,
         "energy_dropped": energy_dropped,
         "spinning": spinning,
         "merged": merged,
