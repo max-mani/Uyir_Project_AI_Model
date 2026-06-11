@@ -11,17 +11,17 @@
     
     <style>
         :root {
-            --bg-color: #0b0f19;
-            --card-bg: rgba(22, 28, 45, 0.7);
-            --border-color: rgba(255, 255, 255, 0.08);
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --border-color: #334155;
             --text-primary: #f8fafc;
             --text-secondary: #94a3b8;
-            --accent-primary: #4f46e5;
-            --accent-secondary: #06b6d4;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #0ea5e9;
             --success: #10b981;
             --danger: #ef4444;
-            --danger-glow: rgba(239, 68, 68, 0.15);
-            --success-glow: rgba(16, 185, 129, 0.15);
+            --danger-bg: rgba(239, 68, 68, 0.1);
+            --success-bg: rgba(16, 185, 129, 0.1);
         }
 
         * {
@@ -32,7 +32,7 @@
 
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, var(--bg-color) 70%);
+            background: var(--bg-color);
             color: var(--text-primary);
             min-height: 100vh;
             display: flex;
@@ -59,10 +59,7 @@
         header h1 {
             font-size: 2.5rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #fff 30%, #a5b4fc 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--text-primary);
             margin-bottom: 0.5rem;
             display: flex;
             align-items: center;
@@ -85,21 +82,18 @@
 
         .card {
             background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--border-color);
-            border-radius: 1.25rem;
-            padding: 1.75rem;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
             display: flex;
             flex-direction: column;
             gap: 1.25rem;
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-            transition: transform 0.3s ease, border-color 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: border-color 0.2s ease;
         }
 
         .card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(99, 102, 241, 0.4);
+            border-color: var(--accent-primary);
         }
 
         .card-header {
@@ -109,15 +103,15 @@
         }
 
         .card-icon {
-            font-size: 1.5rem;
-            background: rgba(255, 255, 255, 0.05);
-            width: 40px;
-            height: 40px;
+            font-size: 1.25rem;
+            background: rgba(255, 255, 255, 0.1);
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 0.75rem;
-            color: #a5b4fc;
+            border-radius: 0.5rem;
+            color: var(--accent-primary);
         }
 
         .card h2 {
@@ -153,13 +147,11 @@
         }
 
         .drop-icon {
-            font-size: 2.5rem;
+            font-size: 2rem;
             color: var(--text-secondary);
-            transition: transform 0.3s ease;
         }
-
+        
         .drop-zone:hover .drop-icon {
-            transform: translateY(-4px);
             color: var(--accent-secondary);
         }
 
@@ -218,16 +210,15 @@
         /* Action Buttons */
         .action-btn {
             font-family: inherit;
-            background: linear-gradient(135deg, var(--accent-primary) 0%, #6366f1 100%);
+            background: var(--accent-primary);
             color: white;
             border: none;
-            padding: 0.875rem;
-            border-radius: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+            transition: background-color 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -235,9 +226,7 @@
         }
 
         .action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
-            filter: brightness(1.1);
+            background: #2563eb;
         }
 
         .action-btn:disabled {
@@ -248,21 +237,17 @@
             box-shadow: none;
         }
 
-        /* Result Panel */
         .results-panel {
             background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--border-color);
-            border-radius: 1.25rem;
+            border-radius: 0.75rem;
             padding: 2rem;
             text-align: center;
             display: none;
             flex-direction: column;
             align-items: center;
             gap: 1rem;
-            animation: scaleIn 0.4s ease-out;
-            box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
         /* Loading Spinner */
@@ -304,18 +289,15 @@
         }
 
         .status-danger {
-            background: var(--danger-glow);
+            background: var(--danger-bg);
             color: var(--danger);
-            border: 2px solid rgba(239, 68, 68, 0.3);
-            box-shadow: 0 0 25px rgba(239, 68, 68, 0.2);
-            animation: flashGlow 2s infinite;
+            border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
         .status-success {
-            background: var(--success-glow);
+            background: var(--success-bg);
             color: var(--success);
-            border: 2px solid rgba(16, 185, 129, 0.3);
-            box-shadow: 0 0 25px rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
         /* Progress Bar / Meter */
@@ -445,19 +427,16 @@
             border-radius: 3px;
         }
         #threshold-slider::-webkit-slider-thumb {
-            height: 18px;
-            width: 18px;
+            height: 16px;
+            width: 16px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent-secondary) 0%, #22d3ee 100%);
+            background: var(--accent-secondary);
             cursor: pointer;
             -webkit-appearance: none;
-            margin-top: -6px;
-            box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
-            transition: transform 0.1s, box-shadow 0.1s;
+            margin-top: -5px;
         }
         #threshold-slider::-webkit-slider-thumb:hover {
-            transform: scale(1.25);
-            box-shadow: 0 0 15px rgba(6, 182, 212, 0.8);
+            background: #0284c7;
         }
     </style>
 </head>
@@ -465,8 +444,8 @@
 
 <div class="container">
     <header>
-        <h1>🚨 Accident Detection AI</h1>
-        <p>Real-time computer vision analysis using ResNet18 + LSTM</p>
+        <h1>Traffic Incident Analysis System</h1>
+        <p>Intelligent Monitoring Dashboard</p>
     </header>
 
     <div class="alert-banner" id="error-alert"></div>
@@ -475,12 +454,11 @@
         <!-- Image Card -->
         <div class="card" id="image-card">
             <div class="card-header">
-                <div class="card-icon">📷</div>
+                <div class="card-icon">IMG</div>
                 <h2>Analyze Image</h2>
             </div>
             
             <div class="drop-zone" id="img-dropzone">
-                <div class="drop-icon">📤</div>
                 <div class="drop-text">Drag & drop your image here or <span style="color: var(--accent-secondary); text-decoration: underline;">browse</span></div>
                 <div class="drop-subtext">Supports JPG, PNG, WEBP</div>
                 <input type="file" id="img-input" accept="image/*">
@@ -492,19 +470,18 @@
             </div>
 
             <button class="action-btn" id="predict-image-btn" onclick="uploadImage()" disabled>
-                <span>🔍</span> Predict Image
+                Predict Image
             </button>
         </div>
 
         <!-- Video Card -->
         <div class="card" id="video-card">
             <div class="card-header">
-                <div class="card-icon">🎥</div>
+                <div class="card-icon">VID</div>
                 <h2>Analyze Video</h2>
             </div>
             
             <div class="drop-zone" id="vid-dropzone">
-                <div class="drop-icon">📤</div>
                 <div class="drop-text">Drag & drop your video here or <span style="color: var(--accent-secondary); text-decoration: underline;">browse</span></div>
                 <div class="drop-subtext">Supports MP4, AVI, MOV</div>
                 <input type="file" id="vid-input" accept="video/*">
@@ -516,7 +493,7 @@
             </div>
 
             <button class="action-btn" id="predict-video-btn" onclick="uploadVideo()" disabled>
-                <span>🎬</span> Predict Video
+                Predict Video
             </button>
         </div>
     </div>
@@ -530,11 +507,11 @@
     <!-- Prediction Results Panel -->
     <div class="results-panel" id="results-panel" style="display: none; flex-direction: column; align-items: center; width: 100%;">
         <h3 style="color: var(--text-secondary); text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 0.5rem;">Detection Result</h3>
-        <div id="result-badge" class="status-badge">ACCIDENT</div>
+        <div id="result-badge" class="status-badge">INCIDENT</div>
         
         <div class="meter-container">
             <div class="meter-label">
-                <span>Accident Confidence Level</span>
+                <span>Incident Confidence Level</span>
                 <span id="confidence-percentage">0.00%</span>
             </div>
             <div class="meter-bg">
@@ -545,12 +522,12 @@
         <!-- Adjustable Threshold Controls -->
         <div style="width: 100%; max-width: 320px; margin-top: 1.25rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 1rem; border-radius: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem; text-align: left;">
             <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">
-                <span>Accident Alarm Threshold</span>
+                <span>Incident Alarm Threshold</span>
                 <span id="threshold-val" style="color: var(--accent-secondary); font-weight: 700;">55%</span>
             </div>
             <input type="range" id="threshold-slider" min="10" max="95" value="55" step="1" style="width: 100%; appearance: none; -webkit-appearance: none; background: rgba(255,255,255,0.08); height: 6px; border-radius: 3px; outline: none; cursor: pointer; display: block; margin: 0.5rem 0;">
             <div style="font-size: 0.75rem; color: var(--text-secondary); opacity: 0.8; line-height: 1.3;">
-                💡 <em>Drag the slider to adjust the threshold. Bounding box overlay annotations are compiled on the server based on the slider threshold.</em>
+                Adjust threshold to tune sensitivity. Annotations are compiled based on the threshold.
             </div>
         </div>
 
@@ -611,12 +588,11 @@
             </div>
         </div>
         
-        <!-- Open Source LLM & Exact Frame Analysis -->
-        <div id="llm-analysis-panel" style="display: none; flex-direction: column; width: 100%; max-width: 800px; margin-top: 1.5rem; background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); border-radius: 1rem; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+        <!-- Automated Scene Assessment & Exact Frame Analysis -->
+        <div id="llm-analysis-panel" style="display: none; flex-direction: column; width: 100%; max-width: 800px; margin-top: 1.5rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 0.75rem; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
             <div style="background: rgba(255, 255, 255, 0.03); padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <span style="font-size: 1.25rem;">🤖</span>
-                    <h3 style="font-size: 1rem; color: var(--text-primary); font-weight: 700;">Open Source Vision LLM Analysis</h3>
+                    <h3 style="font-size: 1rem; color: var(--text-primary); font-weight: 700;">Automated Scene Assessment</h3>
                 </div>
                 <div style="font-size: 0.75rem; background: rgba(16, 185, 129, 0.2); color: var(--success); padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-weight: 700;">ACTIVE</div>
             </div>
@@ -625,8 +601,8 @@
                     <div style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">Exact Collision Frame</div>
                     <img id="exact-accident-frame" src="" style="width: 100%; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1);" alt="Exact Accident Frame">
                 </div>
-                <div style="flex: 1; min-width: 300px; padding: 1.5rem; border-left: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 1rem; background: rgba(0, 0, 0, 0.2);">
-                    <div style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">LLM Reasoning Output</div>
+                <div style="flex: 1; min-width: 300px; padding: 1.5rem; border-left: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 1rem; background: rgba(0, 0, 0, 0.1);">
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">Scene Reasoning Output</div>
                     <div id="llm-reasoning-text" style="font-size: 0.95rem; line-height: 1.6; color: var(--text-primary); background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 0.5rem; font-style: italic; border-left: 3px solid var(--accent-secondary);">
                         Analysis loading...
                     </div>
@@ -636,22 +612,22 @@
 
         <!-- Visual Analysis Feedback -->
         <h3 style="color: var(--text-secondary); text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1.5px; font-weight: 700; margin-top: 2rem; margin-bottom: 0.75rem;">Processed Visual Output</h3>
-        <div id="visual-output-container" style="width: 100%; max-width: 640px; border-radius: 1rem; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); background: #060913; box-shadow: 0 10px 40px rgba(0,0,0,0.8);">
+        <div id="visual-output-container" style="width: 100%; max-width: 640px; border-radius: 0.75rem; overflow: hidden; border: 1px solid var(--border-color); background: var(--card-bg); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
             <video id="processed-video-preview" style="width: 100%; display: none;" controls autoplay loop></video>
             <img id="processed-image-preview" style="width: 100%; display: none;" alt="Processed Output Image">
         </div>
 
         <!-- Logging Feedback Buttons -->
-        <div style="width: 100%; max-width: 500px; margin-top: 1.5rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 0.85rem; text-align: center; display: flex; flex-direction: column; gap: 0.75rem;">
+        <div style="width: 100%; max-width: 500px; margin-top: 1.5rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 0.75rem; text-align: center; display: flex; flex-direction: column; gap: 0.75rem;">
             <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">
-                🛠️ Active Learning: Log features of this event to dataset
+                Log Event for Model Improvement
             </div>
             <div style="display: flex; gap: 1rem; justify-content: center;">
                 <button onclick="submitFeatureLog(0)" class="action-btn" style="background: rgba(16, 185, 129, 0.15); border: 1px solid var(--success); color: var(--success); box-shadow: none; flex: 1; padding: 0.6rem; font-size: 0.85rem;">
-                    ➕ Log as No Accident (0)
+                    Log as No Incident (0)
                 </button>
                 <button onclick="submitFeatureLog(1)" class="action-btn" style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: var(--danger); box-shadow: none; flex: 1; padding: 0.6rem; font-size: 0.85rem;">
-                    🚨 Log as Accident (1)
+                    Log as Incident (1)
                 </button>
             </div>
             <div id="log-status-msg" style="font-size: 0.8rem; color: var(--success); font-weight: 600;"></div>
@@ -661,8 +637,8 @@
     <!-- XGBoost Active Learning Management Panel -->
     <div class="card" id="xgboost-mgmt-panel" style="width: 100%; max-width: 1000px; margin-top: 1rem; align-self: center;">
         <div class="card-header">
-            <div class="card-icon">🧠</div>
-            <h2>XGBoost Active Learning Model Management</h2>
+            <div class="card-icon">DB</div>
+            <h2>Model Training & Data Collection</h2>
         </div>
         
         <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 1.5rem; border-radius: 1rem; width: 100%;">
@@ -674,11 +650,11 @@
                     <span id="ds-total-rows" style="font-weight: 700; color: var(--text-primary);">0</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary);">
-                    <span>Accident Rows (Label 1):</span>
+                    <span>Incident Rows (Label 1):</span>
                     <span id="ds-accident-rows" style="font-weight: 700; color: var(--danger);">0 / 200</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary);">
-                    <span>Non-Accident Rows (Label 0):</span>
+                    <span>Non-Incident Rows (Label 0):</span>
                     <span id="ds-normal-rows" style="font-weight: 700; color: var(--success);">0 / 200</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary);">
@@ -689,8 +665,8 @@
 
             <!-- Right Side: Action Buttons -->
             <div style="display: flex; flex-direction: column; gap: 0.75rem; min-width: 200px;">
-                <button class="action-btn" id="train-xgb-btn" onclick="trainXGBoost()" style="background: linear-gradient(135deg, #ec4899 0%, #d946ef 100%); box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);">
-                    <span>⚙️</span> Train XGBoost Model
+                <button class="action-btn" id="train-xgb-btn" onclick="trainXGBoost()">
+                    Train Model
                 </button>
                 <div id="train-result-info" style="font-size: 0.8rem; color: var(--text-secondary); text-align: center;"></div>
             </div>
@@ -698,7 +674,7 @@
     </div>
 
     <footer>
-        Multi-Stage Intelligent Transportation System (ITS) Accident Detection Dashboard
+        Traffic Incident Analysis System - Internal Pilot
     </footer>
 </div>
 
@@ -940,11 +916,11 @@
 
         if (confidence >= threshold) {
             resultBadge.classList.add('status-danger');
-            resultBadge.innerHTML = '🚨 ACCIDENT DETECTED';
+            resultBadge.innerHTML = 'INCIDENT DETECTED';
             confidenceBar.classList.add('danger');
         } else {
             resultBadge.classList.add('status-success');
-            resultBadge.innerHTML = '✅ NO ACCIDENT';
+            resultBadge.innerHTML = 'NO INCIDENT';
             confidenceBar.classList.add('success');
         }
     }
