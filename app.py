@@ -24,6 +24,7 @@ from utils.optical_flow import compute_optical_flow, calculate_frame_diff_ratio
 from utils.geometry import calculate_bbox_containment_ratio
 from fusion.scoring import fuse_scores
 from model import model, transform, DEVICE, predict_image
+from llm_vision_module import analyze_frame_with_llm
 
 app = FastAPI()
 
@@ -329,6 +330,7 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
         max_accident_score = 0.0
         triggering_phase_globally = "None"
         accident_details = {}
+        max_accident_frame_image = None
 
         # High-risk intersection zone dimensions (center 50% area)
         zone_x_min, zone_x_max = int(width * 0.25), int(width * 0.75)
@@ -586,6 +588,7 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                 max_accident_score = frame_score
                 triggering_phase_globally = frame_trigger
                 accident_details = frame_details
+                max_accident_frame_image = frame.copy()
 
             if frame_accident:
                 accident_detected_globally = True
@@ -679,11 +682,23 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
             except Exception as e:
                 print("Could not clean up raw input file:", e)
 
+        # Save and Analyze exact accident frame
+        accident_frame_url = None
+        llm_analysis_text = "No accident detected."
+        if accident_detected_globally and max_accident_frame_image is not None:
+            frame_filename = f"accident_frame_{uuid.uuid4()}.jpg"
+            frame_path = os.path.join(UPLOAD_DIR, frame_filename)
+            cv2.imwrite(frame_path, max_accident_frame_image)
+            accident_frame_url = f"/static/uploads/{frame_filename}"
+            llm_analysis_text = analyze_frame_with_llm(frame_path, accident_details)
+
         return {
             "class": "ACCIDENT" if accident_detected_globally else "NO ACCIDENT",
             "confidence": float(max_accident_score * 100),
             "trigger_phase": triggering_phase_globally,
             "processed_video_url": f"/static/uploads/{processed_filename}",
+            "accident_frame_url": accident_frame_url,
+            "llm_analysis": llm_analysis_text,
             "details": accident_details
         }
 
