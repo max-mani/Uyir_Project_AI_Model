@@ -1,6 +1,6 @@
 from utils.geometry import euclidean_distance
 
-def proximity_filter(tracks, threshold=120.0):
+def proximity_filter(tracks, threshold=121.0):
     """
     Filters vehicle pairs that are in close proximity.
     tracks: list of Track objects
