@@ -1,6 +1,7 @@
 import os
 import uuid
 import math
+import time
 import cv2
 import torch
 import numpy as np
@@ -15,6 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 # Import custom modules
+import config
 from detection.yolo_module import YOLODetector
 from tracking.deepsort_module import VehicleTracker
 from phases.phase_a_proximity import proximity_filter
@@ -104,7 +106,7 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 # ================= HOME PAGE =================
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request, "index.html")
 
 
 # ================= IMAGE PREDICTION =================
@@ -146,16 +148,13 @@ async def predict_image_api(file: UploadFile = File(...), threshold: float = 0.5
         proximity_score = 0.0
         occlusion_score = 0.0
         
-        dynamic_threshold = 120.0
-        if len(tracks) >= 8:
-            dynamic_threshold = 60.0
-        elif len(tracks) >= 4:
-            dynamic_threshold = 90.0
-            
-        candidate_pairs = proximity_filter(tracks, threshold=dynamic_threshold)
+        candidate_pairs = proximity_filter(tracks)
         
-        for t1, t2, dist in candidate_pairs:
-            prox_s = max(0.0, 1.0 - (dist / dynamic_threshold))
+        for t1, t2, dist, ttc_s in candidate_pairs:
+            pair_threshold = config.PROXIMITY_PERSON_THRESHOLD if (
+                t1.label == config.PERSON_CLASS or t2.label == config.PERSON_CLASS
+            ) else config.PROXIMITY_THRESHOLD
+            prox_s = max(0.0, 1.0 - (dist / pair_threshold), ttc_s)
             proximity_score = max(proximity_score, prox_s)
             
             # Static containment check for occlusion
@@ -231,7 +230,7 @@ async def predict_image_api(file: UploadFile = File(...), threshold: float = 0.5
             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
             cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
 
-        for t1, t2, dist in candidate_pairs:
+        for t1, t2, dist, _ in candidate_pairs:
             c1 = t1.get_centroid()
             c2 = t2.get_centroid()
             pt1 = (int(c1[0]), int(c1[1]))
@@ -328,7 +327,6 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
         out_writer = cv2.VideoWriter(output_path, cv2.CAP_MSMF, fourcc, output_fps, (width, height))
 
         # Instantiate modules
-        detector = YOLODetector()
         tracker = VehicleTracker()
 
         prev_gray = None
@@ -342,6 +340,8 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
         triggering_phase_globally = "None"
         accident_details = {}
         max_accident_frame_image = None
+        last_alert_time = 0.0
+        consec_count = 0
 
         # High-risk intersection zone dimensions (center 50% area)
         zone_x_min, zone_x_max = int(width * 0.25), int(width * 0.75)
@@ -397,9 +397,8 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                 lstm_scores_history.pop(0)
             lstm_peak = max(lstm_scores_history)
 
-            # --- YOLO Detection & Tracking ---
-            detections = detector.detect(frame)
-            active_tracks = tracker.update(detections)
+            # --- YOLO + ByteTrack ---
+            active_tracks = tracker.update(frame=frame)
 
             # --- Optical Flow ---
             flow = None
@@ -431,17 +430,14 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                     else:
                         scene_interruption_score = max(0.0, float(speed_drop / 0.60))
 
-            # --- Phase A: Proximity Filtering ---
-            dynamic_threshold = 120.0
-            if len(active_tracks) >= 8:
-                dynamic_threshold = 60.0
-            elif len(active_tracks) >= 4:
-                dynamic_threshold = 90.0
-                
-            candidate_pairs = proximity_filter(active_tracks, threshold=dynamic_threshold)
+            # --- Phase A: Proximity + TTC Filtering ---
+            candidate_pairs = proximity_filter(active_tracks)
 
             # --- Score Accumulators ---
-            proximity_score = 0.0
+            ttc_score = 0.0
+            trajectory_stop_score = 0.0
+            emergency_stop_score = 0.0
+            relative_velocity_score = 0.0
             trajectory_score = 0.0
             anomaly_score = 0.0
             occlusion_score = 0.0
@@ -467,33 +463,36 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                 diff_burst_score = max(diff_burst_score, diff_burst)
 
             # Evaluate Candidate Trajectory Conflicts (Phase B)
-            for t1, t2, dist in candidate_pairs:
+            for t1, t2, dist, pair_ttc in candidate_pairs:
                 if t1.age < 5 or t2.age < 5:
-                    # Ignore interactions involving brand new tracks to prevent false alarms from erratic initial vectors
-                    continue
-                    
-                if is_stationary(t1) and is_stationary(t2):
-                    # Skip stationary vehicle interactions (standing still in traffic) to prevent false alerts
                     continue
 
-                prox_s = max(0.0, 1.0 - (dist / dynamic_threshold))
-                proximity_score = max(proximity_score, prox_s)
+                if is_stationary(t1) and is_stationary(t2):
+                    continue
+
+                pair_threshold = config.PROXIMITY_PERSON_THRESHOLD if (
+                    t1.label == config.PERSON_CLASS or t2.label == config.PERSON_CLASS
+                ) else config.PROXIMITY_THRESHOLD
+                prox_s = max(0.0, 1.0 - (dist / pair_threshold), pair_ttc)
+                ttc_score = max(ttc_score, prox_s, pair_ttc)
 
                 traj_res = analyze_trajectory_conflict(t1, t2)
                 trajectory_score = max(trajectory_score, traj_res["score"])
-                
-                # Advanced signals
+                trajectory_stop_score = max(trajectory_stop_score, traj_res["trajectory_stop_score"])
+                emergency_stop_score = max(emergency_stop_score, traj_res["emergency_stop_score"])
+                relative_velocity_score = max(relative_velocity_score, traj_res["relative_velocity_score"])
+
                 if traj_res["occluded"]:
                     occlusion_score = max(occlusion_score, traj_res["containment"])
                 else:
                     occlusion_score = max(occlusion_score, traj_res["containment"] * 0.5)
-                
+
                 if traj_res["merged"]:
                     merge_score = 1.0
-                
-                energy_drop_score = max(energy_drop_score, traj_res["max_ke_drop"])
+
+                energy_drop_score = max(energy_drop_score, traj_res["max_ke_drop"], traj_res["emergency_stop_score"])
                 spin_score = max(spin_score, traj_res["max_spin_var"])
-                
+
                 if traj_res.get("post_intersect_static", False):
                     post_intersect_static_score = True
 
@@ -523,29 +522,22 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
             
             traffic_density = min(len(active_tracks) / 20.0, 1.0)
 
-            # Fused Scores for this frame (threshold=threshold for early warnings)
+            # Fused Scores for this frame
             fuse_res = fuse_scores(
-                proximity=proximity_score,
-                trajectory=trajectory_score,
-                flow=anomaly_score,
-                lstm_peak=lstm_peak,
-                occlusion=occlusion_score,
-                merge=merge_score,
-                energy_drop=energy_drop_score,
-                spin=spin_score,
-                scene_interruption=scene_interruption_score,
-                diff_burst=diff_burst_score,
+                trajectory_stop=trajectory_stop_score,
+                ttc_critical=ttc_score,
+                emergency_stop=emergency_stop_score,
+                cnn_lstm=lstm_peak,
+                optical_flow=anomaly_score,
                 flow_dispersion=flow_dispersion_score,
-                post_intersect_static=post_intersect_static_score,
                 scene_density=len(active_tracks),
                 avg_scene_speed=mean_current_speed,
                 stopped_ratio=stopped_ratio,
-                threshold=threshold
+                threshold=threshold,
             )
 
             # Integrate XGBoost prediction if loaded
             if xgb_clf is not None:
-                # Stage 3 check first
                 if anomaly_score < 0.20 and lstm_peak < 0.40:
                     frame_score = 0.0
                     frame_accident = False
@@ -553,16 +545,16 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                     frame_details = fuse_res["details"]
                 else:
                     feats = [[
-                        float(proximity_score),
-                        float(trajectory_score),
+                        float(ttc_score),
+                        float(trajectory_stop_score),
                         float(anomaly_score),
                         float(lstm_peak),
                         float(occlusion_score),
                         float(merge_score),
-                        float(energy_drop_score),
+                        float(emergency_stop_score),
                         float(traffic_density),
                         float(mean_current_speed),
-                        float(stopped_ratio)
+                        float(stopped_ratio),
                     ]]
                     try:
                         prob = float(xgb_clf.predict_proba(feats)[0][1])
@@ -570,25 +562,16 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                     except Exception as e:
                         print("XGBoost video predict error, falling back:", e)
                         frame_score = fuse_res["score"]
-                    
+
                     frame_accident = frame_score >= threshold
                     frame_trigger = "XGBoost Classifier Model"
-                    frame_details = {
-                        "proximity_score": float(proximity_score),
-                        "trajectory_score": float(trajectory_score),
-                        "flow_score": float(anomaly_score),
-                        "lstm_peak": float(lstm_peak),
-                        "occlusion_score": float(occlusion_score),
-                        "merge_score": float(merge_score),
-                        "energy_drop": float(energy_drop_score),
+                    frame_details = fuse_res["details"]
+                    frame_details.update({
                         "spin_score": float(spin_score),
                         "scene_interruption": float(scene_interruption_score),
                         "diff_burst": float(diff_burst_score),
-                        "flow_dispersion": float(flow_dispersion_score),
-                        "traffic_density": float(traffic_density),
-                        "avg_speed": float(mean_current_speed),
-                        "stopped_ratio": float(stopped_ratio)
-                    }
+                        "relative_velocity_score": float(relative_velocity_score),
+                    })
             else:
                 frame_accident = fuse_res["is_accident"]
                 frame_score = fuse_res["score"]
@@ -604,6 +587,24 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                     if "Risk Zone" not in frame_trigger:
                         frame_trigger += " & Risk Zone"
 
+            # Consecutive frame gate + cooldown
+            if frame_accident and frame_score >= threshold:
+                consec_count += 1
+            else:
+                consec_count = 0
+
+            confirmed_accident = (
+                consec_count >= config.CONSECUTIVE_FRAMES
+                and (time.time() - last_alert_time) >= config.COOLDOWN_SECONDS
+            )
+
+            if confirmed_accident:
+                last_alert_time = time.time()
+                consec_count = 0
+                display_accident = True
+            else:
+                display_accident = False
+
             # Log max statistics
             is_max_frame = False
             if frame_score > max_accident_score:
@@ -612,7 +613,7 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                 accident_details = frame_details
                 is_max_frame = True
 
-            if frame_accident:
+            if confirmed_accident:
                 accident_detected_globally = True
 
             # --- Annotations ---
@@ -662,7 +663,7 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                 max_accident_frame_image = frame.copy()
 
             # Flashing banner alert
-            if frame_accident:
+            if display_accident:
                 overlay = frame.copy()
                 cv2.rectangle(overlay, (0, 0), (width, 60), (0, 0, 255), -1)
                 cv2.addWeighted(overlay, 0.4, frame, 0.6, 0, frame)
@@ -678,21 +679,18 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
             cv2.addWeighted(panel_overlay, 0.75, frame, 0.25, 0, frame)
             cv2.rectangle(frame, (panel_x, panel_y), (panel_x + panel_w, panel_y + panel_h), (255, 255, 255), 1)
 
-            cv2.putText(frame, "ITS SYSTEM MONITOR v2", (panel_x + 10, panel_y + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+            cv2.putText(frame, "ITS SYSTEM MONITOR v3", (panel_x + 10, panel_y + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
             cv2.putText(frame, f"Frame: {raw_frame_idx}/{total_frames} | Active: {len(active_tracks)}", (panel_x + 10, panel_y + 40), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (200, 200, 200), 1)
-            
-            # Draw scores list
-            cv2.putText(frame, f"Phase A Proximity: {proximity_score:.2f}", (panel_x + 10, panel_y + 65), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255) if proximity_score > 0 else (200, 200, 200), 1)
-            cv2.putText(frame, f"Phase B Trajectory: {trajectory_score:.2f}", (panel_x + 10, panel_y + 85), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 165, 255) if trajectory_score > 0 else (200, 200, 200), 1)
-            cv2.putText(frame, f"Phase C Anomaly: {anomaly_score:.2f}", (panel_x + 10, panel_y + 105), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255) if anomaly_score > 0 else (200, 200, 200), 1)
-            cv2.putText(frame, f"CNN-LSTM DL Peak: {lstm_peak:.2f}", (panel_x + 10, panel_y + 125), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 255) if lstm_peak > 0.5 else (200, 200, 200), 1)
-            
-            # New Advanced Indicators
-            cv2.putText(frame, f"Occlusion Contain: {occlusion_score:.2f}", (panel_x + 10, panel_y + 150), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255) if occlusion_score > 0.6 else (200, 200, 200), 1)
-            cv2.putText(frame, f"Kinetic Energy Drop: {energy_drop_score:.2f}", (panel_x + 10, panel_y + 170), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 165, 255) if energy_drop_score > 0.8 else (200, 200, 200), 1)
-            cv2.putText(frame, f"Spin (Var): {spin_score:.2f} | Merge: {int(merge_score)}", (panel_x + 10, panel_y + 190), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255) if spin_score > 0.15 else (200, 200, 200), 1)
-            cv2.putText(frame, f"Scene Traffic Interruption: {scene_interruption_score:.2f}", (panel_x + 10, panel_y + 210), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 0) if scene_interruption_score > 0.5 else (200, 200, 200), 1)
-            cv2.putText(frame, f"Shock Burst: {diff_burst_score:.2f} | Scatter: {flow_dispersion_score:.2f}", (panel_x + 10, panel_y + 230), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 255, 0), 1)
+
+            cv2.putText(frame, f"TTC Critical: {ttc_score:.2f}", (panel_x + 10, panel_y + 65), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255) if ttc_score > 0 else (200, 200, 200), 1)
+            cv2.putText(frame, f"Trajectory Stop: {trajectory_stop_score:.2f}", (panel_x + 10, panel_y + 85), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 165, 255) if trajectory_stop_score > 0 else (200, 200, 200), 1)
+            cv2.putText(frame, f"Emergency Stop: {emergency_stop_score:.2f}", (panel_x + 10, panel_y + 105), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255) if emergency_stop_score > 0 else (200, 200, 200), 1)
+            cv2.putText(frame, f"Rel Velocity: {relative_velocity_score:.2f}", (panel_x + 10, panel_y + 125), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 255) if relative_velocity_score > 0 else (200, 200, 200), 1)
+            cv2.putText(frame, f"Optical Flow: {anomaly_score:.2f}", (panel_x + 10, panel_y + 150), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255) if anomaly_score > 0 else (200, 200, 200), 1)
+            cv2.putText(frame, f"Flow Dispersion: {flow_dispersion_score:.2f}", (panel_x + 10, panel_y + 170), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 165, 255) if flow_dispersion_score > 0 else (200, 200, 200), 1)
+            cv2.putText(frame, f"Spin: {spin_score:.2f} | Merge: {int(merge_score)}", (panel_x + 10, panel_y + 190), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255) if spin_score > 0.15 else (200, 200, 200), 1)
+            cv2.putText(frame, f"Scene Interruption: {scene_interruption_score:.2f}", (panel_x + 10, panel_y + 210), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 0) if scene_interruption_score > 0.5 else (200, 200, 200), 1)
+            cv2.putText(frame, f"Consec: {consec_count}/{config.CONSECUTIVE_FRAMES} | Score: {frame_score:.2f}", (panel_x + 10, panel_y + 230), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 255, 0), 1)
 
             out_writer.write(frame)
             frame_idx += 1

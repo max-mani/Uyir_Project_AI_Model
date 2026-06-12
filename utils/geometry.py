@@ -1,5 +1,8 @@
 import math
 
+import config
+
+
 def calculate_centroid(bbox):
     """
     Computes the centroid of a bounding box.
@@ -15,6 +18,42 @@ def euclidean_distance(pt1, pt2):
     pt1, pt2: Tuple or list of (x, y)
     """
     return math.sqrt((pt1[0] - pt2[0])**2 + (pt1[1] - pt2[1])**2)
+
+
+def _get_velocity(track):
+    if track.velocities:
+        return track.velocities[-1]
+    return (0.0, 0.0)
+
+
+def time_to_collision(track_a, track_b):
+    """
+    Frames until contact if both continue at current velocity.
+    Returns float('inf') when not converging.
+    """
+    c1 = track_a.get_centroid()
+    c2 = track_b.get_centroid()
+    dx = c1[0] - c2[0]
+    dy = c1[1] - c2[1]
+    distance = math.sqrt(dx * dx + dy * dy)
+
+    vax, vay = _get_velocity(track_a)
+    vbx, vby = _get_velocity(track_b)
+    rel_vx = vax - vbx
+    rel_vy = vay - vby
+    closing_speed = math.sqrt(rel_vx * rel_vx + rel_vy * rel_vy)
+
+    if closing_speed < config.TTC_MIN_CLOSING_SPEED:
+        return float("inf")
+
+    return distance / closing_speed
+
+
+def ttc_score(ttc):
+    if ttc == float("inf"):
+        return 0.0
+    return max(0.0, 1.0 - (ttc / config.TTC_MAX_FRAMES))
+
 
 def calculate_angle_diff(v1, v2):
     """
