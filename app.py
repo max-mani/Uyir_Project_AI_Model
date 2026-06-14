@@ -953,10 +953,20 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
             except Exception as e:
                 print("Could not clean up raw input file:", e)
 
-        # Save and Analyze exact accident frame (highest-confidence incident summary)
+        # Dashboard summary should match recorded incident confidence, not unrelated
+        # later frame spikes (e.g. XGBoost or zone multipliers on non-alert frames).
+        summary_confidence = float(max_accident_score)
         accident_frame_url = None
         llm_analysis_text = "No accident detected."
-        if accident_detected_globally and max_accident_frame_image is not None:
+
+        if saved_incidents:
+            best_incident = max(saved_incidents, key=lambda inc: float(inc.get("confidence", 0)))
+            summary_confidence = float(best_incident["confidence"])
+            accident_details = best_incident.get("details") or accident_details
+            triggering_phase_globally = best_incident.get("trigger_phase") or triggering_phase_globally
+            accident_frame_url = best_incident.get("snapshot_url")
+            llm_analysis_text = best_incident.get("llm_analysis") or "No analysis provided."
+        elif accident_detected_globally and max_accident_frame_image is not None:
             frame_filename = f"accident_frame_{uuid.uuid4()}.jpg"
             frame_path = os.path.join(UPLOAD_DIR, frame_filename)
             cv2.imwrite(frame_path, max_accident_frame_image)
@@ -965,7 +975,7 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
 
         return {
             "class": "ACCIDENT" if accident_detected_globally else "NO ACCIDENT",
-            "confidence": float(max_accident_score * 100),
+            "confidence": float(summary_confidence * 100),
             "trigger_phase": triggering_phase_globally,
             "processed_video_url": f"/static/uploads/{processed_filename}",
             "accident_frame_url": accident_frame_url,

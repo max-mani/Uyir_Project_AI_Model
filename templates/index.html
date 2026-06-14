@@ -1391,7 +1391,10 @@
     }
 
     function displayResults(data, type) {
-        const confidence = parseFloat(data.confidence || 0);
+        let confidence = parseFloat(data.confidence || 0);
+        if (type === 'video' && Array.isArray(data.incidents) && data.incidents.length) {
+            confidence = Math.max(...data.incidents.map(inc => (parseFloat(inc.confidence) || 0) * 100));
+        }
         lastConfidence = confidence;
         const threshold = parseInt($('threshold-slider').value);
         const details   = data.details || {};
