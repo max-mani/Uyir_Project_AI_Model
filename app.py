@@ -10,7 +10,7 @@ from pathlib import Path
 from PIL import Image
 
 from fastapi import FastAPI, File, UploadFile, Request
-from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -108,11 +108,12 @@ class FeatureLog(BaseModel):
 
 def _phases_from_details(details):
     phases = []
-    if (details.get("proximity_score") or details.get("ttc_score") or 0) > 0:
+    # Use the explicit confirmed flags from Option 2 pipeline when available
+    if details.get("phase_a_confirmed") or (details.get("proximity_score", 0) or details.get("ttc_score", 0)) > 0.3:
         phases.append("phase_a")
-    if (details.get("trajectory_score") or details.get("trajectory_stop_score") or 0) > 0:
+    if details.get("phase_b_confirmed") or (details.get("trajectory_score", 0) or details.get("trajectory_stop_score", 0)) > 0.3:
         phases.append("phase_b")
-    if (details.get("flow_score") or 0) > 0:
+    if details.get("phase_c_confirmed") or details.get("flow_score", 0) > 0.3:
         phases.append("phase_c")
     return phases or ["phase_a"]
 
@@ -144,6 +145,13 @@ def home(request: Request):
 @app.get("/api/incidents")
 def api_incidents(limit: int = 50):
     return {"incidents": incident_store.list_incidents(limit=limit)}
+
+
+@app.delete("/api/incidents/{incident_id}")
+def api_delete_incident(incident_id: str):
+    if not incident_store.delete_incident(incident_id):
+        return JSONResponse(status_code=404, content={"error": "Incident not found"})
+    return {"ok": True}
 
 
 # ================= IMAGE PREDICTION =================
@@ -320,29 +328,6 @@ async def predict_image_api(file: UploadFile = File(...), threshold: float = 0.5
 # ================= VIDEO PREDICTION =================
 @app.post("/predict-video")
 async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.55):
-    """
-    OPTIMIZED VIDEO PROCESSING PIPELINE (v2.1)
-    
-    SPEED IMPROVEMENTS (10x faster, targeting real-time 16fps):
-    1. TIERED COMPUTATION: Expensive ops (CNN-LSTM, optical flow) only run when Phase A+B fire
-       - Phase A (Proximity): Always run, fast (distance calc)
-       - Phase B (Trajectory): Runs only if Phase A detects close vehicles
-       - Phase C (Anomaly) + CNN-LSTM: Only run if Phase B fires, every 3rd frame
-       
-    2. FRAME SKIPPING: Process every 3rd frame (FRAME_SKIP=3)
-       - At 30fps, analyzing frames 0,3,6,9... still catches all accidents
-       - Reduces computation by 3x while maintaining detection accuracy
-       
-    FALSE POSITIVE FIXES:
-    1. CONSECUTIVE FRAME GATE: Requires 3+ consecutive frames above threshold
-       - Prevents single-frame noise from triggering false alerts
-       - Changed from "ANY frame" to "3+ frames" detection
-       
-    2. CNN-LSTM WEIGHT REDUCTION: Reduced from 25% to 5%
-       - CNN-LSTM model quality unknown; likely trained on limited/non-Indian data
-       - Redistributed 20% weight to proven signals: Proximity, Trajectory, Optical Flow
-       - New weights: w1=0.15, w2=0.20, w3=0.15, w4=0.05, w5=0.20, w7=0.15
-    """
     try:
         # Validate file type
         if file.content_type not in ["video/mp4", "video/avi", "video/mov", "video/quicktime"]:
@@ -474,96 +459,10 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
             # --- YOLO + ByteTrack ---
             active_tracks = tracker.update(frame=frame)
 
-            # --- Phase A: Proximity Filtering (always run - fast) ---
-            candidate_pairs = proximity_filter(active_tracks, threshold=120.0)
-
-            # Initialize phase A+B gate variables
-            phase_a_triggered = len(candidate_pairs) > 0
-            phase_b_triggered = False
-            
-            # --- Phase B: Trajectory Analysis (only if Phase A fires) ---
-            trajectory_score = 0.0
-            occlusion_score = 0.0
-            merge_score = 0.0
-            energy_drop_score = 0.0
-            spin_score = 0.0
-            
-            if phase_a_triggered:
-                # Evaluate Candidate Trajectory Conflicts (Phase B)
-                for t1, t2, dist in candidate_pairs:
-                    if is_stationary(t1) and is_stationary(t2):
-                        continue
-
-                    traj_res = analyze_trajectory_conflict(t1, t2)
-                    trajectory_score = max(trajectory_score, traj_res["score"])
-                    
-                    if traj_res["occluded"]:
-                        occlusion_score = max(occlusion_score, traj_res["containment"])
-                    else:
-                        occlusion_score = max(occlusion_score, traj_res["containment"] * 0.5)
-                    
-                    if traj_res["merged"]:
-                        merge_score = 1.0
-                    
-                    energy_drop_score = max(energy_drop_score, traj_res["max_ke_drop"])
-                    spin_score = max(spin_score, traj_res["max_spin_var"])
-                
-                phase_b_triggered = (trajectory_score > 0.3 or occlusion_score > 0.5 or energy_drop_score > 0.5)
-
-            # --- Phase C + CNN-LSTM (EXPENSIVE OPS) - Only if Phase A+B fire ---
-            cnn_lstm_prob = 0.0
-            lstm_peak = 0.0
-            anomaly_score = 0.0
-            flow_dispersion_score = 0.0
-            diff_burst_score = 0.0
-            flow_val = None
-
-            if phase_b_triggered and should_process_full:
-                # --- CNN-LSTM Feature Extraction (expensive, gated by Phase B) ---
-                pil_img = Image.fromarray(frame_rgb)
-                frame_feat = transform(pil_img).unsqueeze(0).to(DEVICE)
-                
-                with torch.no_grad():
-                    feat = model.cnn(frame_feat)
-
-                features_buffer.append(feat)
-                if len(features_buffer) > 16:
-                    features_buffer.pop(0)
-
-                # Pad features if buffer is not full
-                if len(features_buffer) < 16:
-                    padded_buffer = [features_buffer[0]] * (16 - len(features_buffer)) + features_buffer
-                else:
-                    padded_buffer = features_buffer
-
-                features_tensor = torch.cat(padded_buffer, dim=0).unsqueeze(0)
-                with torch.no_grad():
-                    lstm_out, _ = model.lstm(features_tensor)
-                    out_state = lstm_out[:, -1, :]
-                    logits = model.classifier(out_state)
-                    probs = torch.softmax(logits, dim=1)
-                    cnn_lstm_prob = float(probs[0, 1].item())
-
-                # LSTM Peak Memory (rolling 30-frame maximum)
-                lstm_scores_history.append(cnn_lstm_prob)
-                if len(lstm_scores_history) > 30:
-                    lstm_scores_history.pop(0)
-                lstm_peak = max(lstm_scores_history) if lstm_scores_history else 0.0
-
-                # --- Optical Flow (expensive, gated by Phase B) ---
-                if prev_gray is not None:
-                    flow_val = compute_optical_flow(prev_gray, frame_gray)
-
-                # --- Evaluate Track Anomaly (Phase C & Diff Burst) ---
-                for track in active_tracks:
-                    anom_res = analyze_anomaly(track, flow_val)
-                    anomaly_score = max(anomaly_score, anom_res["anomaly_score"])
-                    flow_dispersion_score = max(flow_dispersion_score, anom_res["dispersion_val"])
-                    
-                    # Frame Difference Shock Burst
-                    diff_ratio = calculate_frame_diff_ratio(prev_gray, frame_gray, track.bbox)
-                    diff_burst = 1.0 if diff_ratio > 0.15 else float(diff_ratio / 0.15)
-                    diff_burst_score = max(diff_burst_score, diff_burst)
+            # --- Optical Flow ---
+            flow = None
+            if prev_gray is not None:
+                flow = compute_optical_flow(prev_gray, frame_gray)
 
             # --- Scene-Level Speed calculation (Traffic Interruption) ---
             mean_current_speed = 0.0
@@ -672,10 +571,8 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                 if zone_x_min <= cx <= zone_x_max and zone_y_min <= cy <= zone_y_max:
                     is_in_intersection_zone = True
 
-                if phase_b_triggered:
-                    traj_res = analyze_trajectory_conflict(t1, t2)
-                    if traj_res["class"] == "Collision" or traj_res["merged"] or traj_res["occluded"]:
-                        frame_collision_pairs.append((t1, t2, dist, traj_res["class"]))
+                if traj_res["class"] == "Collision" or traj_res["merged"] or traj_res["occluded"]:
+                    frame_collision_pairs.append((t1, t2, dist, traj_res["class"]))
 
             # Store gray frame reference
             prev_gray = frame_gray
@@ -694,86 +591,171 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
             
             traffic_density = min(len(active_tracks) / 20.0, 1.0)
 
-            # Fused Scores for this frame
-            fuse_res = fuse_scores(
-                trajectory_stop=trajectory_stop_score,
-                ttc_critical=ttc_score,
-                emergency_stop=emergency_stop_score,
-                cnn_lstm=lstm_peak,
-                optical_flow=anomaly_score,
-                flow_dispersion=flow_dispersion_score,
-                scene_density=len(active_tracks),
-                avg_scene_speed=mean_current_speed,
-                stopped_ratio=stopped_ratio,
-                threshold=threshold,
-            )
+            # ================================================================
+            # OPTION 2 DETECTION PIPELINE
+            # Step 1: DL model as hard gate (must be >= 0.55 to proceed)
+            # Step 2: Run all 3 phases in parallel
+            # Step 3: Count phases with signal >= 0.3 (need at least 2 of 3)
+            # Step 4: If DL confirmed AND 2+ phases signal → accident
+            # ================================================================
 
-            # Integrate XGBoost prediction if loaded
-            if xgb_clf is not None:
-                if anomaly_score < 0.20 and lstm_peak < 0.40:
-                    frame_score = 0.0
-                    frame_accident = False
-                    frame_trigger = "Suppressed (Phase C & CNN low)"
-                    frame_details = fuse_res["details"]
-                else:
-                    feats = [[
-                        float(ttc_score),
-                        float(trajectory_stop_score),
-                        float(anomaly_score),
-                        float(lstm_peak),
-                        float(occlusion_score),
-                        float(merge_score),
-                        float(emergency_stop_score),
-                        float(traffic_density),
-                        float(mean_current_speed),
-                        float(stopped_ratio),
-                    ]]
-                    try:
-                        prob = float(xgb_clf.predict_proba(feats)[0][1])
-                        frame_score = prob
-                    except Exception as e:
-                        print("XGBoost video predict error, falling back:", e)
-                        frame_score = fuse_res["score"]
+            DL_GATE_THRESHOLD = 0.55
+            PHASE_SIGNAL_MIN   = 0.30
 
-                    frame_accident = frame_score >= threshold
-                    frame_trigger = "XGBoost Classifier Model"
-                    frame_details = fuse_res["details"]
-                    frame_details.update({
-                        "spin_score": float(spin_score),
-                        "scene_interruption": float(scene_interruption_score),
-                        "diff_burst": float(diff_burst_score),
-                        "relative_velocity_score": float(relative_velocity_score),
-                        "trajectory_score": float(trajectory_score),
-                        "proximity_score": float(ttc_score),
-                        "occlusion_score": float(occlusion_score),
-                        "merge_score": float(merge_score),
-                        "lstm_peak": float(lstm_peak),
-                    })
+            # -- Phase signals (already computed above) --
+            phase_a_signal = ttc_score                                          # Phase A: proximity/TTC
+            phase_b_signal = max(trajectory_stop_score,
+                                 emergency_stop_score,
+                                 relative_velocity_score)                       # Phase B: trajectory
+            phase_c_signal = anomaly_score                                      # Phase C: optical flow/anomaly
+
+            # -- DL gate --
+            dl_confirmed = lstm_peak >= DL_GATE_THRESHOLD
+
+            # -- Phase vote (only evaluated when DL confirms) --
+            phases_signalling = 0
+            phases_detail = {}
+            if dl_confirmed:
+                if phase_a_signal >= PHASE_SIGNAL_MIN:
+                    phases_signalling += 1
+                    phases_detail["phase_a"] = True
+                if phase_b_signal >= PHASE_SIGNAL_MIN:
+                    phases_signalling += 1
+                    phases_detail["phase_b"] = True
+                if phase_c_signal >= PHASE_SIGNAL_MIN:
+                    phases_signalling += 1
+                    phases_detail["phase_c"] = True
+
+            # -- Final decision --
+            if not dl_confirmed:
+                # DL gate not cleared — skip phases entirely
+                frame_score = float(lstm_peak)
+                frame_accident = False
+                frame_trigger = f"DL Gate Not Cleared ({lstm_peak:.2f} < {DL_GATE_THRESHOLD})"
+            elif phases_signalling >= 2:
+                # DL confirmed + 2 of 3 phases agree → confirmed accident
+                # Use fusion score for the final confidence value
+                fuse_res = fuse_scores(
+                    trajectory_stop=trajectory_stop_score,
+                    ttc_critical=ttc_score,
+                    emergency_stop=emergency_stop_score,
+                    cnn_lstm=lstm_peak,
+                    optical_flow=anomaly_score,
+                    flow_dispersion=flow_dispersion_score,
+                    scene_density=len(active_tracks),
+                    avg_scene_speed=mean_current_speed,
+                    stopped_ratio=stopped_ratio,
+                    threshold=threshold,
+                )
+                frame_score = max(fuse_res["score"], lstm_peak * 0.8)
+                frame_accident = True
+                confirmed_phases = [k for k, v in phases_detail.items() if v]
+                frame_trigger = f"DL + {' & '.join(p.replace('phase_', 'Phase ').upper() for p in confirmed_phases)} Verified"
+                fuse_res_details = fuse_res["details"]
+            elif phases_signalling == 1:
+                # DL confirmed but only 1 phase agrees — suspicious but not confirmed
+                fuse_res = fuse_scores(
+                    trajectory_stop=trajectory_stop_score,
+                    ttc_critical=ttc_score,
+                    emergency_stop=emergency_stop_score,
+                    cnn_lstm=lstm_peak,
+                    optical_flow=anomaly_score,
+                    flow_dispersion=flow_dispersion_score,
+                    scene_density=len(active_tracks),
+                    avg_scene_speed=mean_current_speed,
+                    stopped_ratio=stopped_ratio,
+                    threshold=threshold,
+                )
+                frame_score = fuse_res["score"] * 0.7   # reduce score to stay below threshold
+                frame_accident = False
+                frame_trigger = f"DL Confirmed but Only 1 Phase ({list(phases_detail.keys())[0] if phases_detail else 'none'})"
+                fuse_res_details = fuse_res["details"]
             else:
-                frame_accident = fuse_res["is_accident"]
-                frame_score = fuse_res["score"]
-                frame_trigger = fuse_res["trigger_phase"]
-                frame_details = fuse_res["details"]
-                frame_details.update({
-                    "trajectory_score": float(trajectory_score),
-                    "proximity_score": float(ttc_score),
-                    "occlusion_score": float(occlusion_score),
-                    "merge_score": float(merge_score),
-                    "scene_interruption": float(scene_interruption_score),
-                    "spin_score": float(spin_score),
-                    "lstm_peak": float(lstm_peak),
-                })
+                # DL confirmed but no phases signal — likely DL false positive
+                fuse_res = fuse_scores(
+                    trajectory_stop=trajectory_stop_score,
+                    ttc_critical=ttc_score,
+                    emergency_stop=emergency_stop_score,
+                    cnn_lstm=lstm_peak,
+                    optical_flow=anomaly_score,
+                    flow_dispersion=flow_dispersion_score,
+                    scene_density=len(active_tracks),
+                    avg_scene_speed=mean_current_speed,
+                    stopped_ratio=stopped_ratio,
+                    threshold=threshold,
+                )
+                frame_score = fuse_res["score"] * 0.5   # suppress heavily
+                frame_accident = False
+                frame_trigger = "DL Confirmed but No Phase Signal (Suppressed)"
+                fuse_res_details = fuse_res["details"]
 
-            # Zone Risk weighting multiplier (1.2x score bump in high-risk zones)
-            # Only apply if the base score already indicates meaningful risk signal,
-            # so this can't single-handedly turn a near-zero score into an "accident".
-            if is_in_intersection_zone and frame_score >= 0.35:
-                multiplied_score = min(1.0, frame_score * 1.2)
-                if multiplied_score >= threshold:
-                    frame_accident = True
-                    frame_score = multiplied_score
-                    if "Risk Zone" not in frame_trigger:
-                        frame_trigger += " & Risk Zone"
+            # -- XGBoost refinement (only when DL+2 phases already confirmed) --
+            if dl_confirmed and phases_signalling >= 2 and xgb_clf is not None:
+                feats = [[
+                    float(ttc_score),
+                    float(trajectory_stop_score),
+                    float(anomaly_score),
+                    float(lstm_peak),
+                    float(occlusion_score),
+                    float(merge_score),
+                    float(emergency_stop_score),
+                    float(traffic_density),
+                    float(mean_current_speed),
+                    float(stopped_ratio),
+                ]]
+                try:
+                    xgb_prob = float(xgb_clf.predict_proba(feats)[0][1])
+                    # XGBoost can only refine downward if it strongly disagrees,
+                    # not override a confirmed multi-phase detection upward.
+                    if xgb_prob < 0.35:
+                        frame_score *= 0.7
+                        frame_trigger += " (XGB Low Confidence)"
+                        if frame_score < threshold:
+                            frame_accident = False
+                    else:
+                        frame_score = max(frame_score, xgb_prob)
+                        frame_trigger += " & XGBoost"
+                except Exception as e:
+                    print("XGBoost refinement error:", e)
+
+            # -- Zone risk multiplier (only amplifies already-confirmed frames) --
+            if frame_accident and is_in_intersection_zone:
+                frame_score = min(1.0, frame_score * 1.15)
+                if "Risk Zone" not in frame_trigger:
+                    frame_trigger += " & Risk Zone"
+
+            # -- Build frame_details for dashboard display --
+            frame_details = {
+                # Phase scores for display
+                "proximity_score":       float(phase_a_signal),
+                "trajectory_score":      float(phase_b_signal),
+                "flow_score":            float(phase_c_signal),
+                # Sub-signals
+                "ttc_score":             float(ttc_score),
+                "trajectory_stop_score": float(trajectory_stop_score),
+                "emergency_stop_score":  float(emergency_stop_score),
+                "relative_velocity_score": float(relative_velocity_score),
+                "energy_drop":           float(energy_drop_score),
+                "occlusion_score":       float(occlusion_score),
+                "merge_score":           float(merge_score),
+                "spin_score":            float(spin_score),
+                # DL
+                "lstm_peak":             float(lstm_peak),
+                "cnn_lstm_prob":         float(cnn_lstm_prob),
+                # Scene
+                "traffic_density":       float(traffic_density),
+                "avg_speed":             float(mean_current_speed),
+                "stopped_ratio":         float(stopped_ratio),
+                "scene_interruption":    float(scene_interruption_score),
+                # Pipeline status
+                "dl_confirmed":          bool(dl_confirmed),
+                "phases_signalling":     int(phases_signalling),
+                "phase_a_confirmed":     bool(phases_detail.get("phase_a", False)),
+                "phase_b_confirmed":     bool(phases_detail.get("phase_b", False)),
+                "phase_c_confirmed":     bool(phases_detail.get("phase_c", False)),
+                # Post intersect
+                "post_intersect_static": bool(post_intersect_static_score),
+            }
 
             # Consecutive frame gate + cooldown
             if frame_accident and frame_score >= threshold:
@@ -800,15 +782,6 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                 })
             else:
                 display_accident = False
-
-            # ========== CONSECUTIVE FRAME GATE (3 frames minimum) ==========
-            # Only trigger accident if 3+ consecutive frames exceed threshold
-            if frame_accident:
-                consecutive_accident_count += 1
-                if consecutive_accident_count >= CONSECUTIVE_THRESHOLD:
-                    accident_detected_globally = True
-            else:
-                consecutive_accident_count = 0  # Reset on any clean frame
 
             # Log max statistics
             is_max_frame = False
@@ -875,14 +848,7 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                 max_peak_confidence = float(frame_score)
                 max_peak_dl = float(lstm_peak)
                 max_peak_trigger = frame_trigger
-                max_peak_details = {
-                    **dict(frame_details),
-                    "occlusion_score": float(occlusion_score),
-                    "merge_score": float(merge_score),
-                    "scene_interruption": float(scene_interruption_score),
-                    "spin_score": float(spin_score),
-                    "lstm_peak": float(lstm_peak),
-                }
+                max_peak_details = dict(frame_details)
 
             # Flashing banner alert
             if display_accident:

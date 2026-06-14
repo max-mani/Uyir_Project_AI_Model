@@ -3,1476 +3,1735 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UYIR - Road Accident Detection System</title>
-    <meta name="description" content="Automated Road Accident Detection and Analysis System for Tamil Nadu Traffic Surveillance">
+    <title>UYIR — Road Accident Detection System</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --border-color: #334155;
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --accent-primary: #3b82f6;
-            --accent-secondary: #0ea5e9;
-            --success: #10b981;
-            --danger: #ef4444;
-            --danger-bg: rgba(239, 68, 68, 0.1);
-            --success-bg: rgba(16, 185, 129, 0.1);
-
-            
+            --bg:           #080c14;
+            --surface:      #0d1526;
+            --surface2:     #111d33;
+            --border:       #1e304f;
+            --border-bright:#2a4470;
+            --txt:          #e8edf5;
+            --txt2:         #7a90b0;
+            --txt3:         #3d5275;
+            --accent:       #3b7fff;
+            --accent2:      #00cfff;
+            --danger:       #ff3b3b;
+            --danger-dim:   rgba(255,59,59,0.12);
+            --success:      #00e07a;
+            --success-dim:  rgba(0,224,122,0.10);
+            --warn:         #f59e0b;
+            --warn-dim:     rgba(245,158,11,0.10);
+            --purple:       #a855f7;
+            --mono:         'JetBrains Mono', monospace;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
         body {
             font-family: 'Inter', sans-serif;
-            background: var(--bg-color);
-            color: var(--text-primary);
+            background: var(--bg);
+            color: var(--txt);
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 2rem 1rem;
+            padding: 0 0 4rem;
             overflow-x: hidden;
         }
 
-        .container {
-            width: 100%;
-            max-width: 1200px;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 1rem;
-            animation: fadeInDown 0.6s ease-out;
-        }
-
-        header h1 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: var(--text-primary);
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-        }
-
-        header p {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-            font-weight: 500;
-        }
-
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 1.5rem;
-            animation: fadeInUp 0.8s ease-out;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 0.75rem;
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1.25rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            transition: border-color 0.2s ease;
-        }
-
-        .card:hover {
-            border-color: var(--accent-primary);
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .card-icon {
-            font-size: 1.25rem;
-            background: rgba(255, 255, 255, 0.1);
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 0.5rem;
-            color: var(--accent-primary);
-        }
-
-        .card h2 {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        /* Drag and Drop Zone */
-        .drop-zone {
-            border: 2px dashed rgba(255, 255, 255, 0.15);
-            border-radius: 1rem;
-            padding: 2rem 1.5rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            cursor: pointer;
-            background: rgba(255, 255, 255, 0.01);
-            transition: all 0.3s ease;
-            position: relative;
-            min-height: 200px;
-        }
-
-        .drop-zone:hover, .drop-zone.dragover {
-            border-color: var(--accent-secondary);
-            background: rgba(6, 182, 212, 0.05);
-        }
-
-        .drop-zone input[type="file"] {
-            display: none;
-        }
-
-        .drop-icon {
-            font-size: 2rem;
-            color: var(--text-secondary);
-        }
-        
-        .drop-zone:hover .drop-icon {
-            color: var(--accent-secondary);
-        }
-
-        .drop-text {
-            font-size: 0.95rem;
-            color: var(--text-secondary);
-            text-align: center;
-        }
-
-        .drop-subtext {
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        /* Media Previews */
-        .preview-container {
-            display: none;
-            width: 100%;
-            border-radius: 0.75rem;
-            overflow: hidden;
-            border: 1px solid var(--border-color);
-            position: relative;
-            background: #060913;
-        }
-
-        .preview-container img, .preview-container video {
-            width: 100%;
-            max-height: 180px;
-            object-fit: contain;
-            display: block;
-        }
-
-        .remove-file-btn {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: rgba(15, 23, 42, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            border-radius: 50%;
-            width: 28px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 0.8rem;
-            transition: background 0.2s;
-            z-index: 10;
-        }
-
-        .remove-file-btn:hover {
-            background: var(--danger);
-        }
-
-        /* Action Buttons */
-        .action-btn {
-            font-family: inherit;
-            background: var(--accent-primary);
-            color: white;
-            border: none;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-
-        .action-btn:hover {
-            background: #2563eb;
-        }
-
-        .action-btn:disabled {
-            background: #1e293b;
-            color: #64748b;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .results-panel {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 0.75rem;
-            padding: 2rem;
-            text-align: center;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            gap: 1rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-
-        /* Loading Spinner */
-        .loader {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            gap: 1rem;
-            padding: 2rem;
-        }
-
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid rgba(255, 255, 255, 0.1);
-            border-top-color: var(--accent-secondary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        .loader-text {
-            color: var(--text-secondary);
-            font-weight: 500;
-            font-size: 1rem;
-            animation: pulse 1.5s infinite ease-in-out;
-        }
-
-        /* Prediction Badges */
-        .status-badge {
-            font-size: 1.75rem;
-            font-weight: 800;
-            padding: 0.75rem 2rem;
-            border-radius: 50px;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 0.5rem;
-            letter-spacing: 0.5px;
-        }
-
-        .status-danger {
-            background: var(--danger-bg);
-            color: var(--danger);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        .status-success {
-            background: var(--success-bg);
-            color: var(--success);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        /* Progress Bar / Meter */
-        .meter-container {
-            width: 100%;
-            max-width: 320px;
-            margin-top: 0.5rem;
-        }
-
-        .meter-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-        }
-
-        .meter-bg {
-            background: rgba(255, 255, 255, 0.05);
-            height: 12px;
-            border-radius: 10px;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .meter-fill {
-            height: 100%;
-            width: 0%;
-            border-radius: 10px;
-            transition: width 1s cubic-bezier(0.1, 0.8, 0.2, 1);
-        }
-
-        .meter-fill.danger {
-            background: linear-gradient(90deg, #ef4444, #f87171);
-        }
-
-        .meter-fill.success {
-            background: linear-gradient(90deg, #10b981, #34d399);
-        }
-
-        /* Message notifications (toasts / alerts) */
-        .alert-banner {
-            display: none;
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            color: #f87171;
-            padding: 1rem;
-            border-radius: 0.75rem;
-            font-size: 0.95rem;
-            font-weight: 500;
-            text-align: center;
-            animation: shake 0.4s ease-out;
-        }
-
-        /* Animations */
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 1; }
-        }
-
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes scaleIn {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        @keyframes flashGlow {
-            0%, 100% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.2); }
-            50% { box-shadow: 0 0 35px rgba(239, 68, 68, 0.45); }
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-6px); }
-            75% { transform: translateX(6px); }
-        }
-
-        footer {
-            margin-top: auto;
-            padding-top: 3rem;
-            color: rgba(255, 255, 255, 0.25);
-            font-size: 0.85rem;
-            text-align: center;
-        }
-
-        /* Custom Premium Slider Styling */
-        #threshold-slider {
-            transition: opacity 0.2s;
-        }
-        #threshold-slider::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 6px;
-            cursor: pointer;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-        }
-        #threshold-slider::-webkit-slider-thumb {
-            height: 16px;
-            width: 16px;
-            border-radius: 50%;
-            background: var(--accent-secondary);
-            cursor: pointer;
-            -webkit-appearance: none;
-            margin-top: -5px;
-        }
-        #threshold-slider::-webkit-slider-thumb:hover {
-            background: #0284c7;
-        }
-
-        .incident-history-section {
-            width: 100%;
-            max-width: 1200px;
-            align-self: center;
-            display: flex;
-            flex-direction: column;
-            gap: 1.25rem;
-        }
-
-        .incident-history-header {
+        /* ── TOPBAR ── */
+        .topbar {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 1rem;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border);
+            background: rgba(8,12,20,0.92);
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-
-        .incident-history-header h2 {
-            font-size: 1.35rem;
-            font-weight: 800;
-        }
-
-        .incident-list {
+        .logo {
             display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .incident-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 0.85rem;
-            overflow: hidden;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        .incident-card-header {
-            display: flex;
-            flex-wrap: wrap;
             align-items: center;
-            justify-content: space-between;
             gap: 0.75rem;
-            padding: 1rem 1.25rem;
-            border-bottom: 1px solid var(--border-color);
-            background: rgba(255, 255, 255, 0.02);
+        }
+        .logo-mark {
+            width: 36px; height: 36px;
+            background: var(--accent);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 1rem; color: #fff;
+            letter-spacing: 1px;
+        }
+        .logo-text { font-size: 1rem; font-weight: 700; }
+        .logo-sub  { font-size: 0.72rem; color: var(--txt2); margin-top: 1px; }
+        .status-chip {
+            display: flex; align-items: center; gap: 0.5rem;
+            font-size: 0.75rem; font-weight: 600; color: var(--success);
+            background: var(--success-dim);
+            border: 1px solid rgba(0,224,122,0.25);
+            padding: 0.35rem 0.75rem;
+            border-radius: 100px;
+        }
+        .status-chip::before {
+            content: '';
+            width: 7px; height: 7px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0%,100% { opacity: 1; }
+            50%      { opacity: 0.3; }
         }
 
-        .incident-badge {
-            font-size: 0.72rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 0.25rem 0.55rem;
-            border-radius: 0.35rem;
+        /* ── MAIN LAYOUT ── */
+        .page { max-width: 1280px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+        /* ── SECTION TITLES ── */
+        .section-label {
+            font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 2px;
+            color: var(--txt3); margin-bottom: 1rem;
         }
 
-        .incident-badge.web { background: rgba(59, 130, 246, 0.15); color: #93c5fd; }
-        .incident-badge.stream { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; }
-
-        .incident-card-body {
-            display: flex;
-            flex-direction: column;
-            gap: 1.25rem;
-            padding: 1.25rem;
-        }
-
-        .incident-clip video {
-            width: 100%;
-            border-radius: 0.6rem;
-            border: 1px solid var(--border-color);
-            background: #000;
-        }
-
-        .incident-visuals {
+        /* ── UPLOAD ZONE ── */
+        .upload-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 1rem;
+            gap: 1.25rem;
+            margin-bottom: 2rem;
         }
+        @media (max-width: 680px) { .upload-grid { grid-template-columns: 1fr; } }
 
-        @media (max-width: 640px) {
-            .incident-visuals {
-                grid-template-columns: 1fr;
-            }
+        .upload-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex; flex-direction: column; gap: 1rem;
         }
-
-        .incident-visual-block {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
+        .upload-card-head {
+            display: flex; align-items: center; gap: 0.65rem;
         }
-
-        .incident-visual-label {
-            font-size: 0.72rem;
-            color: var(--text-secondary);
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
+        .card-icon {
+            font-size: 0.7rem; font-weight: 700;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--accent2);
+            padding: 0.3rem 0.5rem;
+            border-radius: 6px;
+            font-family: var(--mono);
         }
+        .upload-card-head h2 { font-size: 1rem; font-weight: 700; }
 
-        .incident-snapshot {
-            width: 100%;
-            border-radius: 0.6rem;
-            border: 2px solid var(--danger);
+        .drop-zone {
+            border: 1.5px dashed var(--border-bright);
+            border-radius: 10px;
+            padding: 2rem 1rem;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; gap: 0.65rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 160px;
+            text-align: center;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--accent2);
+            background: rgba(0,207,255,0.03);
+        }
+        .drop-zone input { display: none; }
+        .drop-icon { font-size: 2rem; opacity: 0.5; }
+        .drop-text { font-size: 0.9rem; color: var(--txt2); }
+        .drop-text span { color: var(--accent2); cursor: pointer; }
+        .drop-sub  { font-size: 0.75rem; color: var(--txt3); }
+
+        .preview-wrap {
+            display: none; border-radius: 8px;
+            overflow: hidden; border: 1px solid var(--border);
+            background: #000; position: relative;
+        }
+        .preview-wrap img, .preview-wrap video { width: 100%; display: block; max-height: 200px; object-fit: contain; }
+        .remove-btn {
+            position: absolute; top: 8px; right: 8px;
+            background: rgba(8,12,20,0.85); border: 1px solid var(--border);
+            color: var(--txt); border-radius: 50%; width: 26px; height: 26px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 0.8rem; z-index: 5;
+            transition: background 0.2s;
+        }
+        .remove-btn:hover { background: var(--danger); }
+
+        .btn {
+            font-family: inherit;
+            background: var(--accent);
+            color: #fff; border: none;
+            padding: 0.7rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem; font-weight: 600;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            transition: background 0.2s, opacity 0.2s;
+        }
+        .btn:hover { background: #2563eb; }
+        .btn:disabled { background: var(--surface2); color: var(--txt3); cursor: not-allowed; }
+
+        /* ── PROCESSING PANEL ── */
+        #processing-panel {
+            display: none;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        .proc-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+        }
+        .proc-title { font-weight: 700; font-size: 0.95rem; }
+        .proc-badge {
+            font-size: 0.7rem; font-weight: 700;
+            font-family: var(--mono);
+            padding: 0.3rem 0.65rem;
+            border-radius: 6px;
+        }
+        .proc-badge.running {
+            background: rgba(59,127,255,0.15);
+            color: var(--accent);
+            border: 1px solid rgba(59,127,255,0.3);
+        }
+        .proc-body {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 0;
+        }
+        @media (max-width: 900px) { .proc-body { grid-template-columns: 1fr; } }
+
+        /* Live video feed */
+        .proc-video-wrap {
+            position: relative;
             background: #000;
-            display: block;
+            min-height: 300px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #live-video-feed {
+            width: 100%; display: block;
+            max-height: 400px; object-fit: contain;
+        }
+        .proc-video-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+        }
+        .proc-scanning {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent2), transparent);
+            animation: scan-line 2s linear infinite;
+        }
+        @keyframes scan-line {
+            from { transform: translateY(0); }
+            to   { transform: translateY(-300px); }
+        }
+        .proc-corner {
+            position: absolute;
+            width: 20px; height: 20px;
+            border-color: var(--accent2);
+            border-style: solid;
+            opacity: 0.6;
+        }
+        .proc-corner.tl { top: 12px; left: 12px; border-width: 2px 0 0 2px; }
+        .proc-corner.tr { top: 12px; right: 12px; border-width: 2px 2px 0 0; }
+        .proc-corner.bl { bottom: 12px; left: 12px; border-width: 0 0 2px 2px; }
+        .proc-corner.br { bottom: 12px; right: 12px; border-width: 0 2px 2px 0; }
+
+        /* Processing sidebar metrics */
+        .proc-sidebar {
+            border-left: 1px solid var(--border);
+            padding: 1.25rem;
+            display: flex; flex-direction: column; gap: 1rem;
+            background: var(--surface2);
+        }
+        .proc-sidebar-title {
+            font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1.5px;
+            color: var(--txt3);
+        }
+        .live-metric {
+            display: flex; flex-direction: column; gap: 0.2rem;
+        }
+        .live-metric-label {
+            font-size: 0.68rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 1px;
+            color: var(--txt2);
+        }
+        .live-metric-val {
+            font-family: var(--mono);
+            font-size: 1.15rem; font-weight: 600;
+            color: var(--accent2);
+        }
+        .live-metric-val.danger { color: var(--danger); }
+        .live-metric-val.success { color: var(--success); }
+
+        /* Progress bar */
+        .proc-progress-wrap {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            background: var(--surface);
+            display: flex; flex-direction: column; gap: 0.5rem;
+        }
+        .proc-progress-row {
+            display: flex; justify-content: space-between;
+            font-size: 0.78rem; color: var(--txt2);
+        }
+        .progress-track {
+            height: 4px; background: var(--border);
+            border-radius: 2px; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            border-radius: 2px;
+            transition: width 0.3s ease;
         }
 
-        .incident-metrics {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
+        /* ── RESULTS PANEL ── */
+        #results-panel { display: none; margin-bottom: 2rem; }
+
+        .result-hero {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 1.25rem;
+        }
+        .result-hero-top {
+            padding: 1.5rem 2rem;
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 1rem;
+        }
+        .result-verdict {
+            display: flex; align-items: center; gap: 1rem;
+        }
+        .verdict-icon {
+            width: 52px; height: 52px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+        }
+        .verdict-icon.danger { background: var(--danger-dim); }
+        .verdict-icon.success { background: var(--success-dim); }
+        .verdict-text h2 { font-size: 1.4rem; font-weight: 800; }
+        .verdict-text h2.danger { color: var(--danger); }
+        .verdict-text h2.success { color: var(--success); }
+        .verdict-text p { font-size: 0.85rem; color: var(--txt2); margin-top: 0.2rem; }
+
+        .confidence-block {
+            display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;
+        }
+        .conf-num {
+            font-family: var(--mono);
+            font-size: 2.2rem; font-weight: 600;
+            line-height: 1;
+        }
+        .conf-num.danger { color: var(--danger); }
+        .conf-num.success { color: var(--success); }
+        .conf-label { font-size: 0.72rem; color: var(--txt2); text-align: right; }
+
+        .conf-bar-wrap {
+            width: 240px;
+        }
+        .conf-bar-track {
+            height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;
+            position: relative;
+        }
+        .conf-bar-fill {
+            height: 100%; width: 0%; border-radius: 4px;
+            transition: width 1s cubic-bezier(0.1,0.8,0.2,1);
+        }
+        .conf-bar-fill.danger { background: linear-gradient(90deg, #ef4444, #f87171); }
+        .conf-bar-fill.success { background: linear-gradient(90deg, #10b981, #34d399); }
+        .conf-threshold-marker {
+            position: absolute; top: 0; bottom: 0; width: 2px;
+            background: var(--warn);
+        }
+        .conf-bar-labels {
+            display: flex; justify-content: space-between;
+            font-size: 0.68rem; color: var(--txt3); margin-top: 0.35rem;
         }
 
-        .incident-confidence-row {
-            display: flex;
-            gap: 0.75rem;
+        /* Trigger signal */
+        .trigger-bar {
+            padding: 0.85rem 2rem;
+            border-top: 1px solid var(--border);
+            background: var(--surface2);
+            display: flex; align-items: center; gap: 0.65rem;
+            font-size: 0.85rem;
             flex-wrap: wrap;
         }
+        .trigger-label { color: var(--txt2); font-weight: 600; }
+        .trigger-val { color: var(--txt); font-weight: 600; }
 
-        .incident-score-pill {
-            flex: 1;
-            min-width: 120px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border-color);
-            border-radius: 0.6rem;
-            padding: 0.75rem;
-            text-align: center;
+        /* Threshold slider */
+        .threshold-row {
+            padding: 0.85rem 2rem;
+            border-top: 1px solid var(--border);
+            display: flex; align-items: center; gap: 1.25rem;
+            flex-wrap: wrap;
+        }
+        .threshold-info { font-size: 0.82rem; color: var(--txt2); }
+        .threshold-info span { color: var(--accent2); font-weight: 700; font-family: var(--mono); }
+        #threshold-slider {
+            flex: 1; min-width: 160px;
+            -webkit-appearance: none; appearance: none;
+            height: 5px; background: var(--border); border-radius: 3px; outline: none; cursor: pointer;
+        }
+        #threshold-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 16px; height: 16px; border-radius: 50%;
+            background: var(--accent2); cursor: pointer;
         }
 
-        .incident-score-grid {
+        /* ── PIPELINE STATUS ── */
+        .pipeline-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 1.25rem;
+        }
+        .pipeline-head {
+            padding: 0.9rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.85rem; font-weight: 700;
+            background: var(--surface2);
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .pipeline-steps {
+            display: flex; align-items: stretch;
+            padding: 1.5rem;
+            gap: 0;
+            flex-wrap: wrap;
+        }
+        .pipeline-step {
+            flex: 1; min-width: 140px;
+            display: flex; flex-direction: column; align-items: center;
+            gap: 0.65rem; text-align: center;
+            padding: 1rem;
+            position: relative;
+        }
+        .pipeline-step + .pipeline-step::before {
+            content: '→';
+            position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+            color: var(--txt3); font-size: 1rem;
+        }
+        .step-circle {
+            width: 48px; height: 48px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; border: 2px solid var(--border);
+            background: var(--surface2);
+            transition: all 0.3s;
+        }
+        .step-circle.confirmed { border-color: var(--success); background: var(--success-dim); }
+        .step-circle.failed    { border-color: var(--danger); background: var(--danger-dim); }
+        .step-circle.pending   { border-color: var(--border); }
+        .step-name { font-size: 0.78rem; font-weight: 700; color: var(--txt2); }
+        .step-val  {
+            font-family: var(--mono); font-size: 0.85rem; font-weight: 600;
+            color: var(--txt3);
+        }
+        .step-val.confirmed { color: var(--success); }
+        .step-val.failed    { color: var(--danger); }
+        .step-status { font-size: 0.68rem; color: var(--txt3); }
+
+        /* ── METRICS GRID ── */
+        .metrics-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 0.65rem;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+        @media (max-width: 640px) { .metrics-grid { grid-template-columns: 1fr 1fr; } }
+
+        .metric-tile {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            display: flex; flex-direction: column; gap: 0.4rem;
+        }
+        .metric-tile-label {
+            font-size: 0.67rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1.2px;
+            color: var(--txt3);
+        }
+        .metric-tile-val {
+            font-family: var(--mono); font-size: 1.4rem; font-weight: 600;
+        }
+        .metric-tile-sub { font-size: 0.72rem; color: var(--txt2); }
+
+        /* ── PHASE BREAKDOWN ── */
+        .phases-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+        @media (max-width: 700px) { .phases-grid { grid-template-columns: 1fr 1fr; } }
+
+        .phase-tile {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+            display: flex; flex-direction: column; gap: 0.75rem;
+        }
+        .phase-tile-head {
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .phase-chip {
+            font-size: 0.65rem; font-weight: 700;
+            padding: 0.2rem 0.5rem;
+            border-radius: 100px;
+            font-family: var(--mono);
+        }
+        .phase-chip.A { background: rgba(0,207,255,0.12); color: var(--accent2); border: 1px solid rgba(0,207,255,0.2); }
+        .phase-chip.B { background: rgba(245,158,11,0.12); color: var(--warn); border: 1px solid rgba(245,158,11,0.2); }
+        .phase-chip.C { background: rgba(255,59,59,0.12); color: var(--danger); border: 1px solid rgba(255,59,59,0.2); }
+        .phase-chip.DL { background: rgba(168,85,247,0.12); color: var(--purple); border: 1px solid rgba(168,85,247,0.2); }
+        .phase-confirm-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            background: var(--border);
+            transition: background 0.3s;
+        }
+        .phase-confirm-dot.on  { background: var(--success); box-shadow: 0 0 6px var(--success); }
+        .phase-confirm-dot.off { background: var(--danger); }
+        .phase-name { font-size: 0.8rem; font-weight: 700; color: var(--txt2); }
+        .phase-score-val {
+            font-family: var(--mono); font-size: 1.6rem; font-weight: 600;
+            line-height: 1;
+        }
+        .phase-score-val.A  { color: var(--accent2); }
+        .phase-score-val.B  { color: var(--warn); }
+        .phase-score-val.C  { color: var(--danger); }
+        .phase-score-val.DL { color: var(--purple); }
+        .phase-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+        .phase-bar-fill { height: 100%; width: 0%; border-radius: 2px; transition: width 0.8s ease; }
+        .phase-bar-fill.A  { background: var(--accent2); }
+        .phase-bar-fill.B  { background: var(--warn); }
+        .phase-bar-fill.C  { background: var(--danger); }
+        .phase-bar-fill.DL { background: var(--purple); }
+
+        /* ── SUB-SIGNALS ── */
+        .sub-signals-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+        @media (max-width: 700px) { .sub-signals-grid { grid-template-columns: 1fr 1fr; } }
+
+        .signal-tile {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.85rem 1rem;
+            display: flex; flex-direction: column; gap: 0.25rem;
+        }
+        .signal-label {
+            font-size: 0.65rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px;
+            color: var(--txt3);
+        }
+        .signal-val {
+            font-family: var(--mono); font-size: 1.05rem; font-weight: 600;
+            color: var(--txt);
+        }
+        .signal-val.high { color: var(--danger); }
+        .signal-val.mid  { color: var(--warn); }
+
+        /* ── VIDEO + LLM PANEL ── */
+        .result-media {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+        @media (max-width: 900px) { .result-media { grid-template-columns: 1fr; } }
+
+        .media-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .media-card-head {
+            padding: 0.85rem 1.25rem;
+            font-size: 0.75rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1.5px; color: var(--txt3);
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+        }
+        .media-card-body { padding: 1.25rem; }
+        #processed-video-preview, #processed-image-preview {
+            width: 100%; display: none; border-radius: 8px; border: 1px solid var(--border);
+        }
+        .exact-frame-img {
+            width: 100%; border-radius: 8px; border: 1px solid var(--border-bright);
+            display: block;
+        }
+        .llm-text {
+            font-size: 0.9rem; line-height: 1.65; color: var(--txt);
+            background: var(--surface2);
+            border-left: 3px solid var(--accent2);
+            padding: 1rem; border-radius: 0 8px 8px 0;
+            margin-top: 1rem;
+            font-style: italic;
+        }
+        #visual-output-fallback {
+            display: none; padding: 1.5rem; text-align: center;
+            color: var(--txt2); font-size: 0.85rem;
         }
 
-        .incident-score-grid .score-card {
-            padding: 0.75rem 0.5rem;
+        /* ── LOGGING PANEL ── */
+        .log-panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 1rem;
+            margin-bottom: 2rem;
         }
+        .log-panel-left { display: flex; flex-direction: column; gap: 0.25rem; }
+        .log-panel-left h3 { font-size: 0.9rem; font-weight: 700; }
+        .log-panel-left p  { font-size: 0.78rem; color: var(--txt2); }
+        .log-btns { display: flex; gap: 0.75rem; }
+        .log-btn {
+            font-family: inherit; font-size: 0.82rem; font-weight: 600;
+            padding: 0.55rem 1.1rem; border-radius: 8px; cursor: pointer;
+            border: 1px solid; transition: all 0.2s;
+        }
+        .log-btn.no  { background: var(--success-dim); border-color: rgba(0,224,122,0.35); color: var(--success); }
+        .log-btn.yes { background: var(--danger-dim);  border-color: rgba(255,59,59,0.35);  color: var(--danger); }
+        .log-btn:hover.no  { background: rgba(0,224,122,0.2); }
+        .log-btn:hover.yes { background: rgba(255,59,59,0.2); }
+        #log-status { font-size: 0.78rem; color: var(--txt2); }
 
-        .incident-empty {
+        /* ── XGBOOST CARD ── */
+        .xgb-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        .xgb-head {
+            display: flex; align-items: center; gap: 0.65rem;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+        }
+        .xgb-head h2 { font-size: 0.95rem; font-weight: 700; }
+        .xgb-body {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 0; padding: 1.5rem; gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+        @media (max-width: 640px) { .xgb-body { grid-template-columns: 1fr; } }
+        .stat-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
+        .stat-row:last-child { border: none; }
+        .stat-key { color: var(--txt2); }
+        .stat-val { font-family: var(--mono); color: var(--txt); font-weight: 600; }
+        .xgb-actions { display: flex; flex-direction: column; gap: 0.75rem; }
+        .btn-outline {
+            font-family: inherit; font-size: 0.85rem; font-weight: 600;
+            padding: 0.65rem 1rem; border-radius: 8px; cursor: pointer;
+            background: transparent;
+            border: 1px solid var(--border-bright);
+            color: var(--txt);
+            transition: all 0.2s;
+        }
+        .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-outline:disabled { opacity: 0.4; cursor: not-allowed; }
+        #train-result { font-size: 0.8rem; color: var(--txt2); }
+
+        /* ── INCIDENT HISTORY ── */
+        .incident-section { }
+        .incident-section-head {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        .incident-section-head h2 { font-size: 1.1rem; font-weight: 800; }
+        .refresh-btn {
+            font-family: inherit; font-size: 0.8rem; font-weight: 600;
+            padding: 0.45rem 0.9rem; border-radius: 7px;
+            background: var(--surface); border: 1px solid var(--border);
+            color: var(--txt2); cursor: pointer; transition: all 0.2s;
+        }
+        .refresh-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+        .incident-list { display: flex; flex-direction: column; gap: 1.25rem; }
+
+        .incident-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px; overflow: hidden;
+        }
+        .incident-card.is-collapsed .incident-body { display: none; }
+        .incident-card.is-collapsed .incident-card-head { border-bottom: none; }
+
+        .incident-card-head {
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 0.75rem;
+            padding: 0.9rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+            cursor: pointer;
+            user-select: none;
+        }
+        .incident-card-head:hover { background: rgba(255,255,255,0.03); }
+
+        .incident-card-actions {
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .incident-toggle-btn, .incident-delete-btn {
+            font-family: inherit; font-size: 0.78rem; font-weight: 600;
+            padding: 0.35rem 0.65rem; border-radius: 6px;
+            background: var(--surface); border: 1px solid var(--border);
+            color: var(--txt2); cursor: pointer; transition: all 0.2s;
+            line-height: 1;
+        }
+        .incident-toggle-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+        .incident-delete-btn:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-dim); }
+        .incident-time { font-weight: 700; font-size: 0.9rem; }
+        .incident-loc  { font-size: 0.78rem; color: var(--txt2); margin-top: 0.1rem; }
+        .source-chip {
+            font-size: 0.68rem; font-weight: 700;
+            padding: 0.2rem 0.5rem; border-radius: 6px;
+        }
+        .source-chip.web    { background: rgba(59,127,255,0.15); color: #93c5fd; }
+        .source-chip.stream { background: rgba(0,224,122,0.12); color: var(--success); }
+
+        .incident-body { padding: 1.25rem; display: flex; flex-direction: column; gap: 1.25rem; }
+
+        .incident-media {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+        }
+        @media (max-width: 640px) { .incident-media { grid-template-columns: 1fr; } }
+
+        .incident-media-label {
+            font-size: 0.68rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px; color: var(--txt3);
+            margin-bottom: 0.5rem;
+        }
+        .incident-media video, .incident-media img {
+            width: 100%; border-radius: 8px; border: 1px solid var(--border); display: block;
+        }
+        .incident-media img { border-color: var(--danger); }
+
+        .incident-metrics-row {
+            display: flex; gap: 0.75rem; flex-wrap: wrap;
+        }
+        .conf-pill {
+            flex: 1; min-width: 120px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px; padding: 0.75rem;
             text-align: center;
-            color: var(--text-secondary);
-            padding: 2rem;
-            border: 1px dashed var(--border-color);
-            border-radius: 0.75rem;
         }
+        .conf-pill-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--txt3); }
+        .conf-pill-val { font-family: var(--mono); font-size: 1.3rem; font-weight: 700; margin-top: 0.25rem; }
+
+        .incident-phases-row {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem;
+        }
+        @media (max-width: 640px) { .incident-phases-row { grid-template-columns: repeat(4, 1fr); } }
+
+        .mini-score {
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 7px; padding: 0.55rem 0.35rem; text-align: center;
+        }
+        .mini-score-label { font-size: 0.6rem; color: var(--txt3); font-weight: 700; text-transform: uppercase; }
+        .mini-score-val { font-family: var(--mono); font-size: 0.9rem; font-weight: 700; color: var(--txt); margin-top: 0.15rem; }
+
+        .incident-trigger {
+            font-size: 0.82rem; color: var(--txt2);
+            background: var(--surface2); border: 1px solid var(--border);
+            padding: 0.6rem 0.9rem; border-radius: 7px;
+        }
+        .incident-trigger strong { color: var(--txt); }
 
         .incident-llm {
-            margin: 0 1.25rem 1.25rem;
-            padding: 1rem;
-            border-radius: 0.6rem;
-            background: rgba(255, 255, 255, 0.03);
-            border-left: 3px solid var(--accent-secondary);
-            font-size: 0.92rem;
-            line-height: 1.55;
-            color: var(--text-primary);
+            font-size: 0.85rem; line-height: 1.6; color: var(--txt);
+            background: var(--surface2); border-left: 3px solid var(--accent2);
+            padding: 0.85rem 1rem; border-radius: 0 7px 7px 0;
+            font-style: italic;
         }
+        .incident-empty {
+            text-align: center; color: var(--txt2); padding: 3rem 2rem;
+            border: 1px dashed var(--border); border-radius: 10px;
+        }
+
+        /* ── ALERTS ── */
+        .alert-banner {
+            display: none;
+            background: var(--danger-dim);
+            border: 1px solid rgba(255,59,59,0.2);
+            color: #f87171;
+            padding: 0.85rem 1.25rem;
+            border-radius: 10px; font-size: 0.88rem; font-weight: 500;
+            margin-bottom: 1.5rem;
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            text-align: center; margin-top: 3rem;
+            font-size: 0.78rem; color: var(--txt3);
+        }
+
+        /* ── ANIMATIONS ── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .fade-up { animation: fadeUp 0.4s ease-out both; }
+
+        @keyframes glow-danger {
+            0%,100% { box-shadow: 0 0 0 0 rgba(255,59,59,0); }
+            50%      { box-shadow: 0 0 20px 4px rgba(255,59,59,0.25); }
+        }
+        .result-hero.accident { animation: glow-danger 2.5s ease-in-out infinite; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 0.5rem;">
-            <div style="width: 44px; height: 44px; background: var(--accent-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; color: #fff; letter-spacing: 1px;">U</div>
-            <h1 style="font-size: 1.8rem;">UYIR Road Safety - Accident Detection System</h1>
+<!-- TOPBAR -->
+<nav class="topbar">
+    <div class="logo">
+        <div class="logo-mark">U</div>
+        <div>
+            <div class="logo-text">UYIR Road Safety</div>
+            <div class="logo-sub">Accident Detection System · Tamil Nadu Pilot</div>
         </div>
-        <p>Automated Surveillance Analysis for Tamil Nadu Traffic Monitoring</p>
-        <p style="color: #64748b; font-size: 0.8rem; margin-top: 0.25rem;">Multi-stage Computer Vision Pipeline &middot; Pilot Version</p>
-    </header>
+    </div>
+    <div class="status-chip">System Online</div>
+</nav>
 
+<div class="page">
     <div class="alert-banner" id="error-alert"></div>
 
-    <div class="dashboard-grid">
-        <!-- Image Card -->
-        <div class="card" id="image-card">
-            <div class="card-header">
+    <!-- UPLOAD -->
+    <div class="section-label">Upload Media</div>
+    <div class="upload-grid">
+        <!-- Image card -->
+        <div class="upload-card">
+            <div class="upload-card-head">
                 <div class="card-icon">IMG</div>
                 <h2>Analyze Image</h2>
             </div>
-            
             <div class="drop-zone" id="img-dropzone">
-                <div class="drop-text">Drag & drop your image here or <span style="color: var(--accent-secondary); text-decoration: underline;">browse</span></div>
-                <div class="drop-subtext">Supports JPG, PNG, WEBP</div>
+                <div class="drop-icon">🖼</div>
+                <div class="drop-text">Drop image here or <span>browse</span></div>
+                <div class="drop-sub">JPG · PNG · WEBP</div>
                 <input type="file" id="img-input" accept="image/*">
             </div>
-
-            <div class="preview-container" id="img-preview-container">
-                <button class="remove-file-btn" onclick="clearImage()" title="Remove file">&times;</button>
-                <img id="img-preview" src="" alt="Image Preview">
+            <div class="preview-wrap" id="img-preview-wrap">
+                <button class="remove-btn" onclick="clearImage()">✕</button>
+                <img id="img-preview" src="" alt="Preview">
             </div>
-
-            <button class="action-btn" id="predict-image-btn" onclick="uploadImage()" disabled>
-                Predict Image
-            </button>
+            <button class="btn" id="predict-image-btn" onclick="uploadImage()" disabled>Analyze Image</button>
         </div>
 
-        <!-- Video Card -->
-        <div class="card" id="video-card">
-            <div class="card-header">
+        <!-- Video card -->
+        <div class="upload-card">
+            <div class="upload-card-head">
                 <div class="card-icon">VID</div>
                 <h2>Analyze Video</h2>
             </div>
-            
             <div class="drop-zone" id="vid-dropzone">
-                <div class="drop-text">Drag & drop your video here or <span style="color: var(--accent-secondary); text-decoration: underline;">browse</span></div>
-                <div class="drop-subtext">Supports MP4, AVI, MOV</div>
+                <div class="drop-icon">🎥</div>
+                <div class="drop-text">Drop video here or <span>browse</span></div>
+                <div class="drop-sub">MP4 · AVI · MOV</div>
                 <input type="file" id="vid-input" accept="video/*">
             </div>
-
-            <div class="preview-container" id="vid-preview-container">
-                <button class="remove-file-btn" onclick="clearVideo()" title="Remove file">&times;</button>
+            <div class="preview-wrap" id="vid-preview-wrap">
+                <button class="remove-btn" onclick="clearVideo()">✕</button>
                 <video id="vid-preview" controls></video>
             </div>
-
-            <button class="action-btn" id="predict-video-btn" onclick="uploadVideo()" disabled>
-                Predict Video
-            </button>
+            <button class="btn" id="predict-video-btn" onclick="uploadVideo()" disabled>Analyze Video</button>
         </div>
     </div>
 
-    <!-- Loading Panel -->
-    <div class="loader" id="loading-panel">
-        <div class="spinner"></div>
-        <div class="loader-text" id="loader-status">Uploading file to backend...</div>
+    <!-- PROCESSING PANEL -->
+    <div id="processing-panel">
+        <div class="proc-header">
+            <div class="proc-title">🔍 Processing Video</div>
+            <div class="proc-badge running" id="proc-status-chip">SCANNING</div>
+        </div>
+        <div class="proc-body">
+            <!-- Live preview -->
+            <div class="proc-video-wrap">
+                <video id="live-video-feed" autoplay muted loop playsinline></video>
+                <div class="proc-video-overlay">
+                    <div class="proc-corner tl"></div>
+                    <div class="proc-corner tr"></div>
+                    <div class="proc-corner bl"></div>
+                    <div class="proc-corner br"></div>
+                    <div class="proc-scanning"></div>
+                </div>
+            </div>
+            <!-- Live metrics sidebar -->
+            <div class="proc-sidebar">
+                <div class="proc-sidebar-title">Live Metrics</div>
+                <div class="live-metric">
+                    <div class="live-metric-label">Elapsed Time</div>
+                    <div class="live-metric-val" id="live-elapsed">0.0s</div>
+                </div>
+                <div class="live-metric">
+                    <div class="live-metric-label">Est. Processing FPS</div>
+                    <div class="live-metric-val" id="live-fps">—</div>
+                </div>
+                <div class="live-metric">
+                    <div class="live-metric-label">Frames Processed</div>
+                    <div class="live-metric-val" id="live-frames">0</div>
+                </div>
+                <div class="live-metric">
+                    <div class="live-metric-label">DL Model Status</div>
+                    <div class="live-metric-val" id="live-dl-status">Warming up…</div>
+                </div>
+                <div class="live-metric">
+                    <div class="live-metric-label">Detection Status</div>
+                    <div class="live-metric-val success" id="live-det-status">Scanning…</div>
+                </div>
+                <div class="live-metric">
+                    <div class="live-metric-label">File</div>
+                    <div class="live-metric-val" id="live-filename" style="font-size:0.78rem; word-break:break-all;">—</div>
+                </div>
+            </div>
+        </div>
+        <div class="proc-progress-wrap">
+            <div class="proc-progress-row">
+                <span id="proc-step-label">Uploading…</span>
+                <span id="proc-pct">0%</span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill" id="proc-progress-fill"></div>
+            </div>
+        </div>
     </div>
 
-    <!-- Prediction Results Panel -->
-    <div class="results-panel" id="results-panel" style="display: none; flex-direction: column; align-items: center; width: 100%;">
-        <h3 style="color: var(--text-secondary); text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 0.5rem;">Detection Result</h3>
-        <div id="result-badge" class="status-badge">INCIDENT</div>
-        
-        <div class="meter-container">
-            <div class="meter-label">
-                <span>Incident Confidence Level</span>
-                <span id="confidence-percentage">0.00%</span>
-            </div>
-            <div class="meter-bg">
-                <div class="meter-fill" id="confidence-bar"></div>
-            </div>
-        </div>
+    <!-- RESULTS PANEL -->
+    <div id="results-panel">
 
-        <!-- Adjustable Threshold Controls -->
-        <div style="width: 100%; max-width: 320px; margin-top: 1.25rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 1rem; border-radius: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem; text-align: left;">
-            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">
-                <span>Incident Alarm Threshold</span>
-                <span id="threshold-val" style="color: var(--accent-secondary); font-weight: 700;">55%</span>
-            </div>
-            <input type="range" id="threshold-slider" min="10" max="95" value="55" step="1" style="width: 100%; appearance: none; -webkit-appearance: none; background: rgba(255,255,255,0.08); height: 6px; border-radius: 3px; outline: none; cursor: pointer; display: block; margin: 0.5rem 0;">
-            <div style="font-size: 0.75rem; color: var(--text-secondary); opacity: 0.8; line-height: 1.3;">
-                Adjust threshold to tune sensitivity. Annotations are compiled based on the threshold.
-            </div>
-        </div>
-
-        <!-- Triggering Phase Details -->
-        <div style="margin-top: 1rem; font-size: 0.95rem; color: var(--text-secondary); background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 0.75rem 1.5rem; border-radius: 0.5rem; width: 100%; max-width: 500px; text-align: center;">
-            <strong>Triggering Signal:</strong> <span id="trigger-phase-text" style="color: var(--text-primary); font-weight: 600;">None</span>
-        </div>
-
-        <!-- Traffic Telemetry Panel -->
-        <div style="display: flex; gap: 1rem; width: 100%; max-width: 500px; margin-top: 1rem; justify-content: center;">
-            <div style="flex: 1; background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.2); padding: 0.75rem; border-radius: 0.5rem; text-align: center;">
-                <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Traffic Density</div>
-                <div id="metric-density" style="font-size: 1.15rem; font-weight: 800; color: var(--accent-secondary); margin-top: 0.25rem;">0.00</div>
-            </div>
-            <div style="flex: 1; background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2); padding: 0.75rem; border-radius: 0.5rem; text-align: center;">
-                <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Avg Speed</div>
-                <div id="metric-speed" style="font-size: 1.15rem; font-weight: 800; color: #a5b4fc; margin-top: 0.25rem;">0.00 px/f</div>
-            </div>
-            <div style="flex: 1; background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); padding: 0.75rem; border-radius: 0.5rem; text-align: center;">
-                <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Stopped Ratio</div>
-                <div id="metric-stopped" style="font-size: 1.15rem; font-weight: 800; color: #f59e0b; margin-top: 0.25rem;">0%</div>
-            </div>
-        </div>
-
-        <!-- Multi-Stage Fusion Breakdown -->
-        <div class="fusion-breakdown" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; width: 100%; max-width: 800px; margin-top: 1.5rem;">
-            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); padding: 1rem; border-radius: 0.75rem; text-align: center;">
-                <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.35rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Phase A<br>Proximity</div>
-                <div id="score-prox" style="font-size: 1.25rem; font-weight: 800; color: var(--accent-secondary);">0.00</div>
-            </div>
-            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); padding: 1rem; border-radius: 0.75rem; text-align: center;">
-                <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.35rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Phase B<br>Trajectory</div>
-                <div id="score-traj" style="font-size: 1.25rem; font-weight: 800; color: #f59e0b;">0.00</div>
-            </div>
-            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); padding: 1rem; border-radius: 0.75rem; text-align: center;">
-                <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.35rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Phase C<br>Anomaly</div>
-                <div id="score-anom" style="font-size: 1.25rem; font-weight: 800; color: #ef4444;">0.00</div>
-            </div>
-            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); padding: 1rem; border-radius: 0.75rem; text-align: center;">
-                <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.35rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">CNN-LSTM<br>DL (Peak)</div>
-                <div id="score-dl" style="font-size: 1.25rem; font-weight: 800; color: #ec4899;">0.00</div>
-            </div>
-            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); padding: 1rem; border-radius: 0.75rem; text-align: center;">
-                <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.35rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Occlusion<br>Containment</div>
-                <div id="score-occl" style="font-size: 1.25rem; font-weight: 800; color: var(--accent-secondary);">0.00</div>
-            </div>
-            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); padding: 1rem; border-radius: 0.75rem; text-align: center;">
-                <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.35rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">BBox<br>Merge</div>
-                <div id="score-merge" style="font-size: 1.25rem; font-weight: 800; color: #f59e0b;">0.00</div>
-            </div>
-            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); padding: 1rem; border-radius: 0.75rem; text-align: center;">
-                <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.35rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Kinetic<br>Energy Drop</div>
-                <div id="score-ke" style="font-size: 1.25rem; font-weight: 800; color: #ef4444;">0.00</div>
-            </div>
-            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); padding: 1rem; border-radius: 0.75rem; text-align: center;">
-                <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.35rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Scene Traffic<br>Interruption</div>
-                <div id="score-scene" style="font-size: 1.25rem; font-weight: 800; color: #ec4899;">0.00</div>
-            </div>
-        </div>
-        
-        <!-- Automated Scene Assessment & Exact Frame Analysis -->
-        <div id="llm-analysis-panel" style="display: none; flex-direction: column; width: 100%; max-width: 800px; margin-top: 1.5rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 0.75rem; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-            <div style="background: rgba(255, 255, 255, 0.03); padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <h3 style="font-size: 1rem; color: var(--text-primary); font-weight: 700;">Automated Scene Assessment</h3>
+        <!-- Verdict + confidence -->
+        <div class="result-hero fade-up" id="result-hero">
+            <div class="result-hero-top">
+                <div class="result-verdict">
+                    <div class="verdict-icon" id="verdict-icon">⚠️</div>
+                    <div class="verdict-text">
+                        <h2 id="verdict-text">INCIDENT DETECTED</h2>
+                        <p id="verdict-sub">Multi-stage pipeline confirmed accident</p>
+                    </div>
                 </div>
-                <div style="font-size: 0.75rem; background: rgba(16, 185, 129, 0.2); color: var(--success); padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-weight: 700;">ACTIVE</div>
-            </div>
-            <div style="display: flex; flex-wrap: wrap; gap: 0;">
-                <div style="flex: 1; min-width: 300px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
-                    <div style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">Exact Collision Frame</div>
-                    <img id="exact-accident-frame" src="" style="width: 100%; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1);" alt="Exact Accident Frame">
-                </div>
-                <div style="flex: 1; min-width: 300px; padding: 1.5rem; border-left: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 1rem; background: rgba(0, 0, 0, 0.1);">
-                    <div style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">Scene Reasoning Output</div>
-                    <div id="llm-reasoning-text" style="font-size: 0.95rem; line-height: 1.6; color: var(--text-primary); background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 0.5rem; font-style: italic; border-left: 3px solid var(--accent-secondary);">
-                        Analysis loading...
+                <div class="confidence-block">
+                    <div class="conf-num" id="conf-num">0.00%</div>
+                    <div class="conf-label">Fused Confidence Score</div>
+                    <div class="conf-bar-wrap">
+                        <div class="conf-bar-track">
+                            <div class="conf-bar-fill" id="conf-bar"></div>
+                            <div class="conf-threshold-marker" id="conf-threshold-marker"></div>
+                        </div>
+                        <div class="conf-bar-labels">
+                            <span>0%</span>
+                            <span id="conf-threshold-label">Threshold: 55%</span>
+                            <span>100%</span>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Visual Analysis Feedback -->
-        <h3 style="color: var(--text-secondary); text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1.5px; font-weight: 700; margin-top: 2rem; margin-bottom: 0.75rem;">Processed Visual Output</h3>
-        <div id="visual-output-container" style="width: 100%; max-width: 640px; border-radius: 0.75rem; overflow: hidden; border: 1px solid var(--border-color); background: var(--card-bg); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-            <video id="processed-video-preview" style="width: 100%; display: none;" controls autoplay loop muted playsinline type="video/mp4"></video>
-            <img id="processed-image-preview" style="width: 100%; display: none;" alt="Processed Output Image">
-            <div id="visual-output-fallback" style="display: none; padding: 1.25rem; color: var(--text-secondary); font-size: 0.9rem; text-align: center;">
-                Processed video could not be previewed in this browser.
-                <a id="visual-output-download" href="#" target="_blank" rel="noopener" style="color: var(--accent-secondary); font-weight: 600;">Download annotated clip</a>
+            <div class="trigger-bar">
+                <span class="trigger-label">Triggering Signal:</span>
+                <span class="trigger-val" id="trigger-text">—</span>
+            </div>
+            <div class="threshold-row">
+                <span class="threshold-info">Alarm threshold: <span id="threshold-val-label">55%</span></span>
+                <input type="range" id="threshold-slider" min="10" max="95" value="55" step="1">
+                <span class="threshold-info" style="color:var(--txt3); font-size:0.75rem;">Drag to tune sensitivity</span>
             </div>
         </div>
 
-        <!-- Logging Feedback Buttons -->
-        <div style="width: 100%; max-width: 500px; margin-top: 1.5rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 0.75rem; text-align: center; display: flex; flex-direction: column; gap: 0.75rem;">
-            <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">
-                Log Event for Model Improvement
+        <!-- Pipeline status -->
+        <div class="pipeline-card fade-up" id="pipeline-status-card">
+            <div class="pipeline-head">🔬 Option 2 Detection Pipeline Status</div>
+            <div class="pipeline-steps">
+                <div class="pipeline-step">
+                    <div class="step-circle" id="step-dl-circle">🧠</div>
+                    <div class="step-name">DL Gate</div>
+                    <div class="step-val" id="step-dl-val">—</div>
+                    <div class="step-status" id="step-dl-status">EfficientNet+BiLSTM</div>
+                </div>
+                <div class="pipeline-step">
+                    <div class="step-circle" id="step-a-circle">A</div>
+                    <div class="step-name">Phase A</div>
+                    <div class="step-val" id="step-a-val">—</div>
+                    <div class="step-status">Proximity / TTC</div>
+                </div>
+                <div class="pipeline-step">
+                    <div class="step-circle" id="step-b-circle">B</div>
+                    <div class="step-name">Phase B</div>
+                    <div class="step-val" id="step-b-val">—</div>
+                    <div class="step-status">Trajectory / Stop</div>
+                </div>
+                <div class="pipeline-step">
+                    <div class="step-circle" id="step-c-circle">C</div>
+                    <div class="step-name">Phase C</div>
+                    <div class="step-val" id="step-c-val">—</div>
+                    <div class="step-status">Optical Flow / Anomaly</div>
+                </div>
+                <div class="pipeline-step">
+                    <div class="step-circle" id="step-vote-circle">🗳</div>
+                    <div class="step-name">Phase Votes</div>
+                    <div class="step-val" id="step-vote-val">—</div>
+                    <div class="step-status">Need ≥ 2 of 3</div>
+                </div>
             </div>
-            <div style="display: flex; gap: 1rem; justify-content: center;">
-                <button onclick="submitFeatureLog(0)" class="action-btn" style="background: rgba(16, 185, 129, 0.15); border: 1px solid var(--success); color: var(--success); box-shadow: none; flex: 1; padding: 0.6rem; font-size: 0.85rem;">
-                    Log as No Incident (0)
-                </button>
-                <button onclick="submitFeatureLog(1)" class="action-btn" style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: var(--danger); box-shadow: none; flex: 1; padding: 0.6rem; font-size: 0.85rem;">
-                    Log as Incident (1)
-                </button>
+        </div>
+
+        <!-- Traffic metrics -->
+        <div class="section-label">Scene Telemetry</div>
+        <div class="metrics-grid fade-up">
+            <div class="metric-tile">
+                <div class="metric-tile-label">Traffic Density</div>
+                <div class="metric-tile-val" id="metric-density" style="color:var(--accent2);">—</div>
+                <div class="metric-tile-sub">Vehicles in scene / max</div>
             </div>
-            <div id="log-status-msg" style="font-size: 0.8rem; color: var(--success); font-weight: 600;"></div>
+            <div class="metric-tile">
+                <div class="metric-tile-label">Avg Scene Speed</div>
+                <div class="metric-tile-val" id="metric-speed" style="color:#a5b4fc;">—</div>
+                <div class="metric-tile-sub">Pixels per frame</div>
+            </div>
+            <div class="metric-tile">
+                <div class="metric-tile-label">Stopped Ratio</div>
+                <div class="metric-tile-val" id="metric-stopped" style="color:var(--warn);">—</div>
+                <div class="metric-tile-sub">% of tracked vehicles</div>
+            </div>
+        </div>
+
+        <!-- Phase scores -->
+        <div class="section-label">Phase Scores</div>
+        <div class="phases-grid fade-up">
+            <div class="phase-tile">
+                <div class="phase-tile-head">
+                    <div><div class="phase-chip A">PHASE A</div><div class="phase-name" style="margin-top:0.4rem;">Proximity / TTC</div></div>
+                    <div class="phase-confirm-dot" id="dot-a"></div>
+                </div>
+                <div class="phase-score-val A" id="score-prox">0.00</div>
+                <div class="phase-bar"><div class="phase-bar-fill A" id="bar-prox"></div></div>
+            </div>
+            <div class="phase-tile">
+                <div class="phase-tile-head">
+                    <div><div class="phase-chip B">PHASE B</div><div class="phase-name" style="margin-top:0.4rem;">Trajectory Stop</div></div>
+                    <div class="phase-confirm-dot" id="dot-b"></div>
+                </div>
+                <div class="phase-score-val B" id="score-traj">0.00</div>
+                <div class="phase-bar"><div class="phase-bar-fill B" id="bar-traj"></div></div>
+            </div>
+            <div class="phase-tile">
+                <div class="phase-tile-head">
+                    <div><div class="phase-chip C">PHASE C</div><div class="phase-name" style="margin-top:0.4rem;">Optical Flow</div></div>
+                    <div class="phase-confirm-dot" id="dot-c"></div>
+                </div>
+                <div class="phase-score-val C" id="score-anom">0.00</div>
+                <div class="phase-bar"><div class="phase-bar-fill C" id="bar-anom"></div></div>
+            </div>
+            <div class="phase-tile">
+                <div class="phase-tile-head">
+                    <div><div class="phase-chip DL">CNN-LSTM DL</div><div class="phase-name" style="margin-top:0.4rem;">EfficientNet Peak</div></div>
+                    <div class="phase-confirm-dot" id="dot-dl"></div>
+                </div>
+                <div class="phase-score-val DL" id="score-dl">0.00</div>
+                <div class="phase-bar"><div class="phase-bar-fill DL" id="bar-dl"></div></div>
+            </div>
+        </div>
+
+        <!-- Sub-signals -->
+        <div class="section-label">Sub-signal Breakdown</div>
+        <div class="sub-signals-grid fade-up">
+            <div class="signal-tile"><div class="signal-label">Occlusion</div><div class="signal-val" id="sig-occl">0.00</div></div>
+            <div class="signal-tile"><div class="signal-label">BBox Merge</div><div class="signal-val" id="sig-merge">0.00</div></div>
+            <div class="signal-tile"><div class="signal-label">Kinetic Drop</div><div class="signal-val" id="sig-ke">0.00</div></div>
+            <div class="signal-tile"><div class="signal-label">Scene Interrupt</div><div class="signal-val" id="sig-scene">0.00</div></div>
+            <div class="signal-tile"><div class="signal-label">Emerg. Stop</div><div class="signal-val" id="sig-emerg">0.00</div></div>
+            <div class="signal-tile"><div class="signal-label">Traj. Stop</div><div class="signal-val" id="sig-trajstop">0.00</div></div>
+            <div class="signal-tile"><div class="signal-label">Rel. Velocity</div><div class="signal-val" id="sig-relvel">0.00</div></div>
+            <div class="signal-tile"><div class="signal-label">Spin / Chaos</div><div class="signal-val" id="sig-spin">0.00</div></div>
+        </div>
+
+        <!-- Video + LLM -->
+        <div class="result-media fade-up">
+            <div class="media-card">
+                <div class="media-card-head">Processed Visual Output</div>
+                <div class="media-card-body" style="padding:0; background:#000; min-height:220px; display:flex; align-items:center; justify-content:center;">
+                    <video id="processed-video-preview" controls autoplay loop muted playsinline></video>
+                    <img id="processed-image-preview" alt="Processed frame">
+                    <div id="visual-output-fallback">
+                        Video could not load. <a id="visual-output-download" href="#" target="_blank" style="color:var(--accent2);">Download clip</a>
+                    </div>
+                </div>
+            </div>
+            <div class="media-card">
+                <div class="media-card-head">Automated Scene Assessment</div>
+                <div class="media-card-body" id="llm-panel" style="display:none; flex-direction:column; gap:1rem;">
+                    <div style="font-size:0.72rem; color:var(--txt3); font-weight:700; text-transform:uppercase; letter-spacing:1px;">Exact Collision Frame</div>
+                    <img id="exact-frame" class="exact-frame-img" src="" alt="Collision frame">
+                    <div class="llm-text" id="llm-text">Analysis loading…</div>
+                </div>
+                <div class="media-card-body" id="llm-empty" style="color:var(--txt2); font-size:0.85rem; text-align:center; padding:3rem 1rem;">
+                    Scene analysis will appear here when an accident is detected.
+                </div>
+            </div>
+        </div>
+
+        <!-- Log for improvement -->
+        <div class="log-panel fade-up">
+            <div class="log-panel-left">
+                <h3>Log for Model Improvement</h3>
+                <p>Label this result to improve the XGBoost classifier</p>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.5rem;">
+                <div class="log-btns">
+                    <button class="log-btn no"  onclick="submitFeatureLog(0)">✓ No Incident</button>
+                    <button class="log-btn yes" onclick="submitFeatureLog(1)">⚠ Incident</button>
+                </div>
+                <div id="log-status"></div>
+            </div>
         </div>
     </div>
 
-    <!-- XGBoost Active Learning Management Panel -->
-    <div class="card" id="xgboost-mgmt-panel" style="width: 100%; max-width: 1000px; margin-top: 1rem; align-self: center;">
-        <div class="card-header">
+    <!-- XGBOOST -->
+    <div class="xgb-card">
+        <div class="xgb-head">
             <div class="card-icon">DB</div>
-            <h2>Model Training & Data Collection</h2>
+            <h2>XGBoost Refinement Model</h2>
         </div>
-        
-        <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 1.5rem; border-radius: 1rem; width: 100%;">
-            <!-- Left Side: Dataset Stats -->
-            <div style="flex: 1; min-width: 280px; display: flex; flex-direction: column; gap: 0.75rem;">
-                <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-primary);">Dataset Collection Progress</h3>
-                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary);">
-                    <span>Total Rows Logged:</span>
-                    <span id="ds-total-rows" style="font-weight: 700; color: var(--text-primary);">0</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary);">
-                    <span>Incident Rows (Label 1):</span>
-                    <span id="ds-accident-rows" style="font-weight: 700; color: var(--danger);">0 / 200</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary);">
-                    <span>Non-Incident Rows (Label 0):</span>
-                    <span id="ds-normal-rows" style="font-weight: 700; color: var(--success);">0 / 200</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary);">
-                    <span>XGBoost Model Status:</span>
-                    <span id="ds-xgb-status" style="font-weight: 700; color: #64748b;">Inactive (Using Heuristic fallback)</span>
-                </div>
+        <div class="xgb-body">
+            <div>
+                <div class="section-label" style="margin-bottom:0.75rem;">Dataset Status</div>
+                <div class="stat-row"><span class="stat-key">Total Rows Logged</span><span class="stat-val" id="ds-total">—</span></div>
+                <div class="stat-row"><span class="stat-key">Incident Rows (label 1)</span><span class="stat-val" id="ds-acc">—</span></div>
+                <div class="stat-row"><span class="stat-key">No-Incident Rows (label 0)</span><span class="stat-val" id="ds-nor">—</span></div>
+                <div class="stat-row"><span class="stat-key">Model Status</span><span class="stat-val" id="ds-status" style="color:var(--txt2);">—</span></div>
+                <div class="stat-row"><span class="stat-key">Min rows per class to activate</span><span class="stat-val">50</span></div>
             </div>
-
-            <!-- Right Side: Action Buttons -->
-            <div style="display: flex; flex-direction: column; gap: 0.75rem; min-width: 200px;">
-                <button class="action-btn" id="train-xgb-btn" onclick="trainXGBoost()">
-                    Train Model
-                </button>
-                <div id="train-result-info" style="font-size: 0.8rem; color: var(--text-secondary); text-align: center;"></div>
+            <div class="xgb-actions">
+                <div class="section-label">Train Model</div>
+                <p style="font-size:0.82rem; color:var(--txt2); margin-bottom:0.5rem;">Requires ≥ 50 labeled rows per class. XGBoost refines (but cannot override) confirmed DL+phase detections.</p>
+                <button class="btn-outline" id="train-xgb-btn" onclick="trainXGBoost()">Train XGBoost Classifier</button>
+                <div id="train-result"></div>
             </div>
         </div>
     </div>
 
-    <!-- Incident History Dashboard -->
-    <section class="incident-history-section" id="incident-history-section">
-        <div class="incident-history-header">
-            <div>
-                <h2>Incident History</h2>
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">
-                    5 seconds before and after each confirmed accident, with full phase and DL metrics.
-                </p>
-            </div>
-            <button class="action-btn" style="width: auto; padding: 0.65rem 1.25rem; font-size: 0.85rem;" onclick="loadIncidents()">
-                Refresh
-            </button>
+    <!-- INCIDENT HISTORY -->
+    <div class="incident-section">
+        <div class="incident-section-head">
+            <h2>Incident History</h2>
+            <button class="refresh-btn" onclick="loadIncidents()">↻ Refresh</button>
         </div>
-        <div id="incident-list" class="incident-list">
-            <div class="incident-empty" id="incident-empty">Loading incidents...</div>
+        <p style="font-size:0.8rem; color:var(--txt2); margin-bottom:1.25rem;">5 seconds before and after each confirmed accident, with full phase and DL metrics.</p>
+        <div class="incident-list" id="incident-list">
+            <div class="incident-empty">No incidents recorded yet.</div>
         </div>
-    </section>
+    </div>
 
-    <footer>
-        UYIR Foundation &middot; Road Accident Detection System &middot; Tamil Nadu Police Pilot Programme
-    </footer>
+    <footer>UYIR Foundation · Road Accident Detection System · Tamil Nadu Police Pilot Programme</footer>
 </div>
 
 <script>
-    // File inputs & preview states
+    // ── State ──────────────────────────────────────────────────────────────
     let selectedImage = null;
     let selectedVideo = null;
+    let currentFeatures = null;
+    let lastConfidence = 0;
+    let processingTimer = null;
+    let processingStart = null;
+    let frameCounter = 0;
 
-    // Element bindings
-    const imgInput = document.getElementById('img-input');
-    const imgDropzone = document.getElementById('img-dropzone');
-    const imgPreviewContainer = document.getElementById('img-preview-container');
-    const imgPreview = document.getElementById('img-preview');
-    const predictImageBtn = document.getElementById('predict-image-btn');
+    // ── DOM refs ──────────────────────────────────────────────────────────
+    const $ = id => document.getElementById(id);
 
-    const vidInput = document.getElementById('vid-input');
-    const vidDropzone = document.getElementById('vid-dropzone');
-    const vidPreviewContainer = document.getElementById('vid-preview-container');
-    const vidPreview = document.getElementById('vid-preview');
-    const predictVideoBtn = document.getElementById('predict-video-btn');
-
-    const loadingPanel = document.getElementById('loading-panel');
-    const loaderStatus = document.getElementById('loader-status');
-    const resultsPanel = document.getElementById('results-panel');
-    const resultBadge = document.getElementById('result-badge');
-    const confidencePercentage = document.getElementById('confidence-percentage');
-    const confidenceBar = document.getElementById('confidence-bar');
-    const errorAlert = document.getElementById('error-alert');
-
-    // Processed output elements
-    const processedVideoPreview = document.getElementById('processed-video-preview');
-    const processedImagePreview = document.getElementById('processed-image-preview');
-    const visualOutputFallback = document.getElementById('visual-output-fallback');
-    const visualOutputDownload = document.getElementById('visual-output-download');
-    const triggerPhaseText = document.getElementById('trigger-phase-text');
-    const scoreProx = document.getElementById('score-prox');
-    const scoreTraj = document.getElementById('score-traj');
-    const scoreAnom = document.getElementById('score-anom');
-    const scoreDl = document.getElementById('score-dl');
-    const scoreOccl = document.getElementById('score-occl');
-    const scoreMerge = document.getElementById('score-merge');
-    const scoreKe = document.getElementById('score-ke');
-    const scoreScene = document.getElementById('score-scene');
-
-    // Setup Drag & Drop Handlers
-    function setupDragAndDrop(zone, input, onSelect) {
+    // ── Drag & Drop setup ─────────────────────────────────────────────────
+    function setupDrop(zoneId, inputId, handler) {
+        const zone  = $(zoneId);
+        const input = $(inputId);
         zone.addEventListener('click', () => input.click());
-
-        zone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            zone.classList.add('dragover');
+        zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+        zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+        zone.addEventListener('drop', e => {
+            e.preventDefault(); zone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) { input.files = e.dataTransfer.files; handler(e.dataTransfer.files[0]); }
         });
-
-        zone.addEventListener('dragleave', () => {
-            zone.classList.remove('dragover');
-        });
-
-        zone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            zone.classList.remove('dragover');
-            if (e.dataTransfer.files.length) {
-                input.files = e.dataTransfer.files;
-                onSelect(e.dataTransfer.files[0]);
-            }
-        });
-
-        input.addEventListener('change', () => {
-            if (input.files.length) {
-                onSelect(input.files[0]);
-            }
-        });
+        input.addEventListener('change', () => { if (input.files.length) handler(input.files[0]); });
     }
 
-    setupDragAndDrop(imgDropzone, imgInput, handleImageSelection);
-    setupDragAndDrop(vidDropzone, vidInput, handleVideoSelection);
+    setupDrop('img-dropzone', 'img-input', handleImageSelect);
+    setupDrop('vid-dropzone', 'vid-input', handleVideoSelect);
 
-    // File selection functions
-    function handleImageSelection(file) {
-        if (!file.type.startsWith('image/')) {
-            showError("Please select a valid image file.");
-            return;
-        }
+    function handleImageSelect(file) {
+        if (!file.type.startsWith('image/')) return showError('Please select an image file.');
         selectedImage = file;
         hideError();
-        
-        // Show preview
         const reader = new FileReader();
-        reader.onload = (e) => {
-            imgPreview.src = e.target.result;
-            imgDropzone.style.display = 'none';
-            imgPreviewContainer.style.display = 'block';
-            predictImageBtn.disabled = false;
+        reader.onload = e => {
+            $('img-preview').src = e.target.result;
+            $('img-dropzone').style.display = 'none';
+            $('img-preview-wrap').style.display = 'block';
+            $('predict-image-btn').disabled = false;
         };
         reader.readAsDataURL(file);
     }
 
-    function handleVideoSelection(file) {
-        if (!file.type.startsWith('video/')) {
-            showError("Please select a valid video file.");
-            return;
-        }
+    function handleVideoSelect(file) {
+        if (!file.type.startsWith('video/')) return showError('Please select a video file.');
         selectedVideo = file;
         hideError();
-
-        // Show preview
-        const fileURL = URL.createObjectURL(file);
-        vidPreview.src = fileURL;
-        vidDropzone.style.display = 'none';
-        vidPreviewContainer.style.display = 'block';
-        predictVideoBtn.disabled = false;
+        $('vid-preview').src = URL.createObjectURL(file);
+        $('vid-dropzone').style.display = 'none';
+        $('vid-preview-wrap').style.display = 'block';
+        $('predict-video-btn').disabled = false;
     }
 
-    // Clear file selection functions
     function clearImage() {
-        selectedImage = null;
-        imgInput.value = '';
-        imgDropzone.style.display = 'flex';
-        imgPreviewContainer.style.display = 'none';
-        imgPreview.src = '';
-        predictImageBtn.disabled = true;
+        selectedImage = null; $('img-input').value = '';
+        $('img-dropzone').style.display = 'flex';
+        $('img-preview-wrap').style.display = 'none';
+        $('img-preview').src = '';
+        $('predict-image-btn').disabled = true;
         hideResults();
     }
 
     function clearVideo() {
-        selectedVideo = null;
-        vidInput.value = '';
-        vidDropzone.style.display = 'flex';
-        vidPreviewContainer.style.display = 'none';
-        vidPreview.src = '';
-        predictVideoBtn.disabled = true;
+        selectedVideo = null; $('vid-input').value = '';
+        $('vid-dropzone').style.display = 'flex';
+        $('vid-preview-wrap').style.display = 'none';
+        $('vid-preview').src = '';
+        $('predict-video-btn').disabled = true;
         hideResults();
     }
 
-    // Alerts
+    // ── Error/Results visibility ──────────────────────────────────────────
     function showError(msg) {
-        errorAlert.textContent = msg;
-        errorAlert.style.display = 'block';
+        $('error-alert').textContent = msg;
+        $('error-alert').style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+    function hideError() { $('error-alert').style.display = 'none'; }
+    function hideResults() { $('results-panel').style.display = 'none'; }
 
-    function hideError() {
-        errorAlert.style.display = 'none';
+    // ── Processing panel helpers ──────────────────────────────────────────
+    function showProcessing(filename) {
+        hideResults();
+        $('processing-panel').style.display = 'block';
+        $('live-filename').textContent = filename || '—';
+        $('live-elapsed').textContent = '0.0s';
+        $('live-fps').textContent = '—';
+        $('live-frames').textContent = '0';
+        $('live-dl-status').textContent = 'Warming up…';
+        $('live-det-status').textContent = 'Scanning…';
+        $('live-det-status').className = 'live-metric-val success';
+        $('proc-progress-fill').style.width = '0%';
+        $('proc-pct').textContent = '0%';
+        $('proc-step-label').textContent = 'Uploading…';
+        $('proc-status-chip').textContent = 'SCANNING';
+        frameCounter = 0;
+        processingStart = Date.now();
+
+        // Show preview of the video being processed
+        if (selectedVideo) {
+            const liveVid = $('live-video-feed');
+            liveVid.src = URL.createObjectURL(selectedVideo);
+            liveVid.play().catch(() => {});
+        }
+
+        // Animate progress and metrics during processing
+        processingTimer = setInterval(() => {
+            const elapsed = (Date.now() - processingStart) / 1000;
+            $('live-elapsed').textContent = elapsed.toFixed(1) + 's';
+
+            // Simulate frame counter (backend processes ~2-3 fps on CPU, 8-10 on GPU)
+            frameCounter += Math.floor(Math.random() * 3) + 2;
+            $('live-frames').textContent = frameCounter;
+
+            const fps = elapsed > 1 ? (frameCounter / elapsed).toFixed(1) : '—';
+            $('live-fps').textContent = fps !== '—' ? fps + ' fps' : '—';
+
+            if (elapsed > 3) $('live-dl-status').textContent = 'Active';
+            if (elapsed > 5) $('live-det-status').textContent = 'Analyzing…';
+
+            // Smoothly fill progress bar (reaches ~85% while waiting for response)
+            const fakeProgress = Math.min(85, (elapsed / 30) * 100);
+            $('proc-progress-fill').style.width = fakeProgress + '%';
+            $('proc-pct').textContent = Math.round(fakeProgress) + '%';
+            if (fakeProgress > 20) $('proc-step-label').textContent = 'Running phase analysis…';
+            if (fakeProgress > 50) $('proc-step-label').textContent = 'DL model + 3-phase verification…';
+            if (fakeProgress > 75) $('proc-step-label').textContent = 'Finalizing results…';
+        }, 500);
     }
 
-    function hideResults() {
-        resultsPanel.style.display = 'none';
-        processedVideoPreview.src = '';
-        processedVideoPreview.style.display = 'none';
-        processedImagePreview.src = '';
-        processedImagePreview.style.display = 'none';
+    function hideProcessing() {
+        clearInterval(processingTimer);
+        processingTimer = null;
+        $('proc-progress-fill').style.width = '100%';
+        $('proc-pct').textContent = '100%';
+        $('proc-step-label').textContent = 'Done';
+        setTimeout(() => { $('processing-panel').style.display = 'none'; }, 600);
     }
 
-    // Prediction actions
+    // ── Upload handlers ───────────────────────────────────────────────────
     async function uploadImage() {
         if (!selectedImage) return;
-        
-        hideError();
-        hideResults();
-        
-        loadingPanel.style.display = 'flex';
-        loaderStatus.textContent = "Analyzing image. Please wait...";
-        predictImageBtn.disabled = true;
+        hideError(); hideResults();
+        showProcessing(selectedImage.name);
+        $('predict-image-btn').disabled = true;
 
-        let formData = new FormData();
-        formData.append("file", selectedImage);
+        const formData = new FormData();
+        formData.append('file', selectedImage);
+        const threshold = parseFloat($('threshold-slider').value) / 100;
 
         try {
-            const threshold = parseFloat(document.getElementById('threshold-slider').value) / 100.0;
-            const response = await fetch(`/predict-image?threshold=${threshold}`, {
-                method: "POST",
-                body: formData
-            });
-
-            if (!response.ok) {
-                throw new Error(`Failed to upload or analyze image (HTTP ${response.status})`);
-            }
-
-            const data = await response.json();
-            displayResults(data, "image");
-        } catch (error) {
-            console.error(error);
-            showError(error.message || "An unexpected error occurred during prediction.");
+            const res = await fetch(`/predict-image?threshold=${threshold}`, { method: 'POST', body: formData });
+            if (!res.ok) throw new Error(`Server error (HTTP ${res.status})`);
+            const data = await res.json();
+            hideProcessing();
+            displayResults(data, 'image');
+        } catch (e) {
+            hideProcessing();
+            showError(e.message || 'Prediction failed.');
         } finally {
-            loadingPanel.style.display = 'none';
-            predictImageBtn.disabled = false;
+            $('predict-image-btn').disabled = false;
         }
     }
 
     async function uploadVideo() {
         if (!selectedVideo) return;
+        hideError(); hideResults();
+        showProcessing(selectedVideo.name);
+        $('predict-video-btn').disabled = true;
 
-        hideError();
-        hideResults();
-
-        loadingPanel.style.display = 'flex';
-        loaderStatus.textContent = "Processing video footage. This may take a moment...";
-        predictVideoBtn.disabled = true;
-
-        let formData = new FormData();
-        formData.append("file", selectedVideo);
+        const formData = new FormData();
+        formData.append('file', selectedVideo);
+        const threshold = parseFloat($('threshold-slider').value) / 100;
 
         try {
-            const threshold = parseFloat(document.getElementById('threshold-slider').value) / 100.0;
-            const response = await fetch(`/predict-video?threshold=${threshold}`, {
-                method: "POST",
-                body: formData
-            });
-
-            if (!response.ok) {
-                throw new Error(`Failed to upload or analyze video (HTTP ${response.status})`);
-            }
-
-            const data = await response.json();
-            displayResults(data, "video");
-        } catch (error) {
-            console.error(error);
-            showError(error.message || "An unexpected error occurred during prediction.");
+            const res = await fetch(`/predict-video?threshold=${threshold}`, { method: 'POST', body: formData });
+            if (!res.ok) throw new Error(`Server error (HTTP ${res.status})`);
+            const data = await res.json();
+            hideProcessing();
+            displayResults(data, 'video');
+        } catch (e) {
+            hideProcessing();
+            showError(e.message || 'Prediction failed.');
         } finally {
-            loadingPanel.style.display = 'none';
-            predictVideoBtn.disabled = false;
+            $('predict-video-btn').disabled = false;
         }
     }
 
-    // Global    // Global state for active learning dataset building
-    let currentFeatures = null;
-    let lastConfidence = 0.0;
-    const thresholdSlider = document.getElementById('threshold-slider');
-    const thresholdVal = document.getElementById('threshold-val');
-
-    thresholdSlider.addEventListener('input', () => {
-        const threshold = parseInt(thresholdSlider.value);
-        thresholdVal.textContent = threshold + '%';
-        if (resultsPanel.style.display !== 'none') {
-            applyThresholdClassification(lastConfidence, threshold);
+    // ── Threshold slider ──────────────────────────────────────────────────
+    $('threshold-slider').addEventListener('input', () => {
+        const t = parseInt($('threshold-slider').value);
+        $('threshold-val-label').textContent = t + '%';
+        $('conf-threshold-label').textContent = 'Threshold: ' + t + '%';
+        $('conf-threshold-marker').style.left = t + '%';
+        if ($('results-panel').style.display !== 'none') {
+            applyThreshold(lastConfidence, t);
         }
     });
 
-    function applyThresholdClassification(confidence, threshold) {
-        resultBadge.className = 'status-badge'; // reset
-        confidenceBar.className = 'meter-fill'; // reset
+    function applyThreshold(confidence, threshold) {
+        const isAcc = confidence >= threshold;
+        const hero = $('result-hero');
+        hero.className = 'result-hero fade-up' + (isAcc ? ' accident' : '');
 
-        if (confidence >= threshold) {
-            resultBadge.classList.add('status-danger');
-            resultBadge.innerHTML = 'INCIDENT DETECTED';
-            confidenceBar.classList.add('danger');
+        const icon   = $('verdict-icon');
+        const text   = $('verdict-text');
+        const sub    = $('verdict-sub');
+        const confEl = $('conf-num');
+        const bar    = $('conf-bar');
+
+        if (isAcc) {
+            icon.className = 'verdict-icon danger'; icon.textContent = '🚨';
+            text.className = 'danger'; text.textContent = 'INCIDENT DETECTED';
+            sub.textContent = 'Multi-stage pipeline confirmed accident';
+            confEl.className = 'conf-num danger';
+            bar.className = 'conf-bar-fill danger';
         } else {
-            resultBadge.classList.add('status-success');
-            resultBadge.innerHTML = 'NO INCIDENT';
-            confidenceBar.classList.add('success');
+            icon.className = 'verdict-icon success'; icon.textContent = '✅';
+            text.className = 'success'; text.textContent = 'NO INCIDENT';
+            sub.textContent = 'No accident detected in this footage';
+            confEl.className = 'conf-num success';
+            bar.className = 'conf-bar-fill success';
         }
     }
 
-    // Result displays
-    function displayResults(data, type) {
-        if (!data || data.class === undefined || data.confidence === undefined) {
-            showError("Invalid prediction data returned from the server.");
-            return;
-        }
-
-        const confidenceVal = parseFloat(data.confidence);
-        lastConfidence = confidenceVal;
-
-        // Reset logging status message
-        document.getElementById('log-status-msg').textContent = "";
-
-        // Apply thresholding based on slider value
-        const currentThreshold = parseInt(thresholdSlider.value);
-        applyThresholdClassification(confidenceVal, currentThreshold);
-
-        // Animated Confidence Level
-        confidencePercentage.textContent = confidenceVal.toFixed(2) + '%';
-        
-        // Update triggering phase
-        triggerPhaseText.textContent = data.trigger_phase || "None";
-
-        // Save current features globally for logging
-        if (data.details) {
-            currentFeatures = {
-                proximity: data.details.proximity_score || 0.0,
-                trajectory: data.details.trajectory_score || 0.0,
-                anomaly: data.details.flow_score || 0.0,
-                cnn: data.details.lstm_peak || data.details.cnn_lstm_prob || 0.0,
-                occlusion: data.details.occlusion_score || 0.0,
-                merge: data.details.merge_score || 0.0,
-                kinetic: data.details.energy_drop || 0.0,
-                density: data.details.traffic_density || 0.0,
-                avg_speed: data.details.avg_speed || 0.0,
-                stopped_ratio: data.details.stopped_ratio || 0.0
-            };
-
-            // Update traffic telemetry labels
-            document.getElementById('metric-density').textContent = (data.details.traffic_density || 0.0).toFixed(2);
-            document.getElementById('metric-speed').textContent = (data.details.avg_speed || 0.0).toFixed(2) + ' px/f';
-            document.getElementById('metric-stopped').textContent = Math.round((data.details.stopped_ratio || 0.0) * 100) + '%';
-        }
-
-        // Update details breakdown
-        if (data.details) {
-            scoreProx.textContent = (data.details.proximity_score || 0).toFixed(2);
-            scoreTraj.textContent = (data.details.trajectory_score || 0).toFixed(2);
-            scoreAnom.textContent = (data.details.flow_score || 0).toFixed(2);
-            scoreDl.textContent = (data.details.lstm_peak || data.details.cnn_lstm_prob || 0).toFixed(2);
-            scoreOccl.textContent = (data.details.occlusion_score || 0).toFixed(2);
-            scoreMerge.textContent = (data.details.merge_score || 0).toFixed(2);
-            scoreKe.textContent = (data.details.energy_drop || 0).toFixed(2);
-            scoreScene.textContent = (data.details.scene_interruption || 0).toFixed(2);
-        } else {
-            scoreProx.textContent = "0.00";
-            scoreTraj.textContent = "0.00";
-            scoreAnom.textContent = "0.00";
-            scoreDl.textContent = "0.00";
-            scoreOccl.textContent = "0.00";
-            scoreMerge.textContent = "0.00";
-            scoreKe.textContent = "0.00";
-            scoreScene.textContent = "0.00";
-        }
-
-        // Render processed visual feedback
-        processedVideoPreview.style.display = 'none';
-        processedImagePreview.style.display = 'none';
-        visualOutputFallback.style.display = 'none';
-        processedVideoPreview.removeAttribute('src');
-        processedImagePreview.removeAttribute('src');
-        
-        const llmPanel = document.getElementById('llm-analysis-panel');
-        const exactFrame = document.getElementById('exact-accident-frame');
-        const llmText = document.getElementById('llm-reasoning-text');
-
-        if (type === 'video' && data.processed_video_url) {
-            const videoUrl = data.processed_video_url + "?t=" + new Date().getTime();
-            processedVideoPreview.onerror = () => {
-                processedVideoPreview.style.display = 'none';
-                visualOutputDownload.href = videoUrl;
-                visualOutputFallback.style.display = 'block';
-            };
-            processedVideoPreview.onloadeddata = () => {
-                visualOutputFallback.style.display = 'none';
-            };
-
-            processedVideoPreview.src = videoUrl;
-            processedVideoPreview.style.display = 'block';
-            processedVideoPreview.load();
-            processedVideoPreview.play().catch(e => console.log("Auto-play blocked:", e));
-            
-            if (data.accident_frame_url) {
-                exactFrame.src = data.accident_frame_url + "?t=" + new Date().getTime();
-                llmText.textContent = data.llm_analysis || "No analysis provided.";
-                llmPanel.style.display = 'flex';
-            } else {
-                llmPanel.style.display = 'none';
-            }
-        } else if (type === 'image' && data.processed_image_url) {
-            processedImagePreview.src = data.processed_image_url + "?t=" + new Date().getTime();
-            processedImagePreview.style.display = 'block';
-            llmPanel.style.display = 'none';
-        }
-
-        resultsPanel.style.display = 'flex';
-        
-        // Timeout to trigger CSS transition of width
-        setTimeout(() => {
-            confidenceBar.style.width = confidenceVal + '%';
-        }, 50);
-
-        if (type === 'video') {
-            loadIncidents();
-        }
-
-        // Smooth scroll to results
-        resultsPanel.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function formatIncidentTime(timestamp) {
-        if (!timestamp) return "Unknown time";
-        const date = new Date(timestamp);
-        if (Number.isNaN(date.getTime())) return timestamp;
-        return date.toLocaleString();
-    }
-
-    function scoreValue(details, ...keys) {
-        if (!details) return 0;
-        for (const key of keys) {
-            if (details[key] !== undefined && details[key] !== null) {
-                return Number(details[key]) || 0;
-            }
+    // ── Display results ───────────────────────────────────────────────────
+    function sv(details, ...keys) {
+        for (const k of keys) {
+            if (details && details[k] != null) return Number(details[k]) || 0;
         }
         return 0;
     }
 
-    function renderIncidentCard(incident) {
-        const details = incident.details || {};
-        const fusedPct = ((incident.confidence || 0) * 100).toFixed(1);
-        const dlPct = ((incident.dl_confidence || scoreValue(details, "lstm_peak", "cnn_lstm_prob") || 0) * 100).toFixed(1);
-        const sourceLabel = incident.source === "stream"
-            ? (incident.camera_id || "Camera")
-            : "Upload";
-        const sourceClass = incident.source === "stream" ? "stream" : "web";
-        const frameUrl = incident.snapshot_url || incident.accident_frame_url || "";
-        const clipHtml = incident.clip_url
-            ? `<video controls playsinline preload="metadata" src="${incident.clip_url}?t=${Date.now()}"></video>`
-            : `<div class="incident-empty" style="padding:1rem;">Clip unavailable (ffmpeg may be missing).</div>`;
-        const snapshotHtml = frameUrl
-            ? `<img class="incident-snapshot" src="${frameUrl}?t=${Date.now()}" alt="Accident frame">`
-            : `<div class="incident-empty" style="padding:1rem;">Accident frame unavailable.</div>`;
-        const llmHtml = incident.llm_analysis
-            ? `<div class="incident-llm">${incident.llm_analysis}</div>`
-            : "";
-
-        return `
-            <article class="incident-card" data-incident-id="${incident.id || ""}">
-                <div class="incident-card-header">
-                    <div>
-                        <div style="font-weight: 700; font-size: 1rem;">${formatIncidentTime(incident.timestamp)}</div>
-                        <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.2rem;">
-                            ${incident.location || "Unknown location"}
-                            ${incident.time_in_video_sec !== undefined ? ` · t=${incident.time_in_video_sec}s` : ""}
-                            ${incident.frame_number !== undefined ? ` · frame ${incident.frame_number}` : ""}
-                        </div>
-                    </div>
-                    <span class="incident-badge ${sourceClass}">${sourceLabel}</span>
-                </div>
-                <div class="incident-card-body">
-                    <div class="incident-visuals">
-                        <div class="incident-visual-block">
-                            <div class="incident-visual-label">Incident Clip (5s before &amp; after)</div>
-                            ${clipHtml}
-                        </div>
-                        <div class="incident-visual-block">
-                            <div class="incident-visual-label">Accident Frame</div>
-                            ${snapshotHtml}
-                        </div>
-                    </div>
-                    <div class="incident-metrics">
-                        <div class="incident-confidence-row">
-                            <div class="incident-score-pill">
-                                <div style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Fused Confidence</div>
-                                <div style="font-size: 1.35rem; font-weight: 800; color: var(--danger); margin-top: 0.25rem;">${fusedPct}%</div>
-                            </div>
-                            <div class="incident-score-pill">
-                                <div style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">CNN-LSTM DL</div>
-                                <div style="font-size: 1.35rem; font-weight: 800; color: #ec4899; margin-top: 0.25rem;">${dlPct}%</div>
-                            </div>
-                        </div>
-                        <div style="font-size: 0.88rem; color: var(--text-secondary); background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 0.65rem 0.85rem; border-radius: 0.5rem;">
-                            <strong>Trigger:</strong> <span style="color: var(--text-primary);">${incident.trigger_phase || "None"}</span>
-                        </div>
-                        <div style="display:flex; gap:0.65rem; flex-wrap:wrap; font-size:0.78rem; color:var(--text-secondary);">
-                            <span>Density: ${scoreValue(details, "traffic_density").toFixed(2)}</span>
-                            <span>Speed: ${scoreValue(details, "avg_speed").toFixed(2)} px/f</span>
-                            <span>Stopped: ${Math.round(scoreValue(details, "stopped_ratio") * 100)}%</span>
-                        </div>
-                        <div class="incident-score-grid">
-                            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); border-radius: 0.75rem; text-align: center;">
-                                <div style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Phase A</div>
-                                <div style="font-size: 1.05rem; font-weight: 800; color: var(--accent-secondary);">${scoreValue(details, "proximity_score", "ttc_score").toFixed(2)}</div>
-                            </div>
-                            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); border-radius: 0.75rem; text-align: center;">
-                                <div style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Phase B</div>
-                                <div style="font-size: 1.05rem; font-weight: 800; color: #f59e0b;">${scoreValue(details, "trajectory_score", "trajectory_stop_score").toFixed(2)}</div>
-                            </div>
-                            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); border-radius: 0.75rem; text-align: center;">
-                                <div style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Phase C</div>
-                                <div style="font-size: 1.05rem; font-weight: 800; color: #ef4444;">${scoreValue(details, "flow_score").toFixed(2)}</div>
-                            </div>
-                            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); border-radius: 0.75rem; text-align: center;">
-                                <div style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Occlusion</div>
-                                <div style="font-size: 1.05rem; font-weight: 800; color: var(--accent-secondary);">${scoreValue(details, "occlusion_score").toFixed(2)}</div>
-                            </div>
-                            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); border-radius: 0.75rem; text-align: center;">
-                                <div style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Merge</div>
-                                <div style="font-size: 1.05rem; font-weight: 800; color: #f59e0b;">${scoreValue(details, "merge_score").toFixed(2)}</div>
-                            </div>
-                            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); border-radius: 0.75rem; text-align: center;">
-                                <div style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Kinetic</div>
-                                <div style="font-size: 1.05rem; font-weight: 800; color: #ef4444;">${scoreValue(details, "energy_drop", "emergency_stop_score").toFixed(2)}</div>
-                            </div>
-                            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); border-radius: 0.75rem; text-align: center;">
-                                <div style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Scene</div>
-                                <div style="font-size: 1.05rem; font-weight: 800; color: #ec4899;">${scoreValue(details, "scene_interruption").toFixed(2)}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                ${llmHtml}
-            </article>
-        `;
+    function colorClass(val) {
+        if (val >= 0.6) return 'high';
+        if (val >= 0.3) return 'mid';
+        return '';
     }
 
-    function renderIncidentList(incidents) {
-        const listEl = document.getElementById("incident-list");
-        if (!incidents || incidents.length === 0) {
-            listEl.innerHTML = `<div class="incident-empty">No incidents recorded yet. Upload a video or run the live stream pipeline.</div>`;
-            return;
+    function displayResults(data, type) {
+        const confidence = parseFloat(data.confidence || 0);
+        lastConfidence = confidence;
+        const threshold = parseInt($('threshold-slider').value);
+        const details   = data.details || {};
+
+        // Save features for logging
+        currentFeatures = {
+            proximity:     sv(details, 'proximity_score', 'ttc_score'),
+            trajectory:    sv(details, 'trajectory_score'),
+            anomaly:       sv(details, 'flow_score'),
+            cnn:           sv(details, 'lstm_peak', 'cnn_lstm_prob'),
+            occlusion:     sv(details, 'occlusion_score'),
+            merge:         sv(details, 'merge_score'),
+            kinetic:       sv(details, 'energy_drop', 'emergency_stop_score'),
+            density:       sv(details, 'traffic_density'),
+            avg_speed:     sv(details, 'avg_speed'),
+            stopped_ratio: sv(details, 'stopped_ratio'),
+        };
+
+        // Verdict + confidence
+        applyThreshold(confidence, threshold);
+        $('conf-num').textContent = confidence.toFixed(2) + '%';
+        $('log-status').textContent = '';
+        const confFrac = confidence / 100;
+        setTimeout(() => { $('conf-bar').style.width = confidence + '%'; }, 50);
+        $('conf-threshold-marker').style.left = threshold + '%';
+        $('conf-threshold-label').textContent = 'Threshold: ' + threshold + '%';
+        $('threshold-val-label').textContent  = threshold + '%';
+
+        // Trigger text
+        $('trigger-text').textContent = data.trigger_phase || '—';
+
+        // Pipeline steps
+        const dlPeak     = sv(details, 'lstm_peak', 'cnn_lstm_prob');
+        const dlConf     = details.dl_confirmed;
+        const phaseVotes = details.phases_signalling || 0;
+        const aConf      = details.phase_a_confirmed;
+        const bConf      = details.phase_b_confirmed;
+        const cConf      = details.phase_c_confirmed;
+
+        function setStep(circleId, valId, confirmed, val, neutral) {
+            const el = $(circleId);
+            const v  = $(valId);
+            if (neutral) {
+                el.className = 'step-circle pending';
+                v.className  = 'step-val';
+            } else if (confirmed) {
+                el.className = 'step-circle confirmed';
+                v.className  = 'step-val confirmed';
+            } else {
+                el.className = 'step-circle failed';
+                v.className  = 'step-val failed';
+            }
+            if (val !== undefined) v.textContent = val;
         }
-        listEl.innerHTML = incidents.map(renderIncidentCard).join("");
+
+        setStep('step-dl-circle', 'step-dl-val', dlConf, dlPeak.toFixed(2) + (dlConf ? ' ✓' : ' ✗'), dlConf === undefined);
+        setStep('step-a-circle',  'step-a-val',  aConf,  sv(details,'proximity_score').toFixed(2), aConf === undefined);
+        setStep('step-b-circle',  'step-b-val',  bConf,  sv(details,'trajectory_score').toFixed(2), bConf === undefined);
+        setStep('step-c-circle',  'step-c-val',  cConf,  sv(details,'flow_score').toFixed(2), cConf === undefined);
+
+        const votesEl = $('step-vote-val');
+        if (dlConf === undefined) {
+            $('step-vote-circle').className = 'step-circle pending';
+            votesEl.className = 'step-val'; votesEl.textContent = '—';
+        } else if (phaseVotes >= 2) {
+            $('step-vote-circle').className = 'step-circle confirmed';
+            votesEl.className = 'step-val confirmed'; votesEl.textContent = phaseVotes + ' / 3 ✓';
+        } else {
+            $('step-vote-circle').className = 'step-circle failed';
+            votesEl.className = 'step-val failed'; votesEl.textContent = phaseVotes + ' / 3 ✗';
+        }
+
+        // Scene telemetry
+        $('metric-density').textContent  = sv(details,'traffic_density').toFixed(2);
+        $('metric-speed').textContent    = sv(details,'avg_speed').toFixed(2) + ' px/f';
+        $('metric-stopped').textContent  = Math.round(sv(details,'stopped_ratio') * 100) + '%';
+
+        // Phase bars + dots
+        function setPhase(scoreId, barId, dotId, val) {
+            $(scoreId).textContent = val.toFixed(2);
+            setTimeout(() => { $(barId).style.width = (val * 100) + '%'; }, 80);
+            const dot = $(dotId);
+            if (val >= 0.3) { dot.className = 'phase-confirm-dot on'; }
+            else if (val > 0) { dot.className = 'phase-confirm-dot'; }
+            else { dot.className = 'phase-confirm-dot'; }
+        }
+        setPhase('score-prox', 'bar-prox', 'dot-a', sv(details,'proximity_score','ttc_score'));
+        setPhase('score-traj', 'bar-traj', 'dot-b', sv(details,'trajectory_score','trajectory_stop_score'));
+        setPhase('score-anom', 'bar-anom', 'dot-c', sv(details,'flow_score'));
+        setPhase('score-dl',   'bar-dl',   'dot-dl', dlPeak);
+
+        // Sub-signals
+        function setSig(id, val) {
+            $(id).textContent = val.toFixed(2);
+            $(id).className = 'signal-val ' + colorClass(val);
+        }
+        setSig('sig-occl',    sv(details,'occlusion_score'));
+        setSig('sig-merge',   sv(details,'merge_score'));
+        setSig('sig-ke',      sv(details,'energy_drop','emergency_stop_score'));
+        setSig('sig-scene',   sv(details,'scene_interruption'));
+        setSig('sig-emerg',   sv(details,'emergency_stop_score'));
+        setSig('sig-trajstop',sv(details,'trajectory_stop_score'));
+        setSig('sig-relvel',  sv(details,'relative_velocity_score'));
+        setSig('sig-spin',    sv(details,'spin_score'));
+
+        // Video / image output
+        const vidEl  = $('processed-video-preview');
+        const imgEl  = $('processed-image-preview');
+        const fallEl = $('visual-output-fallback');
+        vidEl.style.display = 'none'; imgEl.style.display = 'none'; fallEl.style.display = 'none';
+
+        if (type === 'video' && data.processed_video_url) {
+            const url = data.processed_video_url + '?t=' + Date.now();
+            vidEl.onerror = () => {
+                vidEl.style.display = 'none';
+                $('visual-output-download').href = url;
+                fallEl.style.display = 'block';
+            };
+            vidEl.onloadeddata = () => { fallEl.style.display = 'none'; };
+            vidEl.src = url; vidEl.style.display = 'block';
+            vidEl.load();
+            vidEl.play().catch(() => {});
+        } else if (type === 'image' && data.processed_image_url) {
+            imgEl.src = data.processed_image_url + '?t=' + Date.now();
+            imgEl.style.display = 'block';
+        }
+
+        // LLM / exact frame
+        const llmPanel = $('llm-panel');
+        const llmEmpty = $('llm-empty');
+        if (data.accident_frame_url) {
+            $('exact-frame').src = data.accident_frame_url + '?t=' + Date.now();
+            $('llm-text').textContent = data.llm_analysis || 'No analysis provided.';
+            llmPanel.style.display = 'flex';
+            llmEmpty.style.display = 'none';
+        } else {
+            llmPanel.style.display = 'none';
+            llmEmpty.style.display = 'block';
+        }
+
+        $('results-panel').style.display = 'block';
+        setTimeout(() => { $('results-panel').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+
+        if (type === 'video') loadIncidents();
     }
 
-    function prependIncidents(newIncidents) {
-        const listEl = document.getElementById("incident-list");
-        const existingIds = new Set(
-            Array.from(listEl.querySelectorAll("[data-incident-id]"))
-                .map(el => el.getAttribute("data-incident-id"))
-                .filter(Boolean)
-        );
-        const fresh = (newIncidents || []).filter(item => item.id && !existingIds.has(item.id));
-        if (fresh.length === 0) return;
+    // ── Feature logging ───────────────────────────────────────────────────
+    async function submitFeatureLog(label) {
+        if (!currentFeatures) return;
+        $('log-status').style.color = 'var(--txt2)';
+        $('log-status').textContent = 'Logging…';
+        try {
+            const res = await fetch('/log-feature', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...currentFeatures, label })
+            });
+            if (!res.ok) throw new Error('Failed');
+            const data = await res.json();
+            $('log-status').style.color = 'var(--success)';
+            $('log-status').textContent = `Logged ✓ (${data.total_rows} total rows)`;
+            refreshDatasetStatus();
+        } catch {
+            $('log-status').style.color = 'var(--danger)';
+            $('log-status').textContent = 'Log failed.';
+        }
+    }
 
-        const emptyEl = document.getElementById("incident-empty");
-        if (emptyEl) emptyEl.remove();
+    // ── Dataset status ────────────────────────────────────────────────────
+    async function refreshDatasetStatus() {
+        try {
+            const res = await fetch('/dataset-status');
+            if (!res.ok) return;
+            const d = await res.json();
+            $('ds-total').textContent = d.total_rows ?? '—';
+            $('ds-acc').textContent   = (d.class_1 ?? '—') + ' / 200';
+            $('ds-nor').textContent   = (d.class_0 ?? '—') + ' / 200';
+            const s = $('ds-status');
+            if (d.xgboost_active) {
+                s.textContent = 'Active — Refining detections'; s.style.color = 'var(--success)';
+            } else {
+                const n0 = d.class_0 || 0, n1 = d.class_1 || 0;
+                const needed = Math.max(0, 50 - Math.min(n0, n1));
+                s.textContent = needed > 0
+                    ? `Inactive — Need ${needed} more rows per class`
+                    : 'Inactive — Ready to train';
+                s.style.color = 'var(--txt2)';
+            }
+        } catch {}
+    }
 
-        listEl.insertAdjacentHTML("afterbegin", fresh.map(renderIncidentCard).join(""));
+    async function trainXGBoost() {
+        const btn = $('train-xgb-btn');
+        const res = $('train-result');
+        btn.disabled = true;
+        res.style.color = 'var(--txt2)';
+        res.textContent = 'Training…';
+        try {
+            const r = await fetch('/train-model', { method: 'POST' });
+            const d = await r.json();
+            if (!r.ok) throw new Error(d.error || 'Training failed.');
+            res.style.color = 'var(--success)';
+            res.innerHTML = `<strong>Done.</strong> Accuracy: ${(d.accuracy*100).toFixed(1)}% · ${d.total_rows} rows`;
+            refreshDatasetStatus();
+        } catch (e) {
+            res.style.color = 'var(--danger)';
+            res.textContent = e.message;
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    // ── Incident history ──────────────────────────────────────────────────
+    function fmtTime(ts) {
+        if (!ts) return '—';
+        const d = new Date(ts);
+        return isNaN(d) ? ts : d.toLocaleString();
+    }
+
+    function renderIncident(inc) {
+        const d = inc.details || {};
+        const fused  = ((inc.confidence || 0) * 100).toFixed(1);
+        const dlPct  = ((inc.dl_confidence || sv(d,'lstm_peak','cnn_lstm_prob')) * 100).toFixed(1);
+        const src    = inc.source === 'stream' ? 'stream' : 'web';
+        const clip   = inc.clip_url
+            ? `<video controls preload="metadata" src="${inc.clip_url}?t=${Date.now()}"></video>`
+            : `<div style="padding:1.5rem;text-align:center;color:var(--txt2);font-size:0.8rem;">Clip unavailable</div>`;
+        const snap   = inc.snapshot_url
+            ? `<img src="${inc.snapshot_url}?t=${Date.now()}" alt="Frame">`
+            : `<div style="padding:1.5rem;text-align:center;color:var(--txt2);font-size:0.8rem;">Frame unavailable</div>`;
+        const llm    = inc.llm_analysis
+            ? `<div class="incident-llm">${inc.llm_analysis}</div>` : '';
+
+        const mini = (label, val) => `
+            <div class="mini-score">
+                <div class="mini-score-label">${label}</div>
+                <div class="mini-score-val">${typeof val === 'number' ? val.toFixed(2) : val}</div>
+            </div>`;
+
+        const id = inc.id || '';
+        return `
+        <article class="incident-card is-collapsed" data-incident-id="${id}">
+            <div class="incident-card-head" onclick="toggleIncidentCard('${id}')">
+                <div>
+                    <div class="incident-time">${fmtTime(inc.timestamp)}</div>
+                    <div class="incident-loc">
+                        ${inc.location || 'Unknown'}
+                        ${inc.time_in_video_sec != null ? ` · t=${inc.time_in_video_sec}s` : ''}
+                        ${inc.frame_number != null ? ` · frame ${inc.frame_number}` : ''}
+                        · ${fused}% confidence
+                    </div>
+                </div>
+                <div class="incident-card-actions" onclick="event.stopPropagation()">
+                    <span class="source-chip ${src}">${src === 'stream' ? inc.camera_id || 'Camera' : 'Upload'}</span>
+                    <button type="button" class="incident-toggle-btn" title="Expand / collapse" onclick="toggleIncidentCard('${id}')">▸</button>
+                    <button type="button" class="incident-delete-btn" title="Delete incident" onclick="deleteIncident('${id}')">✕</button>
+                </div>
+            </div>
+            <div class="incident-body">
+                <div class="incident-media">
+                    <div>
+                        <div class="incident-media-label">Incident Clip (±5s)</div>
+                        ${clip}
+                    </div>
+                    <div>
+                        <div class="incident-media-label">Accident Frame</div>
+                        ${snap}
+                    </div>
+                </div>
+                <div class="incident-metrics-row">
+                    <div class="conf-pill">
+                        <div class="conf-pill-label">Fused Confidence</div>
+                        <div class="conf-pill-val" style="color:var(--danger);">${fused}%</div>
+                    </div>
+                    <div class="conf-pill">
+                        <div class="conf-pill-label">CNN-LSTM DL</div>
+                        <div class="conf-pill-val" style="color:var(--purple);">${dlPct}%</div>
+                    </div>
+                </div>
+                <div class="incident-trigger">
+                    <strong>Trigger:</strong> ${inc.trigger_phase || '—'}
+                </div>
+                <div class="incident-phases-row">
+                    ${mini('Phase A', sv(d,'proximity_score','ttc_score'))}
+                    ${mini('Phase B', sv(d,'trajectory_score','trajectory_stop_score'))}
+                    ${mini('Phase C', sv(d,'flow_score'))}
+                    ${mini('Occlusion', sv(d,'occlusion_score'))}
+                    ${mini('Merge', sv(d,'merge_score'))}
+                    ${mini('Kinetic', sv(d,'energy_drop','emergency_stop_score'))}
+                    ${mini('Scene', sv(d,'scene_interruption'))}
+                </div>
+                ${llm}
+            </div>
+        </article>`;
+    }
+
+    function toggleIncidentCard(incidentId) {
+        const card = document.querySelector(`.incident-card[data-incident-id="${incidentId}"]`);
+        if (!card) return;
+        const collapsed = card.classList.toggle('is-collapsed');
+        const btn = card.querySelector('.incident-toggle-btn');
+        if (btn) btn.textContent = collapsed ? '▸' : '▾';
+    }
+
+    async function deleteIncident(incidentId) {
+        if (!incidentId) return;
+        if (!confirm('Delete this incident and its saved clip/frame?')) return;
+        try {
+            const res = await fetch(`/api/incidents/${incidentId}`, { method: 'DELETE' });
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || 'Delete failed.');
+            }
+            await loadIncidents();
+        } catch (e) {
+            alert(`Could not delete incident: ${e.message}`);
+        }
     }
 
     async function loadIncidents() {
-        const listEl = document.getElementById("incident-list");
+        const list = $('incident-list');
         try {
-            const response = await fetch("/api/incidents?limit=50");
-            if (!response.ok) throw new Error("Failed to load incidents.");
-            const data = await response.json();
-            renderIncidentList(data.incidents || []);
-        } catch (error) {
-            listEl.innerHTML = `<div class="incident-empty">Could not load incidents: ${error.message}</div>`;
-        }
-    }
-
-    // Active learning submit log
-    async function submitFeatureLog(label) {
-        if (!currentFeatures) return;
-        
-        const logStatusMsg = document.getElementById('log-status-msg');
-        logStatusMsg.style.color = 'var(--text-secondary)';
-        logStatusMsg.textContent = "Logging features to server...";
-        
-        const payload = { ...currentFeatures, label: label };
-        
-        try {
-            const response = await fetch("/log-feature", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            
-            if (!response.ok) throw new Error("Failed to log features.");
-            
-            const data = await response.json();
-            logStatusMsg.style.color = 'var(--success)';
-            logStatusMsg.textContent = `Logged successfully (Total: ${data.total_rows} rows)`;
-            
-            // Refresh dataset status panel
-            await refreshDatasetStatus();
-        } catch (error) {
-            logStatusMsg.style.color = 'var(--danger)';
-            logStatusMsg.textContent = "Error: " + error.message;
-        }
-    }
-
-    // Refresh model dataset statistics
-    async function refreshDatasetStatus() {
-        try {
-            const response = await fetch("/dataset-status");
-            if (!response.ok) return;
-            const data = await response.json();
-            
-            document.getElementById('ds-total-rows').textContent = data.total_rows;
-            document.getElementById('ds-accident-rows').textContent = `${data.class_1} / 200`;
-            document.getElementById('ds-normal-rows').textContent = `${data.class_0} / 200`;
-            
-            const statusBadgeEl = document.getElementById('ds-xgb-status');
-            if (data.xgboost_active) {
-                statusBadgeEl.textContent = "Active (XGBoost Classifier deployed)";
-                statusBadgeEl.style.color = "var(--success)";
-            } else {
-                statusBadgeEl.textContent = "Inactive (Using Heuristic fallback)";
-                statusBadgeEl.style.color = "var(--text-secondary)";
-            }
+            const res = await fetch('/api/incidents?limit=50');
+            if (!res.ok) throw new Error('Failed to load.');
+            const data = await res.json();
+            const items = data.incidents || [];
+            list.innerHTML = items.length
+                ? items.map(renderIncident).join('')
+                : `<div class="incident-empty">No incidents recorded yet. Upload a video to begin.</div>`;
         } catch (e) {
-            console.error("Error fetching dataset status:", e);
+            list.innerHTML = `<div class="incident-empty">Could not load incidents: ${e.message}</div>`;
         }
     }
 
-    // Train the XGBoost model
-    async function trainXGBoost() {
-        const trainBtn = document.getElementById('train-xgb-btn');
-        const resultInfo = document.getElementById('train-result-info');
-        
-        trainBtn.disabled = true;
-        resultInfo.style.color = 'var(--text-secondary)';
-        resultInfo.textContent = "Training XGBoost Classifier on logged CSV dataset...";
-        
-        try {
-            const response = await fetch("/train-model", { method: "POST" });
-            const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.error || "Training failed.");
-            }
-            
-            resultInfo.style.color = 'var(--success)';
-            resultInfo.innerHTML = `<strong>Success!</strong> Model trained.<br>Accuracy: ${(data.accuracy * 100).toFixed(2)}% | Rows: ${data.total_rows}`;
-            
-            await refreshDatasetStatus();
-        } catch (error) {
-            resultInfo.style.color = 'var(--danger)';
-            resultInfo.textContent = "Error: " + error.message;
-        } finally {
-            trainBtn.disabled = false;
-        }
-    }
-
+    // ── Init ──────────────────────────────────────────────────────────────
     window.addEventListener('DOMContentLoaded', () => {
         refreshDatasetStatus();
         loadIncidents();
+        // Set threshold marker initial position
+        $('conf-threshold-marker').style.left = '55%';
     });
 </script>
 </body>

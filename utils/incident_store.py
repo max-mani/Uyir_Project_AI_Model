@@ -81,6 +81,27 @@ def get_incident(incident_id):
     return None
 
 
+def delete_incident(incident_id):
+    """Remove an incident from the index and delete its media files."""
+    with _lock:
+        records = _load_index()
+        target = next((r for r in records if r.get("id") == incident_id), None)
+        if target is None:
+            return False
+
+        records = [r for r in records if r.get("id") != incident_id]
+        _save_index(records)
+
+    clip_fs, snap_fs, _, _ = build_incident_paths(incident_id)
+    for path in (clip_fs, snap_fs):
+        try:
+            if os.path.exists(path):
+                os.remove(path)
+        except OSError:
+            pass
+    return True
+
+
 def build_incident_paths(incident_id):
     """Return filesystem paths and public URLs for clip/snapshot assets."""
     clip_name = f"clip_{incident_id}.mp4"
