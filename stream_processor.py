@@ -12,6 +12,9 @@ import argparse
 import logging
 import threading
 import time
+import uuid
+from collections import deque
+from datetime import datetime, timezone
 
 import cv2
 import numpy as np
@@ -21,6 +24,8 @@ from accident_detector import AccidentDetector, AccidentEvent
 from firebase_uploader import FirebaseUploader
 from health_monitor import HealthMonitor
 from tracking.vehicle_tracker import VehicleTracker
+from utils.incident_clip import write_clip_from_frames
+from utils import incident_store
 
 logging.basicConfig(
     level=logging.INFO,
@@ -42,6 +47,13 @@ class StreamProcessor:
         self.detector = AccidentDetector()
         self.uploader = FirebaseUploader()
         self.health = HealthMonitor(fps_provider=self._get_fps)
+
+        buffer_len = int(config.CLIP_SECONDS_BEFORE * config.CLIP_BUFFER_FPS)
+        after_len = int(config.CLIP_SECONDS_AFTER * config.CLIP_BUFFER_FPS)
+        self._clip_buffer = deque(maxlen=max(buffer_len, 1))
+        self._pending_clip = None
+        self._after_frames_needed = after_len
+        self._clip_lock = threading.Lock()
 
     def start(self):
         self.uploader.retry_local_events()
@@ -77,6 +89,9 @@ class StreamProcessor:
 
             processed += 1
             frame = cv2.resize(frame, (config.FRAME_WIDTH, config.FRAME_HEIGHT))
+
+            self._clip_buffer.append(frame.copy())
+            self._collect_after_frames(frame)
 
             vehicles = self.tracker.process_frame(frame)
             event = self.detector.analyze(frame, vehicles, processed)
@@ -116,6 +131,20 @@ class StreamProcessor:
             time.sleep(2)
         return None
 
+    def _collect_after_frames(self, frame):
+        with self._clip_lock:
+            if self._pending_clip is None:
+                return
+            self._pending_clip["after_frames"].append(frame.copy())
+            if len(self._pending_clip["after_frames"]) >= self._after_frames_needed:
+                pending = self._pending_clip
+                self._pending_clip = None
+                threading.Thread(
+                    target=self._finalize_clip,
+                    args=(pending,),
+                    daemon=True,
+                ).start()
+
     def _on_accident(self, event: AccidentEvent):
         print("\n" + "=" * 58)
         print("  ACCIDENT DETECTED")
@@ -126,7 +155,46 @@ class StreamProcessor:
         print(f"  Phases     : {', '.join(event.phases_triggered)}")
         print(f"  Vehicles   : {event.involved_vehicle_ids}")
         print("=" * 58 + "\n")
-        self.uploader.upload_event_async(event)
+
+        with self._clip_lock:
+            if self._pending_clip is not None:
+                return
+            self._pending_clip = {
+                "event": event,
+                "before_frames": list(self._clip_buffer),
+                "after_frames": [],
+            }
+
+    def _finalize_clip(self, pending):
+        event = pending["event"]
+        frames = pending["before_frames"] + pending["after_frames"]
+        incident_id = str(uuid.uuid4())
+        clip_fs, snap_fs, clip_url, snap_url = incident_store.build_incident_paths(incident_id)
+
+        cv2.imwrite(snap_fs, event.snapshot_frame)
+        clip_ok = write_clip_from_frames(frames, config.CLIP_BUFFER_FPS, clip_fs)
+
+        event.clip_path = clip_fs if clip_ok else None
+        details = dict(event.fusion_details or {})
+
+        record = incident_store.save_incident({
+            "id": incident_id,
+            "source": "stream",
+            "timestamp": datetime.fromtimestamp(event.timestamp, tz=timezone.utc).isoformat(),
+            "camera_id": event.camera_id,
+            "location": event.location,
+            "frame_number": event.frame_num,
+            "confidence": float(event.confidence_score),
+            "dl_confidence": float(event.cnn_lstm_confidence or event.stage1_confidence),
+            "trigger_phase": event.trigger_phase,
+            "phases_triggered": event.phases_triggered,
+            "involved_vehicle_ids": event.involved_vehicle_ids,
+            "clip_url": clip_url if clip_ok else None,
+            "snapshot_url": snap_url,
+            "details": details,
+        })
+
+        self.uploader.upload_event_async(event, record)
 
     def _draw_ui(self, frame, vehicles, event, frame_num):
         display = self.tracker.draw_tracks(frame.copy(), vehicles)

@@ -37,7 +37,16 @@ def fuse_scores(
     is_congested = traffic_density > 0.40 and avg_scene_speed < 5.0
     is_stopped_traffic = scene_density >= 4 and stopped_ratio > 0.60
 
-    if is_congested or is_stopped_traffic:
+    # Only apply congestion suppression when there are NO active collision signals.
+    # If emergency_stop or trajectory_stop is elevated, vehicles likely stopped
+    # because of a crash — not because of normal traffic congestion.
+    collision_signal_present = (
+        trajectory_stop > 0.3
+        or emergency_stop > 0.3
+        or cnn_lstm > 0.4
+    )
+
+    if (is_congested or is_stopped_traffic) and not collision_signal_present:
         ttc_critical *= 0.10
         trajectory_stop *= 0.10
         emergency_stop *= 0.10
@@ -57,8 +66,8 @@ def fuse_scores(
     is_accident = final_score >= threshold
 
     triggers = []
-    if is_congested or is_stopped_traffic:
-        triggers.append("Congested")
+    if (is_congested or is_stopped_traffic) and not collision_signal_present:
+        triggers.append("Congested - Suppressed")
     if scores["trajectory_stop"] > 0.5:
         triggers.append("Trajectory Stop (IITH)")
     if scores["ttc_critical"] > 0.5:

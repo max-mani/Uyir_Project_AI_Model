@@ -6,11 +6,17 @@ Stage 1 YOLO accident model is optional (skipped if model file missing).
 import logging
 import os
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 import cv2
+import numpy as np
+import torch
+from PIL import Image
+
+import config
 from fusion.scoring import fuse_scores
+from model import DEVICE, SEQUENCE_LEN, model, transform
 from phases.phase_a_proximity import proximity_filter
 from phases.phase_b_trajectory import analyze_trajectory_conflict
 from phases.phase_c_anomaly import analyze_anomaly
@@ -31,6 +37,10 @@ class AccidentEvent:
     phases_triggered: list
     involved_vehicle_ids: list
     snapshot_frame: object
+    trigger_phase: str = "Weighted Fusion"
+    fusion_details: dict = field(default_factory=dict)
+    cnn_lstm_confidence: float = 0.0
+    clip_path: Optional[str] = None
 
 
 def _tracked_vehicle_to_track(v) -> Track:
@@ -58,6 +68,7 @@ class AccidentDetector:
         self._consec_count = 0
         self._last_alert_time = 0.0
         self._prev_gray = None
+        self._features_buffer = []
 
         if os.path.exists(config.ACCIDENT_MODEL_PATH):
             try:
@@ -69,8 +80,35 @@ class AccidentDetector:
         else:
             logger.info("[Detector] No Stage-1 model — running 3-phase verification only.")
 
+    def _cnn_lstm_prob(self, frame: np.ndarray) -> float:
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        pil_img = Image.fromarray(frame_rgb)
+        frame_feat = transform(pil_img).unsqueeze(0).to(DEVICE)
+
+        with torch.no_grad():
+            feat = model.cnn(frame_feat)
+
+        self._features_buffer.append(feat)
+        if len(self._features_buffer) > SEQUENCE_LEN:
+            self._features_buffer.pop(0)
+
+        if len(self._features_buffer) < SEQUENCE_LEN:
+            padded_buffer = [self._features_buffer[0]] * (SEQUENCE_LEN - len(self._features_buffer)) + self._features_buffer
+        else:
+            padded_buffer = self._features_buffer
+
+        features_tensor = torch.stack(padded_buffer, dim=1)
+        with torch.no_grad():
+            lstm_out, _ = model.bilstm(features_tensor)
+            context = model.attention(lstm_out)
+            logits = model.classifier(context)
+            probs = torch.softmax(logits, dim=1)
+            return float(probs[0, 1].item())
+
     def analyze(self, frame: np.ndarray, vehicles: dict, frame_num: int) -> Optional[AccidentEvent]:
         now = time.time()
+        cnn_lstm_prob = self._cnn_lstm_prob(frame)
+
         if now - self._last_alert_time < config.COOLDOWN_SECONDS:
             self._update_flow(frame)
             return None
@@ -102,6 +140,9 @@ class AccidentDetector:
         emergency_stop_score = 0.0
         optical_flow = 0.0
         flow_dispersion = 0.0
+        occlusion_score = 0.0
+        merge_score = 0.0
+        spin_score = 0.0
         phases = ["phase_a"]
         involved_ids = []
 
@@ -111,8 +152,27 @@ class AccidentDetector:
             traj = analyze_trajectory_conflict(t1, t2)
             trajectory_stop_score = max(trajectory_stop_score, traj["trajectory_stop_score"])
             emergency_stop_score = max(emergency_stop_score, traj["emergency_stop_score"])
+            spin_score = max(spin_score, traj.get("max_spin_var", 0.0))
+            if traj.get("occluded"):
+                occlusion_score = max(occlusion_score, traj.get("containment", 0.0))
+            else:
+                occlusion_score = max(occlusion_score, traj.get("containment", 0.0) * 0.5)
+            if traj.get("merged"):
+                merge_score = 1.0
             if traj["class"] == "Collision":
                 phases.append("phase_b")
+
+        stopped = sum(
+            1 for track in tracks
+            if track.velocities and (track.velocities[-1][0] ** 2 + track.velocities[-1][1] ** 2) ** 0.5 < 2.0
+        )
+        stopped_ratio = stopped / len(tracks) if tracks else 0.0
+        speeds = []
+        for track in tracks:
+            if track.velocities:
+                vx, vy = track.velocities[-1]
+                speeds.append((vx ** 2 + vy ** 2) ** 0.5)
+        avg_speed = sum(speeds) / len(speeds) if speeds else 0.0
 
         for track in tracks:
             anom = analyze_anomaly(track, flow)
@@ -126,10 +186,22 @@ class AccidentDetector:
             trajectory_stop=trajectory_stop_score,
             ttc_critical=ttc_score,
             emergency_stop=emergency_stop_score,
+            cnn_lstm=cnn_lstm_prob,
             optical_flow=optical_flow,
             flow_dispersion=flow_dispersion,
             scene_density=len(tracks),
+            avg_scene_speed=avg_speed,
+            stopped_ratio=stopped_ratio,
         )
+
+        fusion_details = dict(fuse_res["details"])
+        fusion_details.update({
+            "lstm_peak": cnn_lstm_prob,
+            "occlusion_score": float(occlusion_score),
+            "merge_score": float(merge_score),
+            "spin_score": float(spin_score),
+            "scene_interruption": 0.0,
+        })
 
         if fuse_res["score"] >= config.FUSION_THRESHOLD:
             self._consec_count += 1
@@ -150,6 +222,9 @@ class AccidentDetector:
                 phases_triggered=list(set(phases)),
                 involved_vehicle_ids=list(set(involved_ids)),
                 snapshot_frame=frame.copy(),
+                trigger_phase=fuse_res["trigger_phase"],
+                fusion_details=fusion_details,
+                cnn_lstm_confidence=cnn_lstm_prob,
             )
 
         return None

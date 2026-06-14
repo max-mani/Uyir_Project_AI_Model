@@ -47,7 +47,7 @@
 
         .container {
             width: 100%;
-            max-width: 1000px;
+            max-width: 1200px;
             display: flex;
             flex-direction: column;
             gap: 2rem;
@@ -441,6 +441,163 @@
         #threshold-slider::-webkit-slider-thumb:hover {
             background: #0284c7;
         }
+
+        .incident-history-section {
+            width: 100%;
+            max-width: 1200px;
+            align-self: center;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .incident-history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .incident-history-header h2 {
+            font-size: 1.35rem;
+            font-weight: 800;
+        }
+
+        .incident-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .incident-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.85rem;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .incident-card-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .incident-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0.25rem 0.55rem;
+            border-radius: 0.35rem;
+        }
+
+        .incident-badge.web { background: rgba(59, 130, 246, 0.15); color: #93c5fd; }
+        .incident-badge.stream { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; }
+
+        .incident-card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            padding: 1.25rem;
+        }
+
+        .incident-clip video {
+            width: 100%;
+            border-radius: 0.6rem;
+            border: 1px solid var(--border-color);
+            background: #000;
+        }
+
+        .incident-visuals {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 640px) {
+            .incident-visuals {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .incident-visual-block {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .incident-visual-label {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .incident-snapshot {
+            width: 100%;
+            border-radius: 0.6rem;
+            border: 2px solid var(--danger);
+            background: #000;
+            display: block;
+        }
+
+        .incident-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .incident-confidence-row {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .incident-score-pill {
+            flex: 1;
+            min-width: 120px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 0.6rem;
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        .incident-score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 0.65rem;
+        }
+
+        .incident-score-grid .score-card {
+            padding: 0.75rem 0.5rem;
+        }
+
+        .incident-empty {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 2rem;
+            border: 1px dashed var(--border-color);
+            border-radius: 0.75rem;
+        }
+
+        .incident-llm {
+            margin: 0 1.25rem 1.25rem;
+            padding: 1rem;
+            border-radius: 0.6rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 3px solid var(--accent-secondary);
+            font-size: 0.92rem;
+            line-height: 1.55;
+            color: var(--text-primary);
+        }
     </style>
 </head>
 <body>
@@ -620,8 +777,12 @@
         <!-- Visual Analysis Feedback -->
         <h3 style="color: var(--text-secondary); text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1.5px; font-weight: 700; margin-top: 2rem; margin-bottom: 0.75rem;">Processed Visual Output</h3>
         <div id="visual-output-container" style="width: 100%; max-width: 640px; border-radius: 0.75rem; overflow: hidden; border: 1px solid var(--border-color); background: var(--card-bg); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-            <video id="processed-video-preview" style="width: 100%; display: none;" controls autoplay loop></video>
+            <video id="processed-video-preview" style="width: 100%; display: none;" controls autoplay loop muted playsinline type="video/mp4"></video>
             <img id="processed-image-preview" style="width: 100%; display: none;" alt="Processed Output Image">
+            <div id="visual-output-fallback" style="display: none; padding: 1.25rem; color: var(--text-secondary); font-size: 0.9rem; text-align: center;">
+                Processed video could not be previewed in this browser.
+                <a id="visual-output-download" href="#" target="_blank" rel="noopener" style="color: var(--accent-secondary); font-weight: 600;">Download annotated clip</a>
+            </div>
         </div>
 
         <!-- Logging Feedback Buttons -->
@@ -680,6 +841,24 @@
         </div>
     </div>
 
+    <!-- Incident History Dashboard -->
+    <section class="incident-history-section" id="incident-history-section">
+        <div class="incident-history-header">
+            <div>
+                <h2>Incident History</h2>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">
+                    5 seconds before and after each confirmed accident, with full phase and DL metrics.
+                </p>
+            </div>
+            <button class="action-btn" style="width: auto; padding: 0.65rem 1.25rem; font-size: 0.85rem;" onclick="loadIncidents()">
+                Refresh
+            </button>
+        </div>
+        <div id="incident-list" class="incident-list">
+            <div class="incident-empty" id="incident-empty">Loading incidents...</div>
+        </div>
+    </section>
+
     <footer>
         UYIR Foundation &middot; Road Accident Detection System &middot; Tamil Nadu Police Pilot Programme
     </footer>
@@ -714,6 +893,8 @@
     // Processed output elements
     const processedVideoPreview = document.getElementById('processed-video-preview');
     const processedImagePreview = document.getElementById('processed-image-preview');
+    const visualOutputFallback = document.getElementById('visual-output-fallback');
+    const visualOutputDownload = document.getElementById('visual-output-download');
     const triggerPhaseText = document.getElementById('trigger-phase-text');
     const scoreProx = document.getElementById('score-prox');
     const scoreTraj = document.getElementById('score-traj');
@@ -1000,14 +1181,26 @@
         // Render processed visual feedback
         processedVideoPreview.style.display = 'none';
         processedImagePreview.style.display = 'none';
+        visualOutputFallback.style.display = 'none';
+        processedVideoPreview.removeAttribute('src');
+        processedImagePreview.removeAttribute('src');
         
         const llmPanel = document.getElementById('llm-analysis-panel');
         const exactFrame = document.getElementById('exact-accident-frame');
         const llmText = document.getElementById('llm-reasoning-text');
 
         if (type === 'video' && data.processed_video_url) {
-            // Append cache-buster to prevent video caching
-            processedVideoPreview.src = data.processed_video_url + "?t=" + new Date().getTime();
+            const videoUrl = data.processed_video_url + "?t=" + new Date().getTime();
+            processedVideoPreview.onerror = () => {
+                processedVideoPreview.style.display = 'none';
+                visualOutputDownload.href = videoUrl;
+                visualOutputFallback.style.display = 'block';
+            };
+            processedVideoPreview.onloadeddata = () => {
+                visualOutputFallback.style.display = 'none';
+            };
+
+            processedVideoPreview.src = videoUrl;
             processedVideoPreview.style.display = 'block';
             processedVideoPreview.load();
             processedVideoPreview.play().catch(e => console.log("Auto-play blocked:", e));
@@ -1032,8 +1225,165 @@
             confidenceBar.style.width = confidenceVal + '%';
         }, 50);
 
+        if (type === 'video') {
+            loadIncidents();
+        }
+
         // Smooth scroll to results
         resultsPanel.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function formatIncidentTime(timestamp) {
+        if (!timestamp) return "Unknown time";
+        const date = new Date(timestamp);
+        if (Number.isNaN(date.getTime())) return timestamp;
+        return date.toLocaleString();
+    }
+
+    function scoreValue(details, ...keys) {
+        if (!details) return 0;
+        for (const key of keys) {
+            if (details[key] !== undefined && details[key] !== null) {
+                return Number(details[key]) || 0;
+            }
+        }
+        return 0;
+    }
+
+    function renderIncidentCard(incident) {
+        const details = incident.details || {};
+        const fusedPct = ((incident.confidence || 0) * 100).toFixed(1);
+        const dlPct = ((incident.dl_confidence || scoreValue(details, "lstm_peak", "cnn_lstm_prob") || 0) * 100).toFixed(1);
+        const sourceLabel = incident.source === "stream"
+            ? (incident.camera_id || "Camera")
+            : "Upload";
+        const sourceClass = incident.source === "stream" ? "stream" : "web";
+        const frameUrl = incident.snapshot_url || incident.accident_frame_url || "";
+        const clipHtml = incident.clip_url
+            ? `<video controls playsinline preload="metadata" src="${incident.clip_url}?t=${Date.now()}"></video>`
+            : `<div class="incident-empty" style="padding:1rem;">Clip unavailable (ffmpeg may be missing).</div>`;
+        const snapshotHtml = frameUrl
+            ? `<img class="incident-snapshot" src="${frameUrl}?t=${Date.now()}" alt="Accident frame">`
+            : `<div class="incident-empty" style="padding:1rem;">Accident frame unavailable.</div>`;
+        const llmHtml = incident.llm_analysis
+            ? `<div class="incident-llm">${incident.llm_analysis}</div>`
+            : "";
+
+        return `
+            <article class="incident-card" data-incident-id="${incident.id || ""}">
+                <div class="incident-card-header">
+                    <div>
+                        <div style="font-weight: 700; font-size: 1rem;">${formatIncidentTime(incident.timestamp)}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.2rem;">
+                            ${incident.location || "Unknown location"}
+                            ${incident.time_in_video_sec !== undefined ? ` · t=${incident.time_in_video_sec}s` : ""}
+                            ${incident.frame_number !== undefined ? ` · frame ${incident.frame_number}` : ""}
+                        </div>
+                    </div>
+                    <span class="incident-badge ${sourceClass}">${sourceLabel}</span>
+                </div>
+                <div class="incident-card-body">
+                    <div class="incident-visuals">
+                        <div class="incident-visual-block">
+                            <div class="incident-visual-label">Incident Clip (5s before &amp; after)</div>
+                            ${clipHtml}
+                        </div>
+                        <div class="incident-visual-block">
+                            <div class="incident-visual-label">Accident Frame</div>
+                            ${snapshotHtml}
+                        </div>
+                    </div>
+                    <div class="incident-metrics">
+                        <div class="incident-confidence-row">
+                            <div class="incident-score-pill">
+                                <div style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Fused Confidence</div>
+                                <div style="font-size: 1.35rem; font-weight: 800; color: var(--danger); margin-top: 0.25rem;">${fusedPct}%</div>
+                            </div>
+                            <div class="incident-score-pill">
+                                <div style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">CNN-LSTM DL</div>
+                                <div style="font-size: 1.35rem; font-weight: 800; color: #ec4899; margin-top: 0.25rem;">${dlPct}%</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.88rem; color: var(--text-secondary); background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 0.65rem 0.85rem; border-radius: 0.5rem;">
+                            <strong>Trigger:</strong> <span style="color: var(--text-primary);">${incident.trigger_phase || "None"}</span>
+                        </div>
+                        <div style="display:flex; gap:0.65rem; flex-wrap:wrap; font-size:0.78rem; color:var(--text-secondary);">
+                            <span>Density: ${scoreValue(details, "traffic_density").toFixed(2)}</span>
+                            <span>Speed: ${scoreValue(details, "avg_speed").toFixed(2)} px/f</span>
+                            <span>Stopped: ${Math.round(scoreValue(details, "stopped_ratio") * 100)}%</span>
+                        </div>
+                        <div class="incident-score-grid">
+                            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); border-radius: 0.75rem; text-align: center;">
+                                <div style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Phase A</div>
+                                <div style="font-size: 1.05rem; font-weight: 800; color: var(--accent-secondary);">${scoreValue(details, "proximity_score", "ttc_score").toFixed(2)}</div>
+                            </div>
+                            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); border-radius: 0.75rem; text-align: center;">
+                                <div style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Phase B</div>
+                                <div style="font-size: 1.05rem; font-weight: 800; color: #f59e0b;">${scoreValue(details, "trajectory_score", "trajectory_stop_score").toFixed(2)}</div>
+                            </div>
+                            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); border-radius: 0.75rem; text-align: center;">
+                                <div style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Phase C</div>
+                                <div style="font-size: 1.05rem; font-weight: 800; color: #ef4444;">${scoreValue(details, "flow_score").toFixed(2)}</div>
+                            </div>
+                            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); border-radius: 0.75rem; text-align: center;">
+                                <div style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Occlusion</div>
+                                <div style="font-size: 1.05rem; font-weight: 800; color: var(--accent-secondary);">${scoreValue(details, "occlusion_score").toFixed(2)}</div>
+                            </div>
+                            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); border-radius: 0.75rem; text-align: center;">
+                                <div style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Merge</div>
+                                <div style="font-size: 1.05rem; font-weight: 800; color: #f59e0b;">${scoreValue(details, "merge_score").toFixed(2)}</div>
+                            </div>
+                            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); border-radius: 0.75rem; text-align: center;">
+                                <div style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Kinetic</div>
+                                <div style="font-size: 1.05rem; font-weight: 800; color: #ef4444;">${scoreValue(details, "energy_drop", "emergency_stop_score").toFixed(2)}</div>
+                            </div>
+                            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); border-radius: 0.75rem; text-align: center;">
+                                <div style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Scene</div>
+                                <div style="font-size: 1.05rem; font-weight: 800; color: #ec4899;">${scoreValue(details, "scene_interruption").toFixed(2)}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                ${llmHtml}
+            </article>
+        `;
+    }
+
+    function renderIncidentList(incidents) {
+        const listEl = document.getElementById("incident-list");
+        if (!incidents || incidents.length === 0) {
+            listEl.innerHTML = `<div class="incident-empty">No incidents recorded yet. Upload a video or run the live stream pipeline.</div>`;
+            return;
+        }
+        listEl.innerHTML = incidents.map(renderIncidentCard).join("");
+    }
+
+    function prependIncidents(newIncidents) {
+        const listEl = document.getElementById("incident-list");
+        const existingIds = new Set(
+            Array.from(listEl.querySelectorAll("[data-incident-id]"))
+                .map(el => el.getAttribute("data-incident-id"))
+                .filter(Boolean)
+        );
+        const fresh = (newIncidents || []).filter(item => item.id && !existingIds.has(item.id));
+        if (fresh.length === 0) return;
+
+        const emptyEl = document.getElementById("incident-empty");
+        if (emptyEl) emptyEl.remove();
+
+        listEl.insertAdjacentHTML("afterbegin", fresh.map(renderIncidentCard).join(""));
+    }
+
+    async function loadIncidents() {
+        const listEl = document.getElementById("incident-list");
+        try {
+            const response = await fetch("/api/incidents?limit=50");
+            if (!response.ok) throw new Error("Failed to load incidents.");
+            const data = await response.json();
+            renderIncidentList(data.incidents || []);
+        } catch (error) {
+            listEl.innerHTML = `<div class="incident-empty">Could not load incidents: ${error.message}</div>`;
+        }
     }
 
     // Active learning submit log
@@ -1120,7 +1470,10 @@
         }
     }
 
-    window.addEventListener('DOMContentLoaded', refreshDatasetStatus);
+    window.addEventListener('DOMContentLoaded', () => {
+        refreshDatasetStatus();
+        loadIncidents();
+    });
 </script>
 </body>
 </html>

@@ -21,7 +21,7 @@ ACCIDENT_CONF_THRESHOLD = 0.50
 STAGE1_GATE_CONFIDENCE = 0.65
 
 # ── Tracker Settings ─────────────────────────────────────────
-VEHICLE_CONF_THRESHOLD = 0.30
+VEHICLE_CONF_THRESHOLD = 0.15
 TRACK_HISTORY_FRAMES = 30
 TRACK_LOST_TIMEOUT = 30
 
@@ -71,14 +71,14 @@ CONSECUTIVE_FRAMES = 3
 COOLDOWN_SECONDS = 20.0
 FUSION_THRESHOLD = 0.55
 
-# ── Fusion Weights (research-backed, LSTM disabled) ──────────
+# ── Fusion Weights ────────────────────────────────────────────
 FUSION_WEIGHTS = {
-    "trajectory_stop": 0.45,
-    "ttc_critical": 0.20,
+    "trajectory_stop": 0.30,
+    "ttc_critical": 0.15,
     "emergency_stop": 0.20,
-    "cnn_lstm": 0.0,
-    "optical_flow": 0.08,
-    "flow_dispersion": 0.07,
+    "cnn_lstm": 0.25,
+    "optical_flow": 0.05,
+    "flow_dispersion": 0.05,
 }
 
 # Legacy score weights for stream pipeline phase gating
@@ -97,6 +97,13 @@ HEALTH_INTERVAL_SEC = 30
 # ── Local Fallback ───────────────────────────────────────────
 LOCAL_EVENTS_DIR = "local_events"
 SNAPSHOTS_DIR = "snapshots"
+
+# ── Incident Clips ───────────────────────────────────────────
+CLIP_SECONDS_BEFORE = 5
+CLIP_SECONDS_AFTER = 5
+INCIDENTS_DIR = "static/uploads/incidents"
+INCIDENTS_INDEX = "local_events/incidents_index.json"
+CLIP_BUFFER_FPS = 10
 
 # ── Data Logger ──────────────────────────────────────────────
 DATA_LOG_CSV = "uyir_data_log.csv"

@@ -25,8 +25,10 @@ from phases.phase_c_anomaly import analyze_anomaly
 from utils.optical_flow import compute_optical_flow, calculate_frame_diff_ratio
 from utils.geometry import calculate_bbox_containment_ratio
 from fusion.scoring import fuse_scores
-from model import model, transform, DEVICE, predict_image
+from model import model, transform, DEVICE, predict_image, SEQUENCE_LEN
 from llm_vision_module import analyze_frame_with_llm
+from utils.incident_clip import create_video_writer, transcode_video_for_browser, extract_clip_from_file
+from utils import incident_store
 
 app = FastAPI()
 
@@ -53,10 +55,29 @@ def init_csv_file():
                 "label"
             ])
 
+XGB_MIN_ROWS_PER_CLASS = 50
+
 def load_xgboost_model():
     global xgb_clf
     if os.path.exists(XGB_MODEL_PATH):
         try:
+            # Check dataset size/balance before trusting XGBoost over fusion logic
+            if os.path.exists(CSV_FILE):
+                import pandas as pd
+                df = pd.read_csv(CSV_FILE)
+                if "label" in df.columns:
+                    counts = df["label"].value_counts()
+                    n0 = int(counts.get(0, 0))
+                    n1 = int(counts.get(1, 0))
+                    if n0 < XGB_MIN_ROWS_PER_CLASS or n1 < XGB_MIN_ROWS_PER_CLASS:
+                        print(
+                            f"[INFO] XGBoost model found but dataset too small/imbalanced "
+                            f"(label0={n0}, label1={n1}, need >= {XGB_MIN_ROWS_PER_CLASS} each). "
+                            f"Falling back to rule-based fusion scoring."
+                        )
+                        xgb_clf = None
+                        return
+
             from xgboost import XGBClassifier
             XGBClassifier._estimator_type = "classifier"
             xgb_clf = XGBClassifier()
@@ -85,6 +106,17 @@ class FeatureLog(BaseModel):
     stopped_ratio: float
     label: int
 
+def _phases_from_details(details):
+    phases = []
+    if (details.get("proximity_score") or details.get("ttc_score") or 0) > 0:
+        phases.append("phase_a")
+    if (details.get("trajectory_score") or details.get("trajectory_stop_score") or 0) > 0:
+        phases.append("phase_b")
+    if (details.get("flow_score") or 0) > 0:
+        phases.append("phase_c")
+    return phases or ["phase_a"]
+
+
 # ================= BASE PATH =================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -107,6 +139,11 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
     return templates.TemplateResponse(request, "index.html")
+
+
+@app.get("/api/incidents")
+def api_incidents(limit: int = 50):
+    return {"incidents": incident_store.list_incidents(limit=limit)}
 
 
 # ================= IMAGE PREDICTION =================
@@ -320,11 +357,12 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
         PROCESS_EVERY_N_FRAMES = 2  # Process every 2nd frame (cuts time by 50%)
         output_fps = fps / PROCESS_EVERY_N_FRAMES
 
-        # Create Video Writer (H.264 MSMF on Windows)
         processed_filename = f"processed_{uuid.uuid4()}.mp4"
         output_path = os.path.join(UPLOAD_DIR, processed_filename)
-        fourcc = cv2.VideoWriter_fourcc(*'avc1')
-        out_writer = cv2.VideoWriter(output_path, cv2.CAP_MSMF, fourcc, output_fps, (width, height))
+        try:
+            out_writer = create_video_writer(output_path, output_fps, width, height)
+        except RuntimeError as e:
+            return JSONResponse(status_code=500, content={"error": str(e)})
 
         # Instantiate modules
         tracker = VehicleTracker()
@@ -340,25 +378,32 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
         triggering_phase_globally = "None"
         accident_details = {}
         max_accident_frame_image = None
-        last_alert_time = 0.0
+        max_accident_frame_idx = 0
+        max_peak_confidence = 0.0
+        max_peak_dl = 0.0
+        max_peak_trigger = "None"
+        max_peak_details = {}
+        last_alert_source_frame = -999999
         consec_count = 0
+        incident_stubs = []
+        source_fps = fps
+        cooldown_frames = max(1, int(config.COOLDOWN_SECONDS * source_fps))
 
         # High-risk intersection zone dimensions (center 50% area)
         zone_x_min, zone_x_max = int(width * 0.25), int(width * 0.75)
         zone_y_min, zone_y_max = int(height * 0.25), int(height * 0.75)
 
         # Main frame loop
-        raw_frame_idx = 0
+        source_frame_idx = -1
         while True:
             ret, frame = cap.read()
             if not ret:
                 break
-                
-            if raw_frame_idx % PROCESS_EVERY_N_FRAMES != 0:
-                raw_frame_idx += 1
+
+            source_frame_idx += 1
+
+            if source_frame_idx % PROCESS_EVERY_N_FRAMES != 0:
                 continue
-                
-            raw_frame_idx += 1
 
             if frame.shape[1] > MAX_WIDTH:
                 frame = cv2.resize(frame, (width, height))
@@ -366,36 +411,42 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-            # --- CNN-LSTM Feature Extraction ---
+            # --- CNN-BiLSTM-Attention Feature Extraction ---
             pil_img = Image.fromarray(frame_rgb)
             frame_feat = transform(pil_img).unsqueeze(0).to(DEVICE)
-            
+
             with torch.no_grad():
-                feat = model.cnn(frame_feat)
+                feat = model.cnn(frame_feat)  # shape: (1, 1280)
 
             features_buffer.append(feat)
-            if len(features_buffer) > 16:
+            if len(features_buffer) > SEQUENCE_LEN:
                 features_buffer.pop(0)
 
             # Pad features if buffer is not full
-            if len(features_buffer) < 16:
-                padded_buffer = [features_buffer[0]] * (16 - len(features_buffer)) + features_buffer
+            if len(features_buffer) < SEQUENCE_LEN:
+                padded_buffer = [features_buffer[0]] * (SEQUENCE_LEN - len(features_buffer)) + features_buffer
             else:
                 padded_buffer = features_buffer
 
-            features_tensor = torch.cat(padded_buffer, dim=0).unsqueeze(0)
+            features_tensor = torch.stack(padded_buffer, dim=1)  # shape: (1, SEQUENCE_LEN, 1280)
             with torch.no_grad():
-                lstm_out, _ = model.lstm(features_tensor)
-                out_state = lstm_out[:, -1, :]
-                logits = model.classifier(out_state)
+                lstm_out, _ = model.bilstm(features_tensor)        # (1, SEQUENCE_LEN, 512)
+                context = model.attention(lstm_out)                # (1, 512)
+                logits = model.classifier(context)
                 probs = torch.softmax(logits, dim=1)
                 cnn_lstm_prob = float(probs[0, 1].item())
 
             # LSTM Peak Memory (rolling 30-frame maximum)
+            # When buffer is still building (< 16 frames), use current prob directly
+            # so the DL model contributes signal from the start of short videos.
             lstm_scores_history.append(cnn_lstm_prob)
             if len(lstm_scores_history) > 30:
                 lstm_scores_history.pop(0)
-            lstm_peak = max(lstm_scores_history)
+            if len(features_buffer) >= 16:
+                lstm_peak = max(lstm_scores_history)
+            else:
+                # Buffer still warming up - use current probability directly
+                lstm_peak = cnn_lstm_prob
 
             # --- YOLO + ByteTrack ---
             active_tracks = tracker.update(frame=frame)
@@ -422,13 +473,17 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
             
             scene_interruption_score = 0.0
             if len(scene_speed_history) >= 20:
-                baseline_speed = sum(scene_speed_history) / len(scene_speed_history)
+                # Use first 25% of history as "before accident" baseline
+                baseline_window = max(5, len(scene_speed_history) // 4)
+                baseline_speed = sum(scene_speed_history[:baseline_window]) / baseline_window
+                # Compare against recent 5 frames
+                recent_speed = sum(scene_speed_history[-5:]) / 5
                 if baseline_speed > 1.0:
-                    speed_drop = (baseline_speed - mean_current_speed) / baseline_speed
-                    if speed_drop > 0.60:
+                    speed_drop = (baseline_speed - recent_speed) / baseline_speed
+                    if speed_drop > 0.50:
                         scene_interruption_score = 1.0
-                    else:
-                        scene_interruption_score = max(0.0, float(speed_drop / 0.60))
+                    elif speed_drop > 0.20:
+                        scene_interruption_score = float(speed_drop / 0.50)
 
             # --- Phase A: Proximity + TTC Filtering ---
             candidate_pairs = proximity_filter(active_tracks)
@@ -464,7 +519,7 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
 
             # Evaluate Candidate Trajectory Conflicts (Phase B)
             for t1, t2, dist, pair_ttc in candidate_pairs:
-                if t1.age < 5 or t2.age < 5:
+                if t1.age < 2 or t2.age < 2:
                     continue
 
                 if is_stationary(t1) and is_stationary(t2):
@@ -477,7 +532,13 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                 ttc_score = max(ttc_score, prox_s, pair_ttc)
 
                 traj_res = analyze_trajectory_conflict(t1, t2)
-                trajectory_score = max(trajectory_score, traj_res["score"])
+                trajectory_score = max(
+                    trajectory_score,
+                    traj_res["score"],
+                    traj_res["trajectory_stop_score"],
+                    traj_res["emergency_stop_score"],
+                    traj_res["relative_velocity_score"],
+                )
                 trajectory_stop_score = max(trajectory_stop_score, traj_res["trajectory_stop_score"])
                 emergency_stop_score = max(emergency_stop_score, traj_res["emergency_stop_score"])
                 relative_velocity_score = max(relative_velocity_score, traj_res["relative_velocity_score"])
@@ -571,15 +632,31 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                         "scene_interruption": float(scene_interruption_score),
                         "diff_burst": float(diff_burst_score),
                         "relative_velocity_score": float(relative_velocity_score),
+                        "trajectory_score": float(trajectory_score),
+                        "proximity_score": float(ttc_score),
+                        "occlusion_score": float(occlusion_score),
+                        "merge_score": float(merge_score),
+                        "lstm_peak": float(lstm_peak),
                     })
             else:
                 frame_accident = fuse_res["is_accident"]
                 frame_score = fuse_res["score"]
                 frame_trigger = fuse_res["trigger_phase"]
                 frame_details = fuse_res["details"]
+                frame_details.update({
+                    "trajectory_score": float(trajectory_score),
+                    "proximity_score": float(ttc_score),
+                    "occlusion_score": float(occlusion_score),
+                    "merge_score": float(merge_score),
+                    "scene_interruption": float(scene_interruption_score),
+                    "spin_score": float(spin_score),
+                    "lstm_peak": float(lstm_peak),
+                })
 
             # Zone Risk weighting multiplier (1.2x score bump in high-risk zones)
-            if is_in_intersection_zone:
+            # Only apply if the base score already indicates meaningful risk signal,
+            # so this can't single-handedly turn a near-zero score into an "accident".
+            if is_in_intersection_zone and frame_score >= 0.35:
                 multiplied_score = min(1.0, frame_score * 1.2)
                 if multiplied_score >= threshold:
                     frame_accident = True
@@ -595,13 +672,21 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
 
             confirmed_accident = (
                 consec_count >= config.CONSECUTIVE_FRAMES
-                and (time.time() - last_alert_time) >= config.COOLDOWN_SECONDS
+                and (source_frame_idx - last_alert_source_frame) >= cooldown_frames
             )
 
             if confirmed_accident:
-                last_alert_time = time.time()
+                last_alert_source_frame = source_frame_idx
                 consec_count = 0
                 display_accident = True
+                incident_stubs.append({
+                    "source_frame_idx": source_frame_idx,
+                    "confidence": float(frame_score),
+                    "dl_confidence": float(lstm_peak),
+                    "trigger_phase": frame_trigger,
+                    "details": dict(frame_details),
+                    "snapshot_frame": frame.copy(),
+                })
             else:
                 display_accident = False
 
@@ -610,7 +695,7 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
             if frame_score > max_accident_score:
                 max_accident_score = frame_score
                 triggering_phase_globally = frame_trigger
-                accident_details = frame_details
+                accident_details = dict(frame_details)
                 is_max_frame = True
 
             if confirmed_accident:
@@ -647,20 +732,37 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                 for pt in track.history:
                     cv2.circle(frame, (int(pt[0]), int(pt[1])), 2, color, -1)
 
-            # Draw collision points & lines
-            for t1, t2, dist, status in frame_collision_pairs:
-                c1, c2 = t1.get_centroid(), t2.get_centroid()
-                pt1 = (int(c1[0]), int(c1[1]))
-                pt2 = (int(c2[0]), int(c2[1]))
+            # Draw collision points & lines — only on confirmed-accident frames,
+            # so the "IMPACT" overlay matches the actual decision (avoids showing
+            # IMPACT markers on frames the system correctly scored as non-accident
+            # due to harmless bbox overlap/occlusion from camera perspective).
+            if display_accident:
+                for t1, t2, dist, status in frame_collision_pairs:
+                    c1, c2 = t1.get_centroid(), t2.get_centroid()
+                    pt1 = (int(c1[0]), int(c1[1]))
+                    pt2 = (int(c2[0]), int(c2[1]))
 
-                cv2.line(frame, pt1, pt2, (0, 255, 255), 2)
-                center_x, center_y = int((c1[0] + c2[0]) / 2), int((c1[1] + c2[1]) / 2)
-                cv2.circle(frame, (center_x, center_y), 8, (0, 0, 255), -1)
-                cv2.circle(frame, (center_x, center_y), 15, (0, 0, 255), 2)
-                cv2.putText(frame, f"IMPACT ({status})", (center_x - 50, center_y - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+                    cv2.line(frame, pt1, pt2, (0, 255, 255), 2)
+                    center_x, center_y = int((c1[0] + c2[0]) / 2), int((c1[1] + c2[1]) / 2)
+                    cv2.circle(frame, (center_x, center_y), 8, (0, 0, 255), -1)
+                    cv2.circle(frame, (center_x, center_y), 15, (0, 0, 255), 2)
+                    cv2.putText(frame, f"IMPACT ({status})", (center_x - 50, center_y - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+
 
             if is_max_frame:
                 max_accident_frame_image = frame.copy()
+                max_accident_frame_idx = source_frame_idx
+                max_peak_confidence = float(frame_score)
+                max_peak_dl = float(lstm_peak)
+                max_peak_trigger = frame_trigger
+                max_peak_details = {
+                    **dict(frame_details),
+                    "occlusion_score": float(occlusion_score),
+                    "merge_score": float(merge_score),
+                    "scene_interruption": float(scene_interruption_score),
+                    "spin_score": float(spin_score),
+                    "lstm_peak": float(lstm_peak),
+                }
 
             # Flashing banner alert
             if display_accident:
@@ -680,7 +782,7 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
             cv2.rectangle(frame, (panel_x, panel_y), (panel_x + panel_w, panel_y + panel_h), (255, 255, 255), 1)
 
             cv2.putText(frame, "ITS SYSTEM MONITOR v3", (panel_x + 10, panel_y + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-            cv2.putText(frame, f"Frame: {raw_frame_idx}/{total_frames} | Active: {len(active_tracks)}", (panel_x + 10, panel_y + 40), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (200, 200, 200), 1)
+            cv2.putText(frame, f"Frame: {source_frame_idx}/{total_frames} | Active: {len(active_tracks)}", (panel_x + 10, panel_y + 40), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (200, 200, 200), 1)
 
             cv2.putText(frame, f"TTC Critical: {ttc_score:.2f}", (panel_x + 10, panel_y + 65), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255) if ttc_score > 0 else (200, 200, 200), 1)
             cv2.putText(frame, f"Trajectory Stop: {trajectory_stop_score:.2f}", (panel_x + 10, panel_y + 85), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 165, 255) if trajectory_stop_score > 0 else (200, 200, 200), 1)
@@ -698,6 +800,66 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
         cap.release()
         out_writer.release()
 
+        if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
+            return JSONResponse(
+                status_code=500,
+                content={"error": "Failed to write processed video output."},
+            )
+
+        transcode_video_for_browser(output_path)
+
+        # Peak-score fallback: UI treats max score >= threshold as incident even when
+        # the consecutive-frame gate did not fire (common with XGBoost single-frame spikes).
+        if not incident_stubs and max_accident_score >= threshold and max_accident_frame_image is not None:
+            incident_stubs.append({
+                "source_frame_idx": max_accident_frame_idx,
+                "confidence": max_peak_confidence,
+                "dl_confidence": max_peak_dl,
+                "trigger_phase": max_peak_trigger,
+                "details": max_peak_details,
+                "snapshot_frame": max_accident_frame_image.copy(),
+            })
+
+        if max_accident_score >= threshold:
+            accident_detected_globally = True
+
+        # Build incident records with clips before deleting source video
+        saved_incidents = []
+        for stub in incident_stubs:
+            incident_id = str(uuid.uuid4())
+            clip_fs, snap_fs, clip_url, snap_url = incident_store.build_incident_paths(incident_id)
+
+            cv2.imwrite(snap_fs, stub["snapshot_frame"])
+            clip_ok = extract_clip_from_file(
+                input_path,
+                stub["source_frame_idx"],
+                source_fps,
+                clip_fs,
+                total_frames=total_frames,
+            )
+
+            details = stub["details"]
+            details.setdefault("lstm_peak", stub["dl_confidence"])
+            llm_text = analyze_frame_with_llm(snap_fs, details)
+
+            record = incident_store.save_incident({
+                "id": incident_id,
+                "source": "web",
+                "camera_id": "UPLOAD",
+                "location": file.filename or "Uploaded video",
+                "frame_number": stub["source_frame_idx"],
+                "time_in_video_sec": round(stub["source_frame_idx"] / source_fps, 2),
+                "confidence": stub["confidence"],
+                "dl_confidence": stub["dl_confidence"],
+                "trigger_phase": stub["trigger_phase"],
+                "phases_triggered": _phases_from_details(details),
+                "clip_url": clip_url if clip_ok else None,
+                "snapshot_url": snap_url,
+                "llm_analysis": llm_text,
+                "details": details,
+            })
+            saved_incidents.append(record)
+
         # Clean up raw video
         if os.path.exists(input_path):
             try:
@@ -705,7 +867,7 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
             except Exception as e:
                 print("Could not clean up raw input file:", e)
 
-        # Save and Analyze exact accident frame
+        # Save and Analyze exact accident frame (highest-confidence incident summary)
         accident_frame_url = None
         llm_analysis_text = "No accident detected."
         if accident_detected_globally and max_accident_frame_image is not None:
@@ -722,7 +884,9 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
             "processed_video_url": f"/static/uploads/{processed_filename}",
             "accident_frame_url": accident_frame_url,
             "llm_analysis": llm_analysis_text,
-            "details": accident_details
+            "details": accident_details,
+            "incidents": saved_incidents,
+            "incident_count": len(saved_incidents),
         }
 
     except Exception as e:
