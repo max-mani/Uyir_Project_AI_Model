@@ -3,25 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accident Detection AI Dashboard</title>
-    <!-- Google Fonts: Plus Jakarta Sans for premium typography -->
+    <title>UYIR - Road Accident Detection System</title>
+    <meta name="description" content="Automated Road Accident Detection and Analysis System for Tamil Nadu Traffic Surveillance">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --bg-color: #0b0f19;
-            --card-bg: rgba(22, 28, 45, 0.7);
-            --border-color: rgba(255, 255, 255, 0.08);
+
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --border-color: #334155;
             --text-primary: #f8fafc;
             --text-secondary: #94a3b8;
-            --accent-primary: #4f46e5;
-            --accent-secondary: #06b6d4;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #0ea5e9;
             --success: #10b981;
             --danger: #ef4444;
-            --danger-glow: rgba(239, 68, 68, 0.15);
-            --success-glow: rgba(16, 185, 129, 0.15);
+            --danger-bg: rgba(239, 68, 68, 0.1);
+            --success-bg: rgba(16, 185, 129, 0.1);
+
+            
         }
 
         * {
@@ -31,8 +34,8 @@
         }
 
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, var(--bg-color) 70%);
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-color);
             color: var(--text-primary);
             min-height: 100vh;
             display: flex;
@@ -44,7 +47,7 @@
 
         .container {
             width: 100%;
-            max-width: 1000px;
+            max-width: 1200px;
             display: flex;
             flex-direction: column;
             gap: 2rem;
@@ -59,10 +62,7 @@
         header h1 {
             font-size: 2.5rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #fff 30%, #a5b4fc 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--text-primary);
             margin-bottom: 0.5rem;
             display: flex;
             align-items: center;
@@ -85,21 +85,18 @@
 
         .card {
             background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--border-color);
-            border-radius: 1.25rem;
-            padding: 1.75rem;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
             display: flex;
             flex-direction: column;
             gap: 1.25rem;
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-            transition: transform 0.3s ease, border-color 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: border-color 0.2s ease;
         }
 
         .card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(99, 102, 241, 0.4);
+            border-color: var(--accent-primary);
         }
 
         .card-header {
@@ -109,15 +106,15 @@
         }
 
         .card-icon {
-            font-size: 1.5rem;
-            background: rgba(255, 255, 255, 0.05);
-            width: 40px;
-            height: 40px;
+            font-size: 1.25rem;
+            background: rgba(255, 255, 255, 0.1);
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 0.75rem;
-            color: #a5b4fc;
+            border-radius: 0.5rem;
+            color: var(--accent-primary);
         }
 
         .card h2 {
@@ -153,13 +150,11 @@
         }
 
         .drop-icon {
-            font-size: 2.5rem;
+            font-size: 2rem;
             color: var(--text-secondary);
-            transition: transform 0.3s ease;
         }
-
+        
         .drop-zone:hover .drop-icon {
-            transform: translateY(-4px);
             color: var(--accent-secondary);
         }
 
@@ -218,16 +213,15 @@
         /* Action Buttons */
         .action-btn {
             font-family: inherit;
-            background: linear-gradient(135deg, var(--accent-primary) 0%, #6366f1 100%);
+            background: var(--accent-primary);
             color: white;
             border: none;
-            padding: 0.875rem;
-            border-radius: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+            transition: background-color 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -235,9 +229,7 @@
         }
 
         .action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
-            filter: brightness(1.1);
+            background: #2563eb;
         }
 
         .action-btn:disabled {
@@ -248,21 +240,17 @@
             box-shadow: none;
         }
 
-        /* Result Panel */
         .results-panel {
             background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--border-color);
-            border-radius: 1.25rem;
+            border-radius: 0.75rem;
             padding: 2rem;
             text-align: center;
             display: none;
             flex-direction: column;
             align-items: center;
             gap: 1rem;
-            animation: scaleIn 0.4s ease-out;
-            box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
         /* Loading Spinner */
@@ -304,18 +292,15 @@
         }
 
         .status-danger {
-            background: var(--danger-glow);
+            background: var(--danger-bg);
             color: var(--danger);
-            border: 2px solid rgba(239, 68, 68, 0.3);
-            box-shadow: 0 0 25px rgba(239, 68, 68, 0.2);
-            animation: flashGlow 2s infinite;
+            border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
         .status-success {
-            background: var(--success-glow);
+            background: var(--success-bg);
             color: var(--success);
-            border: 2px solid rgba(16, 185, 129, 0.3);
-            box-shadow: 0 0 25px rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
         /* Progress Bar / Meter */
@@ -445,19 +430,173 @@
             border-radius: 3px;
         }
         #threshold-slider::-webkit-slider-thumb {
-            height: 18px;
-            width: 18px;
+            height: 16px;
+            width: 16px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent-secondary) 0%, #22d3ee 100%);
+            background: var(--accent-secondary);
             cursor: pointer;
             -webkit-appearance: none;
-            margin-top: -6px;
-            box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
-            transition: transform 0.1s, box-shadow 0.1s;
+            margin-top: -5px;
         }
         #threshold-slider::-webkit-slider-thumb:hover {
-            transform: scale(1.25);
-            box-shadow: 0 0 15px rgba(6, 182, 212, 0.8);
+            background: #0284c7;
+        }
+
+        .incident-history-section {
+            width: 100%;
+            max-width: 1200px;
+            align-self: center;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .incident-history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .incident-history-header h2 {
+            font-size: 1.35rem;
+            font-weight: 800;
+        }
+
+        .incident-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .incident-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.85rem;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .incident-card-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .incident-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0.25rem 0.55rem;
+            border-radius: 0.35rem;
+        }
+
+        .incident-badge.web { background: rgba(59, 130, 246, 0.15); color: #93c5fd; }
+        .incident-badge.stream { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; }
+
+        .incident-card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            padding: 1.25rem;
+        }
+
+        .incident-clip video {
+            width: 100%;
+            border-radius: 0.6rem;
+            border: 1px solid var(--border-color);
+            background: #000;
+        }
+
+        .incident-visuals {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 640px) {
+            .incident-visuals {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .incident-visual-block {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .incident-visual-label {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .incident-snapshot {
+            width: 100%;
+            border-radius: 0.6rem;
+            border: 2px solid var(--danger);
+            background: #000;
+            display: block;
+        }
+
+        .incident-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .incident-confidence-row {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .incident-score-pill {
+            flex: 1;
+            min-width: 120px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 0.6rem;
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        .incident-score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 0.65rem;
+        }
+
+        .incident-score-grid .score-card {
+            padding: 0.75rem 0.5rem;
+        }
+
+        .incident-empty {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 2rem;
+            border: 1px dashed var(--border-color);
+            border-radius: 0.75rem;
+        }
+
+        .incident-llm {
+            margin: 0 1.25rem 1.25rem;
+            padding: 1rem;
+            border-radius: 0.6rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 3px solid var(--accent-secondary);
+            font-size: 0.92rem;
+            line-height: 1.55;
+            color: var(--text-primary);
         }
     </style>
 </head>
@@ -465,8 +604,12 @@
 
 <div class="container">
     <header>
-        <h1>🚨 Accident Detection AI</h1>
-        <p>Real-time computer vision analysis using ResNet18 + LSTM</p>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 0.5rem;">
+            <div style="width: 44px; height: 44px; background: var(--accent-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; color: #fff; letter-spacing: 1px;">U</div>
+            <h1 style="font-size: 1.8rem;">UYIR Road Safety - Accident Detection System</h1>
+        </div>
+        <p>Automated Surveillance Analysis for Tamil Nadu Traffic Monitoring</p>
+        <p style="color: #64748b; font-size: 0.8rem; margin-top: 0.25rem;">Multi-stage Computer Vision Pipeline &middot; Pilot Version</p>
     </header>
 
     <div class="alert-banner" id="error-alert"></div>
@@ -475,12 +618,11 @@
         <!-- Image Card -->
         <div class="card" id="image-card">
             <div class="card-header">
-                <div class="card-icon">📷</div>
+                <div class="card-icon">IMG</div>
                 <h2>Analyze Image</h2>
             </div>
             
             <div class="drop-zone" id="img-dropzone">
-                <div class="drop-icon">📤</div>
                 <div class="drop-text">Drag & drop your image here or <span style="color: var(--accent-secondary); text-decoration: underline;">browse</span></div>
                 <div class="drop-subtext">Supports JPG, PNG, WEBP</div>
                 <input type="file" id="img-input" accept="image/*">
@@ -492,19 +634,18 @@
             </div>
 
             <button class="action-btn" id="predict-image-btn" onclick="uploadImage()" disabled>
-                <span>🔍</span> Predict Image
+                Predict Image
             </button>
         </div>
 
         <!-- Video Card -->
         <div class="card" id="video-card">
             <div class="card-header">
-                <div class="card-icon">🎥</div>
+                <div class="card-icon">VID</div>
                 <h2>Analyze Video</h2>
             </div>
             
             <div class="drop-zone" id="vid-dropzone">
-                <div class="drop-icon">📤</div>
                 <div class="drop-text">Drag & drop your video here or <span style="color: var(--accent-secondary); text-decoration: underline;">browse</span></div>
                 <div class="drop-subtext">Supports MP4, AVI, MOV</div>
                 <input type="file" id="vid-input" accept="video/*">
@@ -516,7 +657,7 @@
             </div>
 
             <button class="action-btn" id="predict-video-btn" onclick="uploadVideo()" disabled>
-                <span>🎬</span> Predict Video
+                Predict Video
             </button>
         </div>
     </div>
@@ -530,11 +671,11 @@
     <!-- Prediction Results Panel -->
     <div class="results-panel" id="results-panel" style="display: none; flex-direction: column; align-items: center; width: 100%;">
         <h3 style="color: var(--text-secondary); text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 0.5rem;">Detection Result</h3>
-        <div id="result-badge" class="status-badge">ACCIDENT</div>
+        <div id="result-badge" class="status-badge">INCIDENT</div>
         
         <div class="meter-container">
             <div class="meter-label">
-                <span>Accident Confidence Level</span>
+                <span>Incident Confidence Level</span>
                 <span id="confidence-percentage">0.00%</span>
             </div>
             <div class="meter-bg">
@@ -545,18 +686,34 @@
         <!-- Adjustable Threshold Controls -->
         <div style="width: 100%; max-width: 320px; margin-top: 1.25rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 1rem; border-radius: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem; text-align: left;">
             <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">
-                <span>Accident Alarm Threshold</span>
+                <span>Incident Alarm Threshold</span>
                 <span id="threshold-val" style="color: var(--accent-secondary); font-weight: 700;">55%</span>
             </div>
-            <input type="range" id="threshold-slider" min="10" max="95" value="55" step="1" style="width: 100%; -webkit-appearance: none; background: rgba(255,255,255,0.08); height: 6px; border-radius: 3px; outline: none; cursor: pointer; display: block; margin: 0.5rem 0;">
+            <input type="range" id="threshold-slider" min="10" max="95" value="55" step="1" style="width: 100%; appearance: none; -webkit-appearance: none; background: rgba(255,255,255,0.08); height: 6px; border-radius: 3px; outline: none; cursor: pointer; display: block; margin: 0.5rem 0;">
             <div style="font-size: 0.75rem; color: var(--text-secondary); opacity: 0.8; line-height: 1.3;">
-                💡 <em>Drag the slider to adjust the threshold. Bounding box overlay annotations are compiled on the server based on the slider threshold.</em>
+                Adjust threshold to tune sensitivity. Annotations are compiled based on the threshold.
             </div>
         </div>
 
         <!-- Triggering Phase Details -->
         <div style="margin-top: 1rem; font-size: 0.95rem; color: var(--text-secondary); background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 0.75rem 1.5rem; border-radius: 0.5rem; width: 100%; max-width: 500px; text-align: center;">
             <strong>Triggering Signal:</strong> <span id="trigger-phase-text" style="color: var(--text-primary); font-weight: 600;">None</span>
+        </div>
+
+        <!-- Traffic Telemetry Panel -->
+        <div style="display: flex; gap: 1rem; width: 100%; max-width: 500px; margin-top: 1rem; justify-content: center;">
+            <div style="flex: 1; background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.2); padding: 0.75rem; border-radius: 0.5rem; text-align: center;">
+                <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Traffic Density</div>
+                <div id="metric-density" style="font-size: 1.15rem; font-weight: 800; color: var(--accent-secondary); margin-top: 0.25rem;">0.00</div>
+            </div>
+            <div style="flex: 1; background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2); padding: 0.75rem; border-radius: 0.5rem; text-align: center;">
+                <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Avg Speed</div>
+                <div id="metric-speed" style="font-size: 1.15rem; font-weight: 800; color: #a5b4fc; margin-top: 0.25rem;">0.00 px/f</div>
+            </div>
+            <div style="flex: 1; background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); padding: 0.75rem; border-radius: 0.5rem; text-align: center;">
+                <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Stopped Ratio</div>
+                <div id="metric-stopped" style="font-size: 1.15rem; font-weight: 800; color: #f59e0b; margin-top: 0.25rem;">0%</div>
+            </div>
         </div>
 
         <!-- Multi-Stage Fusion Breakdown -->
@@ -594,17 +751,116 @@
                 <div id="score-scene" style="font-size: 1.25rem; font-weight: 800; color: #ec4899;">0.00</div>
             </div>
         </div>
+        
+        <!-- Automated Scene Assessment & Exact Frame Analysis -->
+        <div id="llm-analysis-panel" style="display: none; flex-direction: column; width: 100%; max-width: 800px; margin-top: 1.5rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 0.75rem; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+            <div style="background: rgba(255, 255, 255, 0.03); padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <h3 style="font-size: 1rem; color: var(--text-primary); font-weight: 700;">Automated Scene Assessment</h3>
+                </div>
+                <div style="font-size: 0.75rem; background: rgba(16, 185, 129, 0.2); color: var(--success); padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-weight: 700;">ACTIVE</div>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 0;">
+                <div style="flex: 1; min-width: 300px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">Exact Collision Frame</div>
+                    <img id="exact-accident-frame" src="" style="width: 100%; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1);" alt="Exact Accident Frame">
+                </div>
+                <div style="flex: 1; min-width: 300px; padding: 1.5rem; border-left: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 1rem; background: rgba(0, 0, 0, 0.1);">
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">Scene Reasoning Output</div>
+                    <div id="llm-reasoning-text" style="font-size: 0.95rem; line-height: 1.6; color: var(--text-primary); background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 0.5rem; font-style: italic; border-left: 3px solid var(--accent-secondary);">
+                        Analysis loading...
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Visual Analysis Feedback -->
         <h3 style="color: var(--text-secondary); text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1.5px; font-weight: 700; margin-top: 2rem; margin-bottom: 0.75rem;">Processed Visual Output</h3>
-        <div id="visual-output-container" style="width: 100%; max-width: 640px; border-radius: 1rem; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); background: #060913; box-shadow: 0 10px 40px rgba(0,0,0,0.8);">
-            <video id="processed-video-preview" style="width: 100%; display: none;" controls autoplay loop></video>
+        <div id="visual-output-container" style="width: 100%; max-width: 640px; border-radius: 0.75rem; overflow: hidden; border: 1px solid var(--border-color); background: var(--card-bg); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+            <video id="processed-video-preview" style="width: 100%; display: none;" controls autoplay loop muted playsinline type="video/mp4"></video>
             <img id="processed-image-preview" style="width: 100%; display: none;" alt="Processed Output Image">
+            <div id="visual-output-fallback" style="display: none; padding: 1.25rem; color: var(--text-secondary); font-size: 0.9rem; text-align: center;">
+                Processed video could not be previewed in this browser.
+                <a id="visual-output-download" href="#" target="_blank" rel="noopener" style="color: var(--accent-secondary); font-weight: 600;">Download annotated clip</a>
+            </div>
+        </div>
+
+        <!-- Logging Feedback Buttons -->
+        <div style="width: 100%; max-width: 500px; margin-top: 1.5rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 0.75rem; text-align: center; display: flex; flex-direction: column; gap: 0.75rem;">
+            <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">
+                Log Event for Model Improvement
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <button onclick="submitFeatureLog(0)" class="action-btn" style="background: rgba(16, 185, 129, 0.15); border: 1px solid var(--success); color: var(--success); box-shadow: none; flex: 1; padding: 0.6rem; font-size: 0.85rem;">
+                    Log as No Incident (0)
+                </button>
+                <button onclick="submitFeatureLog(1)" class="action-btn" style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: var(--danger); box-shadow: none; flex: 1; padding: 0.6rem; font-size: 0.85rem;">
+                    Log as Incident (1)
+                </button>
+            </div>
+            <div id="log-status-msg" style="font-size: 0.8rem; color: var(--success); font-weight: 600;"></div>
         </div>
     </div>
 
+    <!-- XGBoost Active Learning Management Panel -->
+    <div class="card" id="xgboost-mgmt-panel" style="width: 100%; max-width: 1000px; margin-top: 1rem; align-self: center;">
+        <div class="card-header">
+            <div class="card-icon">DB</div>
+            <h2>Model Training & Data Collection</h2>
+        </div>
+        
+        <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 1.5rem; border-radius: 1rem; width: 100%;">
+            <!-- Left Side: Dataset Stats -->
+            <div style="flex: 1; min-width: 280px; display: flex; flex-direction: column; gap: 0.75rem;">
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-primary);">Dataset Collection Progress</h3>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary);">
+                    <span>Total Rows Logged:</span>
+                    <span id="ds-total-rows" style="font-weight: 700; color: var(--text-primary);">0</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary);">
+                    <span>Incident Rows (Label 1):</span>
+                    <span id="ds-accident-rows" style="font-weight: 700; color: var(--danger);">0 / 200</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary);">
+                    <span>Non-Incident Rows (Label 0):</span>
+                    <span id="ds-normal-rows" style="font-weight: 700; color: var(--success);">0 / 200</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary);">
+                    <span>XGBoost Model Status:</span>
+                    <span id="ds-xgb-status" style="font-weight: 700; color: #64748b;">Inactive (Using Heuristic fallback)</span>
+                </div>
+            </div>
+
+            <!-- Right Side: Action Buttons -->
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; min-width: 200px;">
+                <button class="action-btn" id="train-xgb-btn" onclick="trainXGBoost()">
+                    Train Model
+                </button>
+                <div id="train-result-info" style="font-size: 0.8rem; color: var(--text-secondary); text-align: center;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Incident History Dashboard -->
+    <section class="incident-history-section" id="incident-history-section">
+        <div class="incident-history-header">
+            <div>
+                <h2>Incident History</h2>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">
+                    5 seconds before and after each confirmed accident, with full phase and DL metrics.
+                </p>
+            </div>
+            <button class="action-btn" style="width: auto; padding: 0.65rem 1.25rem; font-size: 0.85rem;" onclick="loadIncidents()">
+                Refresh
+            </button>
+        </div>
+        <div id="incident-list" class="incident-list">
+            <div class="incident-empty" id="incident-empty">Loading incidents...</div>
+        </div>
+    </section>
+
     <footer>
-        Multi-Stage Intelligent Transportation System (ITS) Accident Detection Dashboard
+        UYIR Foundation &middot; Road Accident Detection System &middot; Tamil Nadu Police Pilot Programme
     </footer>
 </div>
 
@@ -637,6 +893,8 @@
     // Processed output elements
     const processedVideoPreview = document.getElementById('processed-video-preview');
     const processedImagePreview = document.getElementById('processed-image-preview');
+    const visualOutputFallback = document.getElementById('visual-output-fallback');
+    const visualOutputDownload = document.getElementById('visual-output-download');
     const triggerPhaseText = document.getElementById('trigger-phase-text');
     const scoreProx = document.getElementById('score-prox');
     const scoreTraj = document.getElementById('score-traj');
@@ -763,7 +1021,7 @@
         hideResults();
         
         loadingPanel.style.display = 'flex';
-        loaderStatus.textContent = "Processing image (YOLOv8 vehicle detection + proximity analysis + CNN-LSTM)...";
+        loaderStatus.textContent = "Analyzing image. Please wait...";
         predictImageBtn.disabled = true;
 
         let formData = new FormData();
@@ -798,7 +1056,7 @@
         hideResults();
 
         loadingPanel.style.display = 'flex';
-        loaderStatus.textContent = "Analyzing video frame-by-frame (YOLOv8 + Custom Tracking + Proximity + Trajectory Analysis + Optical Flow + CNN-LSTM)... This may take a minute.";
+        loaderStatus.textContent = "Processing video footage. This may take a moment...";
         predictVideoBtn.disabled = true;
 
         let formData = new FormData();
@@ -826,7 +1084,8 @@
         }
     }
 
-    // Global state for thresholding
+    // Global    // Global state for active learning dataset building
+    let currentFeatures = null;
     let lastConfidence = 0.0;
     const thresholdSlider = document.getElementById('threshold-slider');
     const thresholdVal = document.getElementById('threshold-val');
@@ -845,11 +1104,11 @@
 
         if (confidence >= threshold) {
             resultBadge.classList.add('status-danger');
-            resultBadge.innerHTML = '🚨 ACCIDENT DETECTED';
+            resultBadge.innerHTML = 'INCIDENT DETECTED';
             confidenceBar.classList.add('danger');
         } else {
             resultBadge.classList.add('status-success');
-            resultBadge.innerHTML = '✅ NO ACCIDENT';
+            resultBadge.innerHTML = 'NO INCIDENT';
             confidenceBar.classList.add('success');
         }
     }
@@ -864,6 +1123,9 @@
         const confidenceVal = parseFloat(data.confidence);
         lastConfidence = confidenceVal;
 
+        // Reset logging status message
+        document.getElementById('log-status-msg').textContent = "";
+
         // Apply thresholding based on slider value
         const currentThreshold = parseInt(thresholdSlider.value);
         applyThresholdClassification(confidenceVal, currentThreshold);
@@ -874,11 +1136,32 @@
         // Update triggering phase
         triggerPhaseText.textContent = data.trigger_phase || "None";
 
+        // Save current features globally for logging
+        if (data.details) {
+            currentFeatures = {
+                proximity: data.details.proximity_score || 0.0,
+                trajectory: data.details.trajectory_score || 0.0,
+                anomaly: data.details.flow_score || 0.0,
+                cnn: data.details.lstm_peak || data.details.cnn_lstm_prob || 0.0,
+                occlusion: data.details.occlusion_score || 0.0,
+                merge: data.details.merge_score || 0.0,
+                kinetic: data.details.energy_drop || 0.0,
+                density: data.details.traffic_density || 0.0,
+                avg_speed: data.details.avg_speed || 0.0,
+                stopped_ratio: data.details.stopped_ratio || 0.0
+            };
+
+            // Update traffic telemetry labels
+            document.getElementById('metric-density').textContent = (data.details.traffic_density || 0.0).toFixed(2);
+            document.getElementById('metric-speed').textContent = (data.details.avg_speed || 0.0).toFixed(2) + ' px/f';
+            document.getElementById('metric-stopped').textContent = Math.round((data.details.stopped_ratio || 0.0) * 100) + '%';
+        }
+
         // Update details breakdown
         if (data.details) {
             scoreProx.textContent = (data.details.proximity_score || 0).toFixed(2);
             scoreTraj.textContent = (data.details.trajectory_score || 0).toFixed(2);
-            scoreAnom.textContent = (data.details.anomaly_score || 0).toFixed(2);
+            scoreAnom.textContent = (data.details.flow_score || 0).toFixed(2);
             scoreDl.textContent = (data.details.lstm_peak || data.details.cnn_lstm_prob || 0).toFixed(2);
             scoreOccl.textContent = (data.details.occlusion_score || 0).toFixed(2);
             scoreMerge.textContent = (data.details.merge_score || 0).toFixed(2);
@@ -898,16 +1181,41 @@
         // Render processed visual feedback
         processedVideoPreview.style.display = 'none';
         processedImagePreview.style.display = 'none';
+        visualOutputFallback.style.display = 'none';
+        processedVideoPreview.removeAttribute('src');
+        processedImagePreview.removeAttribute('src');
+        
+        const llmPanel = document.getElementById('llm-analysis-panel');
+        const exactFrame = document.getElementById('exact-accident-frame');
+        const llmText = document.getElementById('llm-reasoning-text');
 
         if (type === 'video' && data.processed_video_url) {
-            // Append cache-buster to prevent video caching
-            processedVideoPreview.src = data.processed_video_url + "?t=" + new Date().getTime();
+            const videoUrl = data.processed_video_url + "?t=" + new Date().getTime();
+            processedVideoPreview.onerror = () => {
+                processedVideoPreview.style.display = 'none';
+                visualOutputDownload.href = videoUrl;
+                visualOutputFallback.style.display = 'block';
+            };
+            processedVideoPreview.onloadeddata = () => {
+                visualOutputFallback.style.display = 'none';
+            };
+
+            processedVideoPreview.src = videoUrl;
             processedVideoPreview.style.display = 'block';
             processedVideoPreview.load();
             processedVideoPreview.play().catch(e => console.log("Auto-play blocked:", e));
+            
+            if (data.accident_frame_url) {
+                exactFrame.src = data.accident_frame_url + "?t=" + new Date().getTime();
+                llmText.textContent = data.llm_analysis || "No analysis provided.";
+                llmPanel.style.display = 'flex';
+            } else {
+                llmPanel.style.display = 'none';
+            }
         } else if (type === 'image' && data.processed_image_url) {
             processedImagePreview.src = data.processed_image_url + "?t=" + new Date().getTime();
             processedImagePreview.style.display = 'block';
+            llmPanel.style.display = 'none';
         }
 
         resultsPanel.style.display = 'flex';
@@ -917,9 +1225,255 @@
             confidenceBar.style.width = confidenceVal + '%';
         }, 50);
 
+        if (type === 'video') {
+            loadIncidents();
+        }
+
         // Smooth scroll to results
         resultsPanel.scrollIntoView({ behavior: 'smooth' });
     }
+
+    function formatIncidentTime(timestamp) {
+        if (!timestamp) return "Unknown time";
+        const date = new Date(timestamp);
+        if (Number.isNaN(date.getTime())) return timestamp;
+        return date.toLocaleString();
+    }
+
+    function scoreValue(details, ...keys) {
+        if (!details) return 0;
+        for (const key of keys) {
+            if (details[key] !== undefined && details[key] !== null) {
+                return Number(details[key]) || 0;
+            }
+        }
+        return 0;
+    }
+
+    function renderIncidentCard(incident) {
+        const details = incident.details || {};
+        const fusedPct = ((incident.confidence || 0) * 100).toFixed(1);
+        const dlPct = ((incident.dl_confidence || scoreValue(details, "lstm_peak", "cnn_lstm_prob") || 0) * 100).toFixed(1);
+        const sourceLabel = incident.source === "stream"
+            ? (incident.camera_id || "Camera")
+            : "Upload";
+        const sourceClass = incident.source === "stream" ? "stream" : "web";
+        const frameUrl = incident.snapshot_url || incident.accident_frame_url || "";
+        const clipHtml = incident.clip_url
+            ? `<video controls playsinline preload="metadata" src="${incident.clip_url}?t=${Date.now()}"></video>`
+            : `<div class="incident-empty" style="padding:1rem;">Clip unavailable (ffmpeg may be missing).</div>`;
+        const snapshotHtml = frameUrl
+            ? `<img class="incident-snapshot" src="${frameUrl}?t=${Date.now()}" alt="Accident frame">`
+            : `<div class="incident-empty" style="padding:1rem;">Accident frame unavailable.</div>`;
+        const llmHtml = incident.llm_analysis
+            ? `<div class="incident-llm">${incident.llm_analysis}</div>`
+            : "";
+
+        return `
+            <article class="incident-card" data-incident-id="${incident.id || ""}">
+                <div class="incident-card-header">
+                    <div>
+                        <div style="font-weight: 700; font-size: 1rem;">${formatIncidentTime(incident.timestamp)}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.2rem;">
+                            ${incident.location || "Unknown location"}
+                            ${incident.time_in_video_sec !== undefined ? ` · t=${incident.time_in_video_sec}s` : ""}
+                            ${incident.frame_number !== undefined ? ` · frame ${incident.frame_number}` : ""}
+                        </div>
+                    </div>
+                    <span class="incident-badge ${sourceClass}">${sourceLabel}</span>
+                </div>
+                <div class="incident-card-body">
+                    <div class="incident-visuals">
+                        <div class="incident-visual-block">
+                            <div class="incident-visual-label">Incident Clip (5s before &amp; after)</div>
+                            ${clipHtml}
+                        </div>
+                        <div class="incident-visual-block">
+                            <div class="incident-visual-label">Accident Frame</div>
+                            ${snapshotHtml}
+                        </div>
+                    </div>
+                    <div class="incident-metrics">
+                        <div class="incident-confidence-row">
+                            <div class="incident-score-pill">
+                                <div style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Fused Confidence</div>
+                                <div style="font-size: 1.35rem; font-weight: 800; color: var(--danger); margin-top: 0.25rem;">${fusedPct}%</div>
+                            </div>
+                            <div class="incident-score-pill">
+                                <div style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">CNN-LSTM DL</div>
+                                <div style="font-size: 1.35rem; font-weight: 800; color: #ec4899; margin-top: 0.25rem;">${dlPct}%</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.88rem; color: var(--text-secondary); background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 0.65rem 0.85rem; border-radius: 0.5rem;">
+                            <strong>Trigger:</strong> <span style="color: var(--text-primary);">${incident.trigger_phase || "None"}</span>
+                        </div>
+                        <div style="display:flex; gap:0.65rem; flex-wrap:wrap; font-size:0.78rem; color:var(--text-secondary);">
+                            <span>Density: ${scoreValue(details, "traffic_density").toFixed(2)}</span>
+                            <span>Speed: ${scoreValue(details, "avg_speed").toFixed(2)} px/f</span>
+                            <span>Stopped: ${Math.round(scoreValue(details, "stopped_ratio") * 100)}%</span>
+                        </div>
+                        <div class="incident-score-grid">
+                            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); border-radius: 0.75rem; text-align: center;">
+                                <div style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Phase A</div>
+                                <div style="font-size: 1.05rem; font-weight: 800; color: var(--accent-secondary);">${scoreValue(details, "proximity_score", "ttc_score").toFixed(2)}</div>
+                            </div>
+                            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); border-radius: 0.75rem; text-align: center;">
+                                <div style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Phase B</div>
+                                <div style="font-size: 1.05rem; font-weight: 800; color: #f59e0b;">${scoreValue(details, "trajectory_score", "trajectory_stop_score").toFixed(2)}</div>
+                            </div>
+                            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); border-radius: 0.75rem; text-align: center;">
+                                <div style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Phase C</div>
+                                <div style="font-size: 1.05rem; font-weight: 800; color: #ef4444;">${scoreValue(details, "flow_score").toFixed(2)}</div>
+                            </div>
+                            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); border-radius: 0.75rem; text-align: center;">
+                                <div style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Occlusion</div>
+                                <div style="font-size: 1.05rem; font-weight: 800; color: var(--accent-secondary);">${scoreValue(details, "occlusion_score").toFixed(2)}</div>
+                            </div>
+                            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); border-radius: 0.75rem; text-align: center;">
+                                <div style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Merge</div>
+                                <div style="font-size: 1.05rem; font-weight: 800; color: #f59e0b;">${scoreValue(details, "merge_score").toFixed(2)}</div>
+                            </div>
+                            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); border-radius: 0.75rem; text-align: center;">
+                                <div style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Kinetic</div>
+                                <div style="font-size: 1.05rem; font-weight: 800; color: #ef4444;">${scoreValue(details, "energy_drop", "emergency_stop_score").toFixed(2)}</div>
+                            </div>
+                            <div class="score-card" style="background: rgba(22, 28, 45, 0.5); border: 1px solid var(--border-color); border-radius: 0.75rem; text-align: center;">
+                                <div style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Scene</div>
+                                <div style="font-size: 1.05rem; font-weight: 800; color: #ec4899;">${scoreValue(details, "scene_interruption").toFixed(2)}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                ${llmHtml}
+            </article>
+        `;
+    }
+
+    function renderIncidentList(incidents) {
+        const listEl = document.getElementById("incident-list");
+        if (!incidents || incidents.length === 0) {
+            listEl.innerHTML = `<div class="incident-empty">No incidents recorded yet. Upload a video or run the live stream pipeline.</div>`;
+            return;
+        }
+        listEl.innerHTML = incidents.map(renderIncidentCard).join("");
+    }
+
+    function prependIncidents(newIncidents) {
+        const listEl = document.getElementById("incident-list");
+        const existingIds = new Set(
+            Array.from(listEl.querySelectorAll("[data-incident-id]"))
+                .map(el => el.getAttribute("data-incident-id"))
+                .filter(Boolean)
+        );
+        const fresh = (newIncidents || []).filter(item => item.id && !existingIds.has(item.id));
+        if (fresh.length === 0) return;
+
+        const emptyEl = document.getElementById("incident-empty");
+        if (emptyEl) emptyEl.remove();
+
+        listEl.insertAdjacentHTML("afterbegin", fresh.map(renderIncidentCard).join(""));
+    }
+
+    async function loadIncidents() {
+        const listEl = document.getElementById("incident-list");
+        try {
+            const response = await fetch("/api/incidents?limit=50");
+            if (!response.ok) throw new Error("Failed to load incidents.");
+            const data = await response.json();
+            renderIncidentList(data.incidents || []);
+        } catch (error) {
+            listEl.innerHTML = `<div class="incident-empty">Could not load incidents: ${error.message}</div>`;
+        }
+    }
+
+    // Active learning submit log
+    async function submitFeatureLog(label) {
+        if (!currentFeatures) return;
+        
+        const logStatusMsg = document.getElementById('log-status-msg');
+        logStatusMsg.style.color = 'var(--text-secondary)';
+        logStatusMsg.textContent = "Logging features to server...";
+        
+        const payload = { ...currentFeatures, label: label };
+        
+        try {
+            const response = await fetch("/log-feature", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            
+            if (!response.ok) throw new Error("Failed to log features.");
+            
+            const data = await response.json();
+            logStatusMsg.style.color = 'var(--success)';
+            logStatusMsg.textContent = `Logged successfully (Total: ${data.total_rows} rows)`;
+            
+            // Refresh dataset status panel
+            await refreshDatasetStatus();
+        } catch (error) {
+            logStatusMsg.style.color = 'var(--danger)';
+            logStatusMsg.textContent = "Error: " + error.message;
+        }
+    }
+
+    // Refresh model dataset statistics
+    async function refreshDatasetStatus() {
+        try {
+            const response = await fetch("/dataset-status");
+            if (!response.ok) return;
+            const data = await response.json();
+            
+            document.getElementById('ds-total-rows').textContent = data.total_rows;
+            document.getElementById('ds-accident-rows').textContent = `${data.class_1} / 200`;
+            document.getElementById('ds-normal-rows').textContent = `${data.class_0} / 200`;
+            
+            const statusBadgeEl = document.getElementById('ds-xgb-status');
+            if (data.xgboost_active) {
+                statusBadgeEl.textContent = "Active (XGBoost Classifier deployed)";
+                statusBadgeEl.style.color = "var(--success)";
+            } else {
+                statusBadgeEl.textContent = "Inactive (Using Heuristic fallback)";
+                statusBadgeEl.style.color = "var(--text-secondary)";
+            }
+        } catch (e) {
+            console.error("Error fetching dataset status:", e);
+        }
+    }
+
+    // Train the XGBoost model
+    async function trainXGBoost() {
+        const trainBtn = document.getElementById('train-xgb-btn');
+        const resultInfo = document.getElementById('train-result-info');
+        
+        trainBtn.disabled = true;
+        resultInfo.style.color = 'var(--text-secondary)';
+        resultInfo.textContent = "Training XGBoost Classifier on logged CSV dataset...";
+        
+        try {
+            const response = await fetch("/train-model", { method: "POST" });
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || "Training failed.");
+            }
+            
+            resultInfo.style.color = 'var(--success)';
+            resultInfo.innerHTML = `<strong>Success!</strong> Model trained.<br>Accuracy: ${(data.accuracy * 100).toFixed(2)}% | Rows: ${data.total_rows}`;
+            
+            await refreshDatasetStatus();
+        } catch (error) {
+            resultInfo.style.color = 'var(--danger)';
+            resultInfo.textContent = "Error: " + error.message;
+        } finally {
+            trainBtn.disabled = false;
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        refreshDatasetStatus();
+        loadIncidents();
+    });
 </script>
 </body>
 </html>

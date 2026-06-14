@@ -1,43 +1,21 @@
-import numpy as np
+import math
 
-def compute_iou(box1, box2):
-    """
-    Computes Intersection over Union (IoU) between two bounding boxes.
-    box: [x1, y1, x2, y2]
-    """
-    x1_inter = max(box1[0], box2[0])
-    y1_inter = max(box1[1], box2[1])
-    x2_inter = min(box1[2], box2[2])
-    y2_inter = min(box1[3], box2[3])
-    
-    inter_area = max(0, x2_inter - x1_inter) * max(0, y1_inter - y2_inter)
-    if inter_area == 0:
-        # Check intersection in standard coords where y2 > y1
-        x1_inter = max(box1[0], box2[0])
-        y1_inter = max(box1[1], box2[1])
-        x2_inter = min(box1[2], box2[2])
-        y2_inter = min(box1[3], box2[3])
-        inter_area = max(0, x2_inter - x1_inter) * max(0, y2_inter - y1_inter)
-        
-    area1 = (box1[2] - box1[0]) * (box1[3] - box1[1])
-    area2 = (box2[2] - box2[0]) * (box2[3] - box2[1])
-    
-    union_area = area1 + area2 - inter_area
-    if union_area <= 0:
-        return 0.0
-    return float(inter_area / union_area)
+import config
+
 
 class Track:
     def __init__(self, track_id, bbox, label, conf):
         self.track_id = track_id
-        self.bbox = bbox  # [x1, y1, x2, y2]
+        self.bbox = bbox
         self.label = label
         self.confidence = conf
-        self.history = [self.get_centroid()]  # Centroid history
-        self.bbox_history = [bbox]  # Bounding box history
-        self.velocities = [(0.0, 0.0)]  # Velocity vectors (vx, vy)
+        self.history = [self.get_centroid()]
+        self.bbox_history = [bbox]
+        self.velocities = [(0.0, 0.0)]
+        self.speed_history = [0.0]
         self.age = 1
         self.missing_count = 0
+        self.last_seen_frame = 0
 
     def get_centroid(self):
         x1, y1, x2, y2 = self.bbox
@@ -48,107 +26,118 @@ class Track:
         self.bbox = bbox
         self.confidence = conf
         curr_centroid = self.get_centroid()
-        
-        # Calculate velocity vector (pixels per frame)
+
         vx = curr_centroid[0] - prev_centroid[0]
         vy = curr_centroid[1] - prev_centroid[1]
-        
+        speed = math.sqrt(vx * vx + vy * vy)
+
         self.velocities.append((vx, vy))
-        if len(self.velocities) > 30:
+        self.speed_history.append(speed)
+
+        max_len = config.TRACK_HISTORY_FRAMES
+        if len(self.velocities) > max_len:
             self.velocities.pop(0)
+        if len(self.speed_history) > max_len:
+            self.speed_history.pop(0)
 
         self.history.append(curr_centroid)
-        if len(self.history) > 30:
+        if len(self.history) > max_len:
             self.history.pop(0)
 
         self.bbox_history.append(bbox)
-        if len(self.bbox_history) > 30:
+        if len(self.bbox_history) > max_len:
             self.bbox_history.pop(0)
 
         self.missing_count = 0
         self.age += 1
+        self.last_seen_frame = getattr(self, "_current_frame", self.last_seen_frame)
 
-class VehicleTracker:
-    def __init__(self, iou_threshold=0.3, max_missing=10):
+
+class ByteTrackTracker:
+    """
+    YOLOv8 + ByteTrack tracker. Maintains Track objects compatible
+    with the existing phase modules and app.py pipeline.
+    """
+
+    def __init__(self, model_name=None, conf_threshold=None):
+        from detection.yolo_module import get_yolo_model
+        model_path = model_name or config.VEHICLE_MODEL_PATH
+        self.model = get_yolo_model(model_path)
+        self.conf_threshold = conf_threshold or config.VEHICLE_CONF_THRESHOLD
         self.tracks = {}
-        self.next_id = 1
-        self.iou_threshold = iou_threshold
-        self.max_missing = max_missing
+        self.frame_count = 0
+        self.max_missing = config.TRACK_LOST_TIMEOUT
 
-    def update(self, detections):
+    def update(self, detections=None, frame=None):
         """
-        Updates tracks with new detections.
-        detections: list of dicts: [{"bbox": [x1, y1, x2, y2], "confidence": float, "label": str}]
-        Returns list of active tracks.
+        Update tracks from a frame using ByteTrack, or from raw detections
+        (legacy path for static image processing without tracking IDs).
         """
-        # Get active track IDs
-        active_track_ids = list(self.tracks.keys())
-        
-        # If no active tracks, initialize all detections as new tracks
-        if not active_track_ids:
-            for det in detections:
-                track = Track(self.next_id, det["bbox"], det["label"], det["confidence"])
-                self.tracks[self.next_id] = track
-                self.next_id += 1
-            return list(self.tracks.values())
+        if frame is not None:
+            return self._update_from_frame(frame)
 
-        # Greedy matching based on IoU
-        matches = []
-        unmatched_detections = list(range(len(detections)))
-        unmatched_tracks = list(active_track_ids)
+        return self._update_from_detections(detections or [])
 
-        # Build list of IoU scores
-        iou_matrix = []
-        for t_id in unmatched_tracks:
-            track = self.tracks[t_id]
-            for d_idx in unmatched_detections:
-                det = detections[d_idx]
-                iou = compute_iou(track.bbox, det["bbox"])
-                if iou >= self.iou_threshold:
-                    iou_matrix.append((iou, t_id, d_idx))
+    def _update_from_frame(self, frame):
+        self.frame_count += 1
+        active_ids = set()
 
-        # Sort matches by highest IoU descending
-        iou_matrix.sort(key=lambda x: x[0], reverse=True)
+        results = self.model.track(
+            frame,
+            persist=True,
+            conf=self.conf_threshold,
+            tracker="bytetrack.yaml",
+            verbose=False,
+        )
 
-        for iou, t_id, d_idx in iou_matrix:
-            if t_id in unmatched_tracks and d_idx in unmatched_detections:
-                matches.append((t_id, d_idx))
-                unmatched_tracks.remove(t_id)
-                unmatched_detections.remove(d_idx)
+        result = results[0]
+        if result.boxes is not None and result.boxes.id is not None:
+            boxes = result.boxes.xyxy.cpu().numpy()
+            ids = result.boxes.id.cpu().numpy().astype(int)
+            classes = result.boxes.cls.cpu().numpy().astype(int)
+            confs = result.boxes.conf.cpu().numpy()
 
-        # Update matched tracks
-        for t_id, d_idx in matches:
-            det = detections[d_idx]
-            self.tracks[t_id].update(det["bbox"], det["confidence"])
+            for bbox, tid, cls_id, conf in zip(boxes, ids, classes, confs):
+                if int(cls_id) not in config.TARGET_CLASSES:
+                    continue
 
-        # Increment missing count for unmatched tracks, mark for deletion
-        deleted_ids = []
-        for t_id in unmatched_tracks:
-            track = self.tracks[t_id]
-            track.missing_count += 1
-            # Add virtual velocity update (keep moving with same velocity)
-            if len(track.velocities) > 0:
-                vx, vy = track.velocities[-1]
-                x1, y1, x2, y2 = track.bbox
-                new_bbox = [x1 + vx, y1 + vy, x2 + vx, y2 + vy]
-                track.bbox = new_bbox
-                track.history.append(track.get_centroid())
-                if len(track.history) > 30:
-                    track.history.pop(0)
-            
-            if track.missing_count > self.max_missing:
-                deleted_ids.append(t_id)
+                bbox_list = bbox.tolist()
+                label = config.TARGET_CLASSES[int(cls_id)]
 
-        # Delete stale tracks
-        for t_id in deleted_ids:
-            del self.tracks[t_id]
+                if tid in self.tracks:
+                    track = self.tracks[tid]
+                    track._current_frame = self.frame_count
+                    track.update(bbox_list, float(conf))
+                    track.last_seen_frame = self.frame_count
+                else:
+                    track = Track(tid, bbox_list, label, float(conf))
+                    track.last_seen_frame = self.frame_count
+                    self.tracks[tid] = track
 
-        # Spawn new tracks for unmatched detections
-        for d_idx in unmatched_detections:
-            det = detections[d_idx]
-            track = Track(self.next_id, det["bbox"], det["label"], det["confidence"])
-            self.tracks[self.next_id] = track
-            self.next_id += 1
+                active_ids.add(int(tid))
 
-        # Return active tracks that have been updated recently
-        return [t for t in self.tracks.values() if t.missing_count == 0]
+        stale = [
+            tid for tid, track in self.tracks.items()
+            if self.frame_count - track.last_seen_frame > self.max_missing
+        ]
+        for tid in stale:
+            del self.tracks[tid]
+
+        return [self.tracks[tid] for tid in active_ids if tid in self.tracks]
+
+    def _update_from_detections(self, detections):
+        """Fallback for single-frame image processing without ByteTrack IDs."""
+        active_tracks = []
+        for idx, det in enumerate(detections):
+            track_id = idx + 1
+            if track_id in self.tracks:
+                self.tracks[track_id].update(det["bbox"], det["confidence"])
+            else:
+                self.tracks[track_id] = Track(
+                    track_id, det["bbox"], det["label"], det["confidence"]
+                )
+            active_tracks.append(self.tracks[track_id])
+        return active_tracks
+
+
+VehicleTracker = ByteTrackTracker

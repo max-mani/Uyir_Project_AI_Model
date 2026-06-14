@@ -46,8 +46,6 @@ Thumbs.db
 .env
 .env.local
 
-
-
 # Uploaded files and temporary uploads
 static/uploads/*
 !static/uploads/.gitkeep

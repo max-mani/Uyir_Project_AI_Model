@@ -2,12 +2,12 @@ import os
 import torch
 import torch.nn as nn
 from torchvision import transforms
-from torchvision.models import resnet18, ResNet18_Weights
+from torchvision.models import efficientnet_b0, EfficientNet_B0_Weights
 from PIL import Image
 import cv2
 
 # ================= CONFIG =================
-SEQUENCE_LEN = 16
+SEQUENCE_LEN = 32
 MODEL_PATH = "model_output/accident_model.pth"
 
 CLASS_NAMES = {
@@ -15,11 +15,15 @@ CLASS_NAMES = {
     1: "ACCIDENT"
 }
 
+NUM_CLASSES = 2
+
 DEVICE = torch.device("cpu")
 
 # ================= TRANSFORM =================
+# Must match training transform (resize size + normalization).
+# Note: no random flip / color jitter here - those are train-time only.
 transform = transforms.Compose([
-    transforms.Resize((112, 112)),
+    transforms.Resize((240, 240)),
     transforms.ToTensor(),
     transforms.Normalize(
         mean=[0.485, 0.456, 0.406],
@@ -28,26 +32,41 @@ transform = transforms.Compose([
 ])
 
 # ================= MODEL =================
-class CNNLSTM(nn.Module):
+class Attention(nn.Module):
+    def __init__(self, hidden_dim):
+        super().__init__()
+        self.attn = nn.Linear(hidden_dim, 1)
+
+    def forward(self, x):
+        weights = torch.softmax(self.attn(x), dim=1)
+        context = (weights * x).sum(dim=1)
+        return context
+
+
+class AccidentNet(nn.Module):
     def __init__(self):
         super().__init__()
 
-        backbone = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1)
-        backbone.fc = nn.Identity()
+        backbone = efficientnet_b0(weights=None)  # weights loaded from checkpoint
+        backbone.classifier = nn.Identity()
         self.cnn = backbone
 
-        self.lstm = nn.LSTM(
-            input_size=512,
-            hidden_size=128,
-            num_layers=1,
-            batch_first=True
+        self.bilstm = nn.LSTM(
+            input_size=1280,
+            hidden_size=256,
+            num_layers=2,
+            bidirectional=True,
+            batch_first=True,
+            dropout=0.3
         )
 
+        self.attention = Attention(512)
+
         self.classifier = nn.Sequential(
-            nn.Linear(128, 128),
+            nn.Linear(512, 256),
             nn.ReLU(),
-            nn.Dropout(0.5),
-            nn.Linear(128, 2)
+            nn.Dropout(0.4),
+            nn.Linear(256, NUM_CLASSES)
         )
 
     def forward(self, x):
@@ -55,16 +74,16 @@ class CNNLSTM(nn.Module):
         x = x.view(b * t, c, h, w)
 
         features = self.cnn(x)
-        features = features.view(b, t, 512)
+        features = features.view(b, t, 1280)
 
-        lstm_out, _ = self.lstm(features)
-        out = lstm_out[:, -1, :]
+        lstm_out, _ = self.bilstm(features)
+        context = self.attention(lstm_out)
 
-        return self.classifier(out)
+        return self.classifier(context)
 
 
 # ================= LOAD MODEL =================
-model = CNNLSTM().to(DEVICE)
+model = AccidentNet().to(DEVICE)
 
 checkpoint = torch.load(MODEL_PATH, map_location=DEVICE)
 model.load_state_dict(checkpoint["model_state_dict"])
