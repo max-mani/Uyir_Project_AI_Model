@@ -34,8 +34,11 @@ from model import model, transform, DEVICE, predict_image, SEQUENCE_LEN
 from llm_vision_module import analyze_frame_with_llm
 from utils.incident_clip import create_video_writer, transcode_video_for_browser, extract_clip_from_file
 from utils import incident_store
+from firebase_uploader import FirebaseUploader
 
 app = FastAPI()
+_firebase = FirebaseUploader()
+_firebase.retry_local_events()
 
 # ================= XGBOOST MODEL INTEGRATION =================
 CSV_FILE = "accident_features.csv"
@@ -121,6 +124,46 @@ def _phases_from_details(details):
     if details.get("phase_c_confirmed") or details.get("flow_score", 0) > 0.3:
         phases.append("phase_c")
     return phases or ["phase_a"]
+
+
+def _save_incident_records(stubs, input_path, source_fps, total_frames, location, source="web"):
+    """Build clip/snapshot assets, persist locally, and upload to Firebase."""
+    saved_incidents = []
+    for stub in stubs:
+        incident_id = str(uuid.uuid4())
+        clip_fs, snap_fs, clip_url, snap_url = incident_store.build_incident_paths(incident_id)
+        cv2.imwrite(snap_fs, stub["snapshot_frame"])
+        clip_ok = extract_clip_from_file(
+            input_path,
+            stub["source_frame_idx"],
+            source_fps,
+            clip_fs,
+            total_frames=total_frames,
+        )
+        details = stub["details"]
+        details.setdefault("lstm_peak", stub["dl_confidence"])
+        status = stub.get("status", "confirmed")
+        llm_text = analyze_frame_with_llm(snap_fs, details) if status == "confirmed" else None
+        record = incident_store.save_incident({
+            "id": incident_id,
+            "source": source,
+            "camera_id": "UPLOAD",
+            "location": location,
+            "frame_number": stub["source_frame_idx"],
+            "time_in_video_sec": round(stub["source_frame_idx"] / source_fps, 2),
+            "confidence": stub["confidence"],
+            "dl_confidence": stub["dl_confidence"],
+            "trigger_phase": stub["trigger_phase"],
+            "phases_triggered": _phases_from_details(details),
+            "clip_url": clip_url if clip_ok else None,
+            "snapshot_url": snap_url,
+            "llm_analysis": llm_text,
+            "details": details,
+            "status": status,
+        })
+        _firebase.upload_incident_record_async(record)
+        saved_incidents.append(record)
+    return saved_incidents
 
 
 # ================= BASE PATH =================
@@ -321,6 +364,8 @@ def _process_video_streaming(job_id, input_path, filename, threshold):
         max_peak_trigger   = "None"
         max_peak_details   = {}
         last_alert_source_frame = -999999
+        last_alt_alert_frame = -999999
+        last_alt_status = None
         consec_count       = 0
         incident_stubs     = []
         source_fps         = fps
@@ -556,17 +601,32 @@ def _process_video_streaming(job_id, input_path, filename, threshold):
                     "details": dict(frame_details),
                 })
 
-            # DL gate triggered but not confirmed — push suspicious/suppressed notification
-            elif dl_confirmed and not frame_accident and cooldown_ok:
-                _push_incident(job_id, {
-                    "status": detection_status,  # "suspicious" or "suppressed"
-                    "confidence": float(frame_score),
-                    "dl_confidence": float(lstm_peak),
-                    "trigger_phase": frame_trigger,
-                    "frame": source_frame_idx,
-                    "time_sec": round(source_frame_idx / source_fps, 2),
-                    "details": dict(frame_details),
-                })
+            # DL gate triggered but not confirmed — record suspicious/suppressed (deduped)
+            elif dl_confirmed and not frame_accident and cooldown_ok and detection_status in ("suspicious", "suppressed"):
+                alt_cooldown_ok = (source_frame_idx - last_alt_alert_frame) > cooldown_frames
+                status_changed = detection_status != last_alt_status
+                if alt_cooldown_ok or status_changed:
+                    last_alt_alert_frame = source_frame_idx
+                    last_alt_status = detection_status
+                    stub = {
+                        "source_frame_idx": source_frame_idx,
+                        "confidence": float(frame_score),
+                        "dl_confidence": float(lstm_peak),
+                        "trigger_phase": frame_trigger,
+                        "details": dict(frame_details),
+                        "snapshot_frame": frame.copy(),
+                        "status": detection_status,
+                    }
+                    incident_stubs.append(stub)
+                    _push_incident(job_id, {
+                        "status": detection_status,
+                        "confidence": float(frame_score),
+                        "dl_confidence": float(lstm_peak),
+                        "trigger_phase": frame_trigger,
+                        "frame": source_frame_idx,
+                        "time_sec": round(source_frame_idx / source_fps, 2),
+                        "details": dict(frame_details),
+                    })
 
             if is_max_frame:
                 max_accident_frame_image = frame.copy()
@@ -639,33 +699,12 @@ def _process_video_streaming(job_id, input_path, filename, threshold):
         cap.release()
         out_writer.release()
 
-        from utils.incident_clip import transcode_video_for_browser, extract_clip_from_file
+        from utils.incident_clip import transcode_video_for_browser
         transcode_video_for_browser(output_path)
 
-        # Build final incident records
-        saved_incidents = []
-        for stub in incident_stubs:
-            incident_id = str(uuid.uuid4())
-            clip_fs, snap_fs, clip_url, snap_url = incident_store.build_incident_paths(incident_id)
-            cv2.imwrite(snap_fs, stub["snapshot_frame"])
-            clip_ok = extract_clip_from_file(input_path, stub["source_frame_idx"], source_fps, clip_fs, total_frames=total_frames)
-            details = stub["details"]
-            details.setdefault("lstm_peak", stub["dl_confidence"])
-            llm_text = analyze_frame_with_llm(snap_fs, details)
-            record = incident_store.save_incident({
-                "id": incident_id, "source": "web", "camera_id": "UPLOAD",
-                "location": filename, "frame_number": stub["source_frame_idx"],
-                "time_in_video_sec": round(stub["source_frame_idx"] / source_fps, 2),
-                "confidence": stub["confidence"], "dl_confidence": stub["dl_confidence"],
-                "trigger_phase": stub["trigger_phase"],
-                "phases_triggered": _phases_from_details(details),
-                "clip_url": clip_url if clip_ok else None,
-                "snapshot_url": snap_url,
-                "llm_analysis": llm_text,
-                "details": details,
-                "status": stub.get("status", "confirmed"),
-            })
-            saved_incidents.append(record)
+        saved_incidents = _save_incident_records(
+            incident_stubs, input_path, source_fps, total_frames, filename,
+        )
 
         if os.path.exists(input_path):
             try: os.remove(input_path)
@@ -693,6 +732,11 @@ def home(request: Request):
 @app.get("/api/incidents")
 def api_incidents(limit: int = 50):
     return {"incidents": incident_store.list_incidents(limit=limit)}
+
+
+@app.get("/api/firebase/status")
+def api_firebase_status():
+    return {"connected": _firebase.enabled}
 
 
 @app.delete("/api/incidents/{incident_id}")
@@ -940,6 +984,8 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
         max_peak_trigger = "None"
         max_peak_details = {}
         last_alert_source_frame = -999999
+        last_alt_alert_frame = -999999
+        last_alt_status = None
         consec_count = 0
         incident_stubs = []
         source_fps = fps
@@ -1176,10 +1222,10 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
 
             # -- Final decision --
             if not dl_confirmed:
-                # DL gate not cleared — skip phases entirely
                 frame_score = float(lstm_peak)
                 frame_accident = False
                 frame_trigger = f"DL Gate Not Cleared ({lstm_peak:.2f} < {DL_GATE_THRESHOLD})"
+                detection_status = "scanning"
             elif phases_signalling >= 2:
                 # DL confirmed + 2 of 3 phases agree → confirmed accident
                 # Use fusion score for the final confidence value
@@ -1199,6 +1245,7 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                 frame_accident = True
                 confirmed_phases = [k for k, v in phases_detail.items() if v]
                 frame_trigger = f"DL + {' & '.join(p.replace('phase_', 'Phase ').upper() for p in confirmed_phases)} Verified"
+                detection_status = "confirmed"
                 fuse_res_details = fuse_res["details"]
             elif phases_signalling == 1:
                 # DL confirmed but only 1 phase agrees — suspicious but not confirmed
@@ -1217,6 +1264,7 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                 frame_score = fuse_res["score"] * 0.7   # reduce score to stay below threshold
                 frame_accident = False
                 frame_trigger = f"DL Confirmed but Only 1 Phase ({list(phases_detail.keys())[0] if phases_detail else 'none'})"
+                detection_status = "suspicious"
                 fuse_res_details = fuse_res["details"]
             else:
                 # DL confirmed but no phases signal — likely DL false positive
@@ -1235,6 +1283,7 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                 frame_score = fuse_res["score"] * 0.5   # suppress heavily
                 frame_accident = False
                 frame_trigger = "DL Confirmed but No Phase Signal (Suppressed)"
+                detection_status = "suppressed"
                 fuse_res_details = fuse_res["details"]
 
             # -- XGBoost refinement (only when DL+2 phases already confirmed) --
@@ -1327,7 +1376,25 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                     "trigger_phase": frame_trigger,
                     "details": dict(frame_details),
                     "snapshot_frame": frame.copy(),
+                    "status": "confirmed",
                 })
+            elif dl_confirmed and not frame_accident and detection_status in ("suspicious", "suppressed"):
+                cooldown_ok = (source_frame_idx - last_alert_source_frame) > cooldown_frames
+                if cooldown_ok:
+                    alt_cooldown_ok = (source_frame_idx - last_alt_alert_frame) > cooldown_frames
+                    status_changed = detection_status != last_alt_status
+                    if alt_cooldown_ok or status_changed:
+                        last_alt_alert_frame = source_frame_idx
+                        last_alt_status = detection_status
+                        incident_stubs.append({
+                            "source_frame_idx": source_frame_idx,
+                            "confidence": float(frame_score),
+                            "dl_confidence": float(lstm_peak),
+                            "trigger_phase": frame_trigger,
+                            "details": dict(frame_details),
+                            "snapshot_frame": frame.copy(),
+                            "status": detection_status,
+                        })
             else:
                 display_accident = False
 
@@ -1452,47 +1519,19 @@ async def predict_video_api(file: UploadFile = File(...), threshold: float = 0.5
                 "trigger_phase": max_peak_trigger,
                 "details": max_peak_details,
                 "snapshot_frame": max_accident_frame_image.copy(),
+                "status": "confirmed",
             })
 
         if max_accident_score >= threshold:
             accident_detected_globally = True
 
-        # Build incident records with clips before deleting source video
-        saved_incidents = []
-        for stub in incident_stubs:
-            incident_id = str(uuid.uuid4())
-            clip_fs, snap_fs, clip_url, snap_url = incident_store.build_incident_paths(incident_id)
-
-            cv2.imwrite(snap_fs, stub["snapshot_frame"])
-            clip_ok = extract_clip_from_file(
-                input_path,
-                stub["source_frame_idx"],
-                source_fps,
-                clip_fs,
-                total_frames=total_frames,
-            )
-
-            details = stub["details"]
-            details.setdefault("lstm_peak", stub["dl_confidence"])
-            llm_text = analyze_frame_with_llm(snap_fs, details)
-
-            record = incident_store.save_incident({
-                "id": incident_id,
-                "source": "web",
-                "camera_id": "UPLOAD",
-                "location": file.filename or "Uploaded video",
-                "frame_number": stub["source_frame_idx"],
-                "time_in_video_sec": round(stub["source_frame_idx"] / source_fps, 2),
-                "confidence": stub["confidence"],
-                "dl_confidence": stub["dl_confidence"],
-                "trigger_phase": stub["trigger_phase"],
-                "phases_triggered": _phases_from_details(details),
-                "clip_url": clip_url if clip_ok else None,
-                "snapshot_url": snap_url,
-                "llm_analysis": llm_text,
-                "details": details,
-            })
-            saved_incidents.append(record)
+        saved_incidents = _save_incident_records(
+            incident_stubs,
+            input_path,
+            source_fps,
+            total_frames,
+            file.filename or "Uploaded video",
+        )
 
         # Clean up raw video
         if os.path.exists(input_path):

@@ -192,9 +192,10 @@ class StreamProcessor:
             "clip_url": clip_url if clip_ok else None,
             "snapshot_url": snap_url,
             "details": details,
+            "status": "confirmed",
         })
 
-        self.uploader.upload_event_async(event, record)
+        self.uploader.upload_incident_record_async(record)
 
     def _draw_ui(self, frame, vehicles, event, frame_num):
         display = self.tracker.draw_tracks(frame.copy(), vehicles)

@@ -89,7 +89,7 @@ MIN_SCORE_TO_PASS = 4
 
 # ── Firebase Settings ────────────────────────────────────────
 FIREBASE_KEY_PATH = "firebase_key.json"
-FIREBASE_BUCKET = "your-project-id.appspot.com"
+FIREBASE_BUCKET = "kapaan-web.firebasestorage.app"
 FIRESTORE_COLLECTION = "accident_events"
 HEALTH_COLLECTION = "pi_health"
 HEALTH_INTERVAL_SEC = 30

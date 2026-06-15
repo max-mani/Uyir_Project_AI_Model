@@ -1148,7 +1148,7 @@
       .tab-content.active {
         display: flex;
         flex-direction: column;
-        gap: 1.1rem;
+        gap: 0.55rem;
       }
 
       /* Incident cards */
@@ -1157,25 +1157,157 @@
         border: 1px solid var(--border);
         border-radius: 12px;
         overflow: hidden;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+      .inc-card:hover {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
       }
       .inc-card.confirmed {
-        border-color: rgba(255, 59, 59, 0.3);
+        border-color: rgba(255, 59, 59, 0.25);
+      }
+      .inc-card.confirmed:not(.collapsed) {
+        border-color: rgba(255, 59, 59, 0.4);
       }
       .inc-card.suspicious {
-        border-color: rgba(245, 158, 11, 0.3);
+        border-color: rgba(245, 158, 11, 0.25);
+      }
+      .inc-card.suspicious:not(.collapsed) {
+        border-color: rgba(245, 158, 11, 0.45);
       }
       .inc-card.suppressed {
         border-color: var(--border);
       }
+      .inc-card.collapsed .inc-body {
+        display: none;
+      }
+      .inc-card.collapsed .inc-head {
+        border-bottom: none;
+      }
       .inc-head {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 0.65rem;
-        padding: 0.85rem 1.2rem;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
         border-bottom: 1px solid var(--border);
         background: var(--surface2);
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.15s;
+      }
+      .inc-head:hover {
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .inc-toggle {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--txt2);
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        transition:
+          transform 0.22s ease,
+          background 0.2s,
+          color 0.2s,
+          border-color 0.2s;
+      }
+      .inc-card:not(.collapsed) .inc-toggle {
+        transform: rotate(90deg);
+        background: var(--blue-dim);
+        border-color: rgba(59, 130, 246, 0.35);
+        color: var(--blue);
+      }
+      .inc-head-main {
+        flex: 1;
+        min-width: 0;
+      }
+      .inc-head-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .inc-head-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        flex-shrink: 0;
+      }
+      .inc-status-badge {
+        font-size: 0.62rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 0.2rem 0.5rem;
+        border-radius: 5px;
+      }
+      .inc-status-badge.confirmed {
+        background: var(--red-dim);
+        color: var(--red);
+      }
+      .inc-status-badge.suspicious {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--warn);
+      }
+      .inc-status-badge.suppressed {
+        background: var(--surface);
+        color: var(--txt2);
+        border: 1px solid var(--border);
+      }
+      .inc-conf-chip {
+        font-family: var(--mono);
+        font-size: 0.78rem;
+        font-weight: 700;
+        padding: 0.22rem 0.55rem;
+        border-radius: 6px;
+        background: rgba(255, 59, 59, 0.12);
+        color: var(--red);
+        border: 1px solid rgba(255, 59, 59, 0.2);
+      }
+      .inc-card.suspicious .inc-conf-chip {
+        background: rgba(245, 158, 11, 0.12);
+        color: var(--warn);
+        border-color: rgba(245, 158, 11, 0.25);
+      }
+      .inc-card.suppressed .inc-conf-chip {
+        background: var(--surface);
+        color: var(--txt2);
+        border-color: var(--border);
+      }
+      .inc-delete {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--txt2);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        line-height: 1;
+        transition:
+          background 0.15s,
+          border-color 0.15s,
+          color 0.15s;
+        flex-shrink: 0;
+      }
+      .inc-delete:hover {
+        background: var(--red-dim);
+        border-color: rgba(255, 59, 59, 0.35);
+        color: var(--red);
+      }
+      .inc-delete:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+        pointer-events: none;
       }
       .inc-time {
         font-weight: 700;
@@ -1233,6 +1365,15 @@
       }
       .inc-media img {
         border-color: var(--red);
+      }
+      .inc-media-empty {
+        padding: 1.2rem;
+        text-align: center;
+        color: var(--txt2);
+        font-size: 0.78rem;
+        border: 1px dashed var(--border);
+        border-radius: 7px;
+        background: var(--surface2);
       }
       .inc-conf-row {
         display: flex;
@@ -2010,6 +2151,11 @@
         lastConf = 0,
         sseConn = null;
       let incidentStore = { confirmed: [], suspicious: [], suppressed: [] };
+      const TAB_BTN_IDS = {
+        confirmed: "tab-conf",
+        suspicious: "tab-susp",
+        suppressed: "tab-supp",
+      };
       let curTab = "confirmed";
       let liveStartTime = null;
 
@@ -2301,7 +2447,14 @@
 
       function addLiveIncident(inc) {
         const bucket = inc.status || "confirmed";
-        // Build a minimal incident object for immediate display
+        // Dedupe: skip if same bucket + frame already shown
+        const existing = (incidentStore[bucket] || []).some(
+          (item) =>
+            item.frame_number === inc.frame &&
+            item.time_in_video_sec === inc.time_sec,
+        );
+        if (existing) return;
+
         const fake = {
           id: "live-" + Date.now(),
           source: "web",
@@ -2322,8 +2475,7 @@
         incidentStore[bucket].unshift(fake);
         renderTab(bucket);
         updateTabCounts();
-        // Flash tab
-        const tabEl = $("tab-" + bucket);
+        const tabEl = $(TAB_BTN_IDS[bucket]);
         if (tabEl) {
           tabEl.style.color = "var(--red)";
           setTimeout(() => {
@@ -2630,29 +2782,35 @@
         ).toFixed(1);
         const src = inc.source === "stream" ? "stream" : "web";
         const isLive = !!inc._live;
+        const iid = inc.id || "";
+        const canDelete = iid && !isLive;
         const clip = inc.clip_url
           ? `<video controls preload="metadata" src="${inc.clip_url}?t=${Date.now()}"></video>`
-          : `<div style="padding:1.2rem;text-align:center;color:var(--txt2);font-size:.78rem">${isLive ? "Clip will appear after processing completes" : "Clip unavailable"}</div>`;
+          : `<div class="inc-media-empty">${isLive ? "Clip will appear after processing completes" : "Clip unavailable"}</div>`;
         const snap = inc.snapshot_url
           ? `<img src="${inc.snapshot_url}?t=${Date.now()}" alt="Accident frame">`
-          : `<div style="padding:1.2rem;text-align:center;color:var(--txt2);font-size:.78rem">${isLive ? "Frame captured at t=" + inc.time_in_video_sec + "s" : "Frame unavailable"}</div>`;
+          : `<div class="inc-media-empty">${isLive ? "Frame captured at t=" + inc.time_in_video_sec + "s" : "Frame unavailable"}</div>`;
         const llmHtml = inc.llm_analysis
           ? `<div class="inc-llm">${inc.llm_analysis}</div>`
           : "";
-        const statusColors = {
-          confirmed: "var(--red)",
-          suspicious: "var(--warn)",
-          suppressed: "var(--txt2)",
-        };
         const mi = (l, v) =>
           `<div class="mini-score"><div class="ms-l">${l}</div><div class="ms-v">${typeof v === "number" ? v.toFixed(2) : v}</div></div>`;
-        return `<article class="inc-card ${bucket}" data-iid="${inc.id || ""}">
-    <div class="inc-head">
-      <div><div class="inc-time">${fmtTime(inc.timestamp) || fmtTime(new Date().toISOString())}</div>
-        <div class="inc-loc">${inc.location || "Upload"} ${inc.time_in_video_sec != null ? `· t=${inc.time_in_video_sec}s` : ""} ${inc.frame_number != null ? `· frame ${inc.frame_number}` : ""}</div></div>
-      <div style="display:flex;align-items:center;gap:.5rem">
-        <span style="font-size:.68rem;font-weight:700;color:${statusColors[bucket]};text-transform:uppercase">${bucket}</span>
+        const locLine = `${inc.location || "Upload"}${inc.time_in_video_sec != null ? ` · t=${inc.time_in_video_sec}s` : ""}${inc.frame_number != null ? ` · frame ${inc.frame_number}` : ""}`;
+        const deleteBtn = canDelete
+          ? `<button type="button" class="inc-delete" title="Delete incident" aria-label="Delete incident" onclick="deleteIncident('${iid}','${bucket}',event)">✕</button>`
+          : `<button type="button" class="inc-delete" disabled title="Delete after processing completes">✕</button>`;
+        return `<article class="inc-card collapsed ${bucket}" data-iid="${iid}" data-bucket="${bucket}">
+    <div class="inc-head" onclick="toggleIncidentCard('${iid}')">
+      <span class="inc-toggle" aria-hidden="true">▶</span>
+      <div class="inc-head-main">
+        <div class="inc-time">${fmtTime(inc.timestamp) || fmtTime(new Date().toISOString())}</div>
+        <div class="inc-loc">${locLine}</div>
+      </div>
+      <div class="inc-head-meta">
+        <span class="inc-status-badge ${bucket}">${bucket}</span>
+        <span class="inc-conf-chip">${fused}%</span>
         <span class="inc-src src-${src}">${src === "stream" ? inc.camera_id || "Camera" : "Upload"}</span>
+        ${deleteBtn}
       </div>
     </div>
     <div class="inc-body">
@@ -2674,6 +2832,48 @@
       ${llmHtml}
     </div>
   </article>`;
+      }
+
+      function toggleIncidentCard(iid) {
+        const card = document.querySelector(`.inc-card[data-iid="${iid}"]`);
+        if (card) card.classList.toggle("collapsed");
+      }
+
+      async function deleteIncident(iid, bucket, ev) {
+        if (ev) {
+          ev.stopPropagation();
+          ev.preventDefault();
+        }
+        if (!iid) return;
+        if (!confirm("Delete this incident from history? This cannot be undone.")) return;
+
+        if (iid.startsWith("live-")) {
+          incidentStore[bucket] = (incidentStore[bucket] || []).filter(
+            (inc) => inc.id !== iid,
+          );
+          renderTab(bucket);
+          updateTabCounts();
+          return;
+        }
+
+        try {
+          const res = await fetch(`/api/incidents/${encodeURIComponent(iid)}`, {
+            method: "DELETE",
+          });
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            alert(data.error || "Failed to delete incident.");
+            return;
+          }
+          incidentStore[bucket] = (incidentStore[bucket] || []).filter(
+            (inc) => inc.id !== iid,
+          );
+          renderTab(bucket);
+          updateTabCounts();
+        } catch (e) {
+          console.error("deleteIncident:", e);
+          alert("Network error while deleting incident.");
+        }
       }
 
       function renderTab(bucket) {
@@ -2705,7 +2905,8 @@
         document
           .querySelectorAll(".tab-content")
           .forEach((c) => c.classList.remove("active"));
-        $("tab-" + bucket).classList.add("active");
+        const tabBtn = $(TAB_BTN_IDS[bucket]);
+        if (tabBtn) tabBtn.classList.add("active");
         $("tc-" + bucket).classList.add("active");
       }
 
@@ -2725,6 +2926,7 @@
           renderTab("suspicious");
           renderTab("suppressed");
           updateTabCounts();
+          switchTab(curTab);
         } catch (e) {
           console.error("loadHistory:", e);
         }
