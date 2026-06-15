@@ -1,1741 +1,2741 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UYIR — Road Accident Detection System</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>UYIR — Road Accident Detection</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <style>
-        :root {
-            --bg:           #080c14;
-            --surface:      #0d1526;
-            --surface2:     #111d33;
-            --border:       #1e304f;
-            --border-bright:#2a4470;
-            --txt:          #e8edf5;
-            --txt2:         #7a90b0;
-            --txt3:         #3d5275;
-            --accent:       #3b7fff;
-            --accent2:      #00cfff;
-            --danger:       #ff3b3b;
-            --danger-dim:   rgba(255,59,59,0.12);
-            --success:      #00e07a;
-            --success-dim:  rgba(0,224,122,0.10);
-            --warn:         #f59e0b;
-            --warn-dim:     rgba(245,158,11,0.10);
-            --purple:       #a855f7;
-            --mono:         'JetBrains Mono', monospace;
-        }
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--txt);
-            min-height: 100vh;
-            padding: 0 0 4rem;
-            overflow-x: hidden;
-        }
+      :root {
+        --bg: #07101f;
+        --surface: #0c1a2e;
+        --surface2: #111f38;
+        --border: #1a2f50;
+        --border2: #2a4470;
+        --txt: #dde8f5;
+        --txt2: #6b8aae;
+        --txt3: #2e4a6e;
+        --blue: #3b7fff;
+        --cyan: #00cfff;
+        --green: #00e07a;
+        --red: #ff3b3b;
+        --warn: #f59e0b;
+        --purple: #a855f7;
+        --red-dim: rgba(255, 59, 59, 0.1);
+        --green-dim: rgba(0, 224, 122, 0.1);
+        --warn-dim: rgba(245, 158, 11, 0.1);
+        --blue-dim: rgba(59, 127, 255, 0.1);
+        --cyan-dim: rgba(0, 207, 255, 0.08);
+        --purple-dim: rgba(168, 85, 247, 0.1);
+        --mono: "JetBrains Mono", monospace;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--bg);
+        color: var(--txt);
+        min-height: 100vh;
+        padding-bottom: 4rem;
+        overflow-x: hidden;
+      }
 
-        /* ── TOPBAR ── */
-        .topbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1rem 2rem;
-            border-bottom: 1px solid var(--border);
-            background: rgba(8,12,20,0.92);
-            backdrop-filter: blur(8px);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+      /* TOPBAR */
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.9rem 2rem;
+        border-bottom: 1px solid var(--border);
+        background: rgba(7, 16, 31, 0.95);
+        backdrop-filter: blur(8px);
+        position: sticky;
+        top: 0;
+        z-index: 200;
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .logo-mark {
+        width: 36px;
+        height: 36px;
+        background: var(--blue);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 1rem;
+        color: #fff;
+      }
+      .logo-text {
+        font-size: 0.95rem;
+        font-weight: 700;
+      }
+      .logo-sub {
+        font-size: 0.7rem;
+        color: var(--txt2);
+      }
+      .status-pill {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--green);
+        background: var(--green-dim);
+        border: 1px solid rgba(0, 224, 122, 0.25);
+        padding: 0.3rem 0.75rem;
+        border-radius: 100px;
+      }
+      .status-pill::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        background: var(--green);
+        border-radius: 50%;
+        animation: blink 2s infinite;
+      }
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
         }
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
+        50% {
+          opacity: 0.3;
         }
-        .logo-mark {
-            width: 36px; height: 36px;
-            background: var(--accent);
-            border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 800; font-size: 1rem; color: #fff;
-            letter-spacing: 1px;
-        }
-        .logo-text { font-size: 1rem; font-weight: 700; }
-        .logo-sub  { font-size: 0.72rem; color: var(--txt2); margin-top: 1px; }
-        .status-chip {
-            display: flex; align-items: center; gap: 0.5rem;
-            font-size: 0.75rem; font-weight: 600; color: var(--success);
-            background: var(--success-dim);
-            border: 1px solid rgba(0,224,122,0.25);
-            padding: 0.35rem 0.75rem;
-            border-radius: 100px;
-        }
-        .status-chip::before {
-            content: '';
-            width: 7px; height: 7px;
-            background: var(--success);
-            border-radius: 50%;
-            animation: pulse-dot 2s infinite;
-        }
-        @keyframes pulse-dot {
-            0%,100% { opacity: 1; }
-            50%      { opacity: 0.3; }
-        }
+      }
 
-        /* ── MAIN LAYOUT ── */
-        .page { max-width: 1280px; margin: 0 auto; padding: 2rem 1.5rem; }
+      /* PAGE */
+      .page {
+        max-width: 1300px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+      }
+      .sec-label {
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: var(--txt3);
+        margin-bottom: 0.9rem;
+      }
 
-        /* ── SECTION TITLES ── */
-        .section-label {
-            font-size: 0.7rem; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 2px;
-            color: var(--txt3); margin-bottom: 1rem;
-        }
+      /* CARD */
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .card-head {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.9rem 1.4rem;
+        border-bottom: 1px solid var(--border);
+        background: var(--surface2);
+      }
+      .card-head h2 {
+        font-size: 0.95rem;
+        font-weight: 700;
+      }
+      .tag {
+        font-size: 0.65rem;
+        font-weight: 700;
+        font-family: var(--mono);
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+      }
 
-        /* ── UPLOAD ZONE ── */
+      /* UPLOAD GRID */
+      .upload-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.2rem;
+        margin-bottom: 1.5rem;
+      }
+      @media (max-width: 660px) {
         .upload-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.25rem;
-            margin-bottom: 2rem;
+          grid-template-columns: 1fr;
         }
-        @media (max-width: 680px) { .upload-grid { grid-template-columns: 1fr; } }
+      }
+      .upload-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.4rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .upload-head {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+      }
+      .upload-head h2 {
+        font-size: 0.95rem;
+        font-weight: 700;
+      }
+      .drop-zone {
+        border: 1.5px dashed var(--border2);
+        border-radius: 10px;
+        padding: 2rem 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        cursor: pointer;
+        transition: 0.2s;
+        min-height: 150px;
+        text-align: center;
+      }
+      .drop-zone:hover,
+      .drop-zone.over {
+        border-color: var(--cyan);
+        background: var(--cyan-dim);
+      }
+      .drop-zone input {
+        display: none;
+      }
+      .drop-icon {
+        font-size: 1.8rem;
+        opacity: 0.45;
+      }
+      .drop-txt {
+        font-size: 0.88rem;
+        color: var(--txt2);
+      }
+      .drop-txt span {
+        color: var(--cyan);
+      }
+      .drop-sub {
+        font-size: 0.72rem;
+        color: var(--txt3);
+      }
+      .preview-wrap {
+        display: none;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        background: #000;
+        position: relative;
+      }
+      .preview-wrap img,
+      .preview-wrap video {
+        width: 100%;
+        display: block;
+        max-height: 190px;
+        object-fit: contain;
+      }
+      .rm-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: rgba(7, 16, 31, 0.85);
+        border: 1px solid var(--border);
+        color: var(--txt);
+        border-radius: 50%;
+        width: 26px;
+        height: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 0.8rem;
+        z-index: 5;
+        transition: 0.2s;
+      }
+      .rm-btn:hover {
+        background: var(--red);
+      }
+      .btn {
+        font-family: inherit;
+        background: var(--blue);
+        color: #fff;
+        border: none;
+        padding: 0.7rem 1rem;
+        border-radius: 8px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: 0.2s;
+      }
+      .btn:hover {
+        background: #2563eb;
+      }
+      .btn:disabled {
+        background: var(--surface2);
+        color: var(--txt3);
+        cursor: not-allowed;
+      }
+      .btn-sm {
+        padding: 0.45rem 0.85rem;
+        font-size: 0.78rem;
+        border-radius: 7px;
+      }
 
-        .upload-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            display: flex; flex-direction: column; gap: 1rem;
+      /* LIVE PANEL */
+      #live-panel {
+        display: none;
+        margin-bottom: 1.5rem;
+      }
+      .live-layout {
+        display: grid;
+        grid-template-columns: 1fr 280px;
+        height: 460px;
+      }
+      @media (max-width: 860px) {
+        .live-layout {
+          grid-template-columns: 1fr;
+          height: auto;
         }
-        .upload-card-head {
-            display: flex; align-items: center; gap: 0.65rem;
+      }
+      .live-video-wrap {
+        position: relative;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 300px;
+      }
+      #live-feed {
+        width: 100%;
+        display: block;
+        max-height: 460px;
+        object-fit: contain;
+      }
+      .live-video-wrap.no-signal::after {
+        content: "Waiting for stream…";
+        position: absolute;
+        color: var(--txt2);
+        font-size: 0.85rem;
+      }
+      .scan-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--cyan),
+          transparent
+        );
+        animation: scan 1.8s linear infinite;
+        pointer-events: none;
+      }
+      @keyframes scan {
+        from {
+          top: 0;
         }
-        .card-icon {
-            font-size: 0.7rem; font-weight: 700;
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            color: var(--accent2);
-            padding: 0.3rem 0.5rem;
-            border-radius: 6px;
-            font-family: var(--mono);
+        to {
+          top: 100%;
         }
-        .upload-card-head h2 { font-size: 1rem; font-weight: 700; }
+      }
+      .corner {
+        position: absolute;
+        width: 18px;
+        height: 18px;
+        border-color: var(--cyan);
+        border-style: solid;
+        opacity: 0.55;
+        pointer-events: none;
+      }
+      .tl {
+        top: 10px;
+        left: 10px;
+        border-width: 2px 0 0 2px;
+      }
+      .tr {
+        top: 10px;
+        right: 10px;
+        border-width: 2px 2px 0 0;
+      }
+      .bl {
+        bottom: 10px;
+        left: 10px;
+        border-width: 0 0 2px 2px;
+      }
+      .br {
+        bottom: 10px;
+        right: 10px;
+        border-width: 0 2px 2px 0;
+      }
 
-        .drop-zone {
-            border: 1.5px dashed var(--border-bright);
-            border-radius: 10px;
-            padding: 2rem 1rem;
-            display: flex; flex-direction: column; align-items: center;
-            justify-content: center; gap: 0.65rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            min-height: 160px;
-            text-align: center;
-        }
-        .drop-zone:hover, .drop-zone.dragover {
-            border-color: var(--accent2);
-            background: rgba(0,207,255,0.03);
-        }
-        .drop-zone input { display: none; }
-        .drop-icon { font-size: 2rem; opacity: 0.5; }
-        .drop-text { font-size: 0.9rem; color: var(--txt2); }
-        .drop-text span { color: var(--accent2); cursor: pointer; }
-        .drop-sub  { font-size: 0.75rem; color: var(--txt3); }
+      /* Live sidebar */
+      .live-sidebar {
+        border-left: 1px solid var(--border);
+        background: var(--surface2);
+        padding: 1.2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.9rem;
+        overflow-y: auto;
+      }
+      .ls-label {
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        color: var(--txt3);
+      }
+      .ls-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+      }
+      .lm {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+      }
+      .lm-l {
+        font-size: 0.68rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--txt2);
+      }
+      .lm-v {
+        font-family: var(--mono);
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: var(--cyan);
+      }
+      .lm-v.ok {
+        color: var(--green);
+      }
+      .lm-v.bad {
+        color: var(--red);
+      }
+      .lm-v.warn {
+        color: var(--warn);
+      }
 
-        .preview-wrap {
-            display: none; border-radius: 8px;
-            overflow: hidden; border: 1px solid var(--border);
-            background: #000; position: relative;
-        }
-        .preview-wrap img, .preview-wrap video { width: 100%; display: block; max-height: 200px; object-fit: contain; }
-        .remove-btn {
-            position: absolute; top: 8px; right: 8px;
-            background: rgba(8,12,20,0.85); border: 1px solid var(--border);
-            color: var(--txt); border-radius: 50%; width: 26px; height: 26px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; font-size: 0.8rem; z-index: 5;
-            transition: background 0.2s;
-        }
-        .remove-btn:hover { background: var(--danger); }
+      /* Mini bars */
+      .mini-bar-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .mini-bar-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .mini-bar-l {
+        font-size: 0.68rem;
+        color: var(--txt2);
+        width: 42px;
+        flex-shrink: 0;
+      }
+      .mini-bar-track {
+        flex: 1;
+        height: 5px;
+        background: var(--border);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      .mini-bar-fill {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.3s ease;
+      }
+      .bar-a {
+        background: var(--cyan);
+      }
+      .bar-b {
+        background: var(--warn);
+      }
+      .bar-c {
+        background: var(--red);
+      }
+      .bar-dl {
+        background: var(--purple);
+      }
+      .mini-bar-v {
+        font-family: var(--mono);
+        font-size: 0.65rem;
+        color: var(--txt);
+        width: 28px;
+        text-align: right;
+        flex-shrink: 0;
+      }
 
-        .btn {
-            font-family: inherit;
-            background: var(--accent);
-            color: #fff; border: none;
-            padding: 0.7rem 1rem;
-            border-radius: 8px;
-            font-size: 0.9rem; font-weight: 600;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-            transition: background 0.2s, opacity 0.2s;
+      /* Status badge */
+      .det-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.3rem 0.65rem;
+        border-radius: 6px;
+        transition: all 0.3s;
+      }
+      .det-scanning {
+        background: var(--blue-dim);
+        color: var(--blue);
+        border: 1px solid rgba(59, 127, 255, 0.3);
+      }
+      .det-confirmed {
+        background: var(--red-dim);
+        color: var(--red);
+        border: 1px solid rgba(255, 59, 59, 0.35);
+        animation: pulse-red 1.5s infinite;
+      }
+      .det-suspicious {
+        background: var(--warn-dim);
+        color: var(--warn);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+      }
+      .det-suppressed {
+        background: var(--blue-dim);
+        color: var(--txt2);
+        border: 1px solid var(--border);
+      }
+      @keyframes pulse-red {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 rgba(255, 59, 59, 0);
         }
-        .btn:hover { background: #2563eb; }
-        .btn:disabled { background: var(--surface2); color: var(--txt3); cursor: not-allowed; }
+        50% {
+          box-shadow: 0 0 8px 2px rgba(255, 59, 59, 0.35);
+        }
+      }
 
-        /* ── PROCESSING PANEL ── */
-        #processing-panel {
-            display: none;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 2rem;
-        }
-        .proc-header {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--border);
-            background: var(--surface2);
-        }
-        .proc-title { font-weight: 700; font-size: 0.95rem; }
-        .proc-badge {
-            font-size: 0.7rem; font-weight: 700;
-            font-family: var(--mono);
-            padding: 0.3rem 0.65rem;
-            border-radius: 6px;
-        }
-        .proc-badge.running {
-            background: rgba(59,127,255,0.15);
-            color: var(--accent);
-            border: 1px solid rgba(59,127,255,0.3);
-        }
-        .proc-body {
-            display: grid;
-            grid-template-columns: 1fr 320px;
-            gap: 0;
-        }
-        @media (max-width: 900px) { .proc-body { grid-template-columns: 1fr; } }
+      /* Progress bar */
+      .prog-wrap {
+        padding: 0.9rem 1.4rem;
+        border-top: 1px solid var(--border);
+        background: var(--surface);
+      }
+      .prog-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        color: var(--txt2);
+        margin-bottom: 0.4rem;
+      }
+      .prog-track {
+        height: 4px;
+        background: var(--border);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .prog-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, var(--blue), var(--cyan));
+        border-radius: 2px;
+        transition: width 0.4s ease;
+      }
 
-        /* Live video feed */
-        .proc-video-wrap {
-            position: relative;
-            background: #000;
-            min-height: 300px;
-            display: flex; align-items: center; justify-content: center;
-        }
-        #live-video-feed {
-            width: 100%; display: block;
-            max-height: 400px; object-fit: contain;
-        }
-        .proc-video-overlay {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            pointer-events: none;
-        }
-        .proc-scanning {
-            position: absolute; bottom: 0; left: 0; right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--accent2), transparent);
-            animation: scan-line 2s linear infinite;
-        }
-        @keyframes scan-line {
-            from { transform: translateY(0); }
-            to   { transform: translateY(-300px); }
-        }
-        .proc-corner {
-            position: absolute;
-            width: 20px; height: 20px;
-            border-color: var(--accent2);
-            border-style: solid;
-            opacity: 0.6;
-        }
-        .proc-corner.tl { top: 12px; left: 12px; border-width: 2px 0 0 2px; }
-        .proc-corner.tr { top: 12px; right: 12px; border-width: 2px 2px 0 0; }
-        .proc-corner.bl { bottom: 12px; left: 12px; border-width: 0 0 2px 2px; }
-        .proc-corner.br { bottom: 12px; right: 12px; border-width: 0 2px 2px 0; }
+      /* RESULT PANEL */
+      #result-panel {
+        display: none;
+        margin-bottom: 1.5rem;
+      }
+      .verdict-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 1.2rem;
+      }
+      .verdict-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        padding: 1.5rem 2rem;
+      }
+      .verdict-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+      .v-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+      }
+      .v-icon.acc {
+        background: var(--red-dim);
+      }
+      .v-icon.ok {
+        background: var(--green-dim);
+      }
+      .v-text h2 {
+        font-size: 1.4rem;
+        font-weight: 800;
+      }
+      .v-text h2.acc {
+        color: var(--red);
+      }
+      .v-text h2.ok {
+        color: var(--green);
+      }
+      .v-text p {
+        font-size: 0.82rem;
+        color: var(--txt2);
+        margin-top: 0.2rem;
+      }
+      .conf-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.5rem;
+      }
+      .conf-num {
+        font-family: var(--mono);
+        font-size: 2.2rem;
+        font-weight: 600;
+        line-height: 1;
+      }
+      .conf-num.acc {
+        color: var(--red);
+      }
+      .conf-num.ok {
+        color: var(--green);
+      }
+      .conf-sub {
+        font-size: 0.7rem;
+        color: var(--txt2);
+      }
+      .conf-bar-wrap {
+        width: 220px;
+      }
+      .conf-track {
+        height: 8px;
+        background: var(--border);
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+      }
+      .conf-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: 4px;
+        transition: width 1s cubic-bezier(0.1, 0.8, 0.2, 1);
+      }
+      .conf-fill.acc {
+        background: linear-gradient(90deg, #ef4444, #f87171);
+      }
+      .conf-fill.ok {
+        background: linear-gradient(90deg, #10b981, #34d399);
+      }
+      .thr-marker {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--warn);
+      }
+      .conf-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.65rem;
+        color: var(--txt3);
+        margin-top: 0.3rem;
+      }
 
-        /* Processing sidebar metrics */
-        .proc-sidebar {
-            border-left: 1px solid var(--border);
-            padding: 1.25rem;
-            display: flex; flex-direction: column; gap: 1rem;
-            background: var(--surface2);
-        }
-        .proc-sidebar-title {
-            font-size: 0.7rem; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 1.5px;
-            color: var(--txt3);
-        }
-        .live-metric {
-            display: flex; flex-direction: column; gap: 0.2rem;
-        }
-        .live-metric-label {
-            font-size: 0.68rem; font-weight: 600;
-            text-transform: uppercase; letter-spacing: 1px;
-            color: var(--txt2);
-        }
-        .live-metric-val {
-            font-family: var(--mono);
-            font-size: 1.15rem; font-weight: 600;
-            color: var(--accent2);
-        }
-        .live-metric-val.danger { color: var(--danger); }
-        .live-metric-val.success { color: var(--success); }
+      .trigger-bar {
+        padding: 0.8rem 2rem;
+        border-top: 1px solid var(--border);
+        background: var(--surface2);
+        font-size: 0.84rem;
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        flex-wrap: wrap;
+      }
+      .thr-row {
+        padding: 0.8rem 2rem;
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 1.2rem;
+        flex-wrap: wrap;
+      }
+      .thr-info {
+        font-size: 0.8rem;
+        color: var(--txt2);
+      }
+      .thr-info span {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-weight: 700;
+      }
+      #thr-slider {
+        flex: 1;
+        min-width: 140px;
+        -webkit-appearance: none;
+        appearance: none;
+        height: 5px;
+        background: var(--border);
+        border-radius: 3px;
+        outline: none;
+        cursor: pointer;
+      }
+      #thr-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--cyan);
+        cursor: pointer;
+      }
 
-        /* Progress bar */
-        .proc-progress-wrap {
-            padding: 1rem 1.5rem;
-            border-top: 1px solid var(--border);
-            background: var(--surface);
-            display: flex; flex-direction: column; gap: 0.5rem;
-        }
-        .proc-progress-row {
-            display: flex; justify-content: space-between;
-            font-size: 0.78rem; color: var(--txt2);
-        }
-        .progress-track {
-            height: 4px; background: var(--border);
-            border-radius: 2px; overflow: hidden;
-        }
-        .progress-fill {
-            height: 100%; width: 0%;
-            background: linear-gradient(90deg, var(--accent), var(--accent2));
-            border-radius: 2px;
-            transition: width 0.3s ease;
-        }
+      /* PIPELINE */
+      .pipeline-steps {
+        display: flex;
+        align-items: stretch;
+        padding: 1.4rem;
+        gap: 0;
+        flex-wrap: wrap;
+      }
+      .pipe-step {
+        flex: 1;
+        min-width: 120px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.6rem;
+        text-align: center;
+        padding: 0.9rem;
+        position: relative;
+      }
+      .pipe-step + .pipe-step::before {
+        content: "→";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--txt3);
+      }
+      .step-circle {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        border: 2px solid var(--border);
+        background: var(--surface2);
+        transition: 0.3s;
+      }
+      .step-circle.pass {
+        border-color: var(--green);
+        background: var(--green-dim);
+      }
+      .step-circle.fail {
+        border-color: var(--red);
+        background: var(--red-dim);
+      }
+      .step-circle.warn-s {
+        border-color: var(--warn);
+        background: var(--warn-dim);
+      }
+      .step-name {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--txt2);
+      }
+      .step-val {
+        font-family: var(--mono);
+        font-size: 0.82rem;
+        color: var(--txt3);
+        transition: 0.3s;
+      }
+      .step-val.pass {
+        color: var(--green);
+      }
+      .step-val.fail {
+        color: var(--red);
+      }
+      .step-val.warn-s {
+        color: var(--warn);
+      }
+      .step-sub {
+        font-size: 0.65rem;
+        color: var(--txt3);
+      }
 
-        /* ── RESULTS PANEL ── */
-        #results-panel { display: none; margin-bottom: 2rem; }
+      /* METRICS & PHASES */
+      .metrics3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.2rem;
+      }
+      @media (max-width: 580px) {
+        .metrics3 {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      .met-tile {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 0.9rem 1.1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+      }
+      .met-label {
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--txt3);
+      }
+      .met-val {
+        font-family: var(--mono);
+        font-size: 1.35rem;
+        font-weight: 600;
+      }
+      .met-sub {
+        font-size: 0.7rem;
+        color: var(--txt2);
+      }
+      .phases4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.2rem;
+      }
+      @media (max-width: 700px) {
+        .phases4 {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      .phase-tile {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 0.9rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.7rem;
+      }
+      .pt-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .pt-chip {
+        font-size: 0.62rem;
+        font-weight: 700;
+        padding: 0.2rem 0.45rem;
+        border-radius: 100px;
+        font-family: var(--mono);
+      }
+      .ch-a {
+        background: var(--cyan-dim);
+        color: var(--cyan);
+        border: 1px solid rgba(0, 207, 255, 0.2);
+      }
+      .ch-b {
+        background: var(--warn-dim);
+        color: var(--warn);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+      }
+      .ch-c {
+        background: var(--red-dim);
+        color: var(--red);
+        border: 1px solid rgba(255, 59, 59, 0.2);
+      }
+      .ch-dl {
+        background: var(--purple-dim);
+        color: var(--purple);
+        border: 1px solid rgba(168, 85, 247, 0.2);
+      }
+      .pt-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--border);
+        transition: 0.3s;
+      }
+      .pt-dot.on {
+        background: var(--green);
+        box-shadow: 0 0 5px var(--green);
+      }
+      .pt-dot.off {
+        background: var(--red);
+      }
+      .pt-name {
+        font-size: 0.77rem;
+        font-weight: 700;
+        color: var(--txt2);
+      }
+      .pt-score {
+        font-family: var(--mono);
+        font-size: 1.5rem;
+        font-weight: 600;
+        line-height: 1;
+      }
+      .s-a {
+        color: var(--cyan);
+      }
+      .s-b {
+        color: var(--warn);
+      }
+      .s-c {
+        color: var(--red);
+      }
+      .s-dl {
+        color: var(--purple);
+      }
+      .pt-bar {
+        height: 3px;
+        background: var(--border);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .pt-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: 2px;
+        transition: width 0.8s ease;
+      }
+      .f-a {
+        background: var(--cyan);
+      }
+      .f-b {
+        background: var(--warn);
+      }
+      .f-c {
+        background: var(--red);
+      }
+      .f-dl {
+        background: var(--purple);
+      }
+      .sigs8 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.7rem;
+        margin-bottom: 1.2rem;
+      }
+      @media (max-width: 700px) {
+        .sigs8 {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      .sig-tile {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.75rem 0.9rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+      }
+      .sig-l {
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--txt3);
+      }
+      .sig-v {
+        font-family: var(--mono);
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--txt);
+      }
+      .sig-v.hi {
+        color: var(--red);
+      }
+      .sig-v.md {
+        color: var(--warn);
+      }
 
-        .result-hero {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 1.25rem;
+      /* MEDIA + LLM */
+      .media-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.2rem;
+        margin-bottom: 1.2rem;
+      }
+      @media (max-width: 860px) {
+        .media-grid {
+          grid-template-columns: 1fr;
         }
-        .result-hero-top {
-            padding: 1.5rem 2rem;
-            display: flex; align-items: center; justify-content: space-between;
-            flex-wrap: wrap; gap: 1rem;
-        }
-        .result-verdict {
-            display: flex; align-items: center; gap: 1rem;
-        }
-        .verdict-icon {
-            width: 52px; height: 52px; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem;
-        }
-        .verdict-icon.danger { background: var(--danger-dim); }
-        .verdict-icon.success { background: var(--success-dim); }
-        .verdict-text h2 { font-size: 1.4rem; font-weight: 800; }
-        .verdict-text h2.danger { color: var(--danger); }
-        .verdict-text h2.success { color: var(--success); }
-        .verdict-text p { font-size: 0.85rem; color: var(--txt2); margin-top: 0.2rem; }
+      }
+      .media-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .media-head {
+        padding: 0.8rem 1.2rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: var(--txt3);
+        border-bottom: 1px solid var(--border);
+        background: var(--surface2);
+      }
+      .media-body {
+        background: #000;
+        min-height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #proc-vid,
+      #proc-img {
+        width: 100%;
+        display: none;
+        border-radius: 0;
+      }
+      .vid-fallback {
+        display: none;
+        padding: 1.5rem;
+        text-align: center;
+        color: var(--txt2);
+        font-size: 0.82rem;
+        background: var(--surface);
+      }
+      .llm-body {
+        padding: 1.2rem;
+        display: none;
+        flex-direction: column;
+        gap: 0.85rem;
+      }
+      .llm-frame-img {
+        width: 100%;
+        border-radius: 7px;
+        border: 1px solid var(--border);
+        display: block;
+      }
+      .llm-text {
+        font-size: 0.87rem;
+        line-height: 1.65;
+        color: var(--txt);
+        background: var(--surface2);
+        border-left: 3px solid var(--cyan);
+        padding: 0.9rem 1rem;
+        border-radius: 0 7px 7px 0;
+        font-style: italic;
+      }
+      .llm-empty {
+        padding: 2.5rem 1.2rem;
+        text-align: center;
+        color: var(--txt2);
+        font-size: 0.82rem;
+      }
 
-        .confidence-block {
-            display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;
-        }
-        .conf-num {
-            font-family: var(--mono);
-            font-size: 2.2rem; font-weight: 600;
-            line-height: 1;
-        }
-        .conf-num.danger { color: var(--danger); }
-        .conf-num.success { color: var(--success); }
-        .conf-label { font-size: 0.72rem; color: var(--txt2); text-align: right; }
+      /* LOG PANEL */
+      .log-panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.1rem 1.4rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+      .log-left h3 {
+        font-size: 0.88rem;
+        font-weight: 700;
+      }
+      .log-left p {
+        font-size: 0.75rem;
+        color: var(--txt2);
+        margin-top: 0.15rem;
+      }
+      .log-btns {
+        display: flex;
+        gap: 0.65rem;
+      }
+      .log-btn {
+        font-family: inherit;
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        border-radius: 7px;
+        cursor: pointer;
+        border: 1px solid;
+        transition: 0.2s;
+      }
+      .lb-no {
+        background: var(--green-dim);
+        border-color: rgba(0, 224, 122, 0.3);
+        color: var(--green);
+      }
+      .lb-yes {
+        background: var(--red-dim);
+        border-color: rgba(255, 59, 59, 0.3);
+        color: var(--red);
+      }
+      #log-msg {
+        font-size: 0.75rem;
+        color: var(--txt2);
+      }
 
-        .conf-bar-wrap {
-            width: 240px;
-        }
-        .conf-bar-track {
-            height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;
-            position: relative;
-        }
-        .conf-bar-fill {
-            height: 100%; width: 0%; border-radius: 4px;
-            transition: width 1s cubic-bezier(0.1,0.8,0.2,1);
-        }
-        .conf-bar-fill.danger { background: linear-gradient(90deg, #ef4444, #f87171); }
-        .conf-bar-fill.success { background: linear-gradient(90deg, #10b981, #34d399); }
-        .conf-threshold-marker {
-            position: absolute; top: 0; bottom: 0; width: 2px;
-            background: var(--warn);
-        }
-        .conf-bar-labels {
-            display: flex; justify-content: space-between;
-            font-size: 0.68rem; color: var(--txt3); margin-top: 0.35rem;
-        }
+      /* INCIDENT HISTORY — 3-TAB */
+      .tab-bar {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 1.2rem;
+      }
+      .tab-btn {
+        font-family: inherit;
+        font-size: 0.82rem;
+        font-weight: 600;
+        padding: 0.65rem 1.2rem;
+        border: none;
+        background: transparent;
+        color: var(--txt2);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+      }
+      .tab-btn.active {
+        color: var(--txt);
+        border-bottom-color: var(--blue);
+      }
+      .tab-count {
+        font-size: 0.65rem;
+        font-family: var(--mono);
+        padding: 0.1rem 0.4rem;
+        border-radius: 100px;
+        background: var(--surface2);
+        color: var(--txt2);
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: flex;
+        flex-direction: column;
+        gap: 1.1rem;
+      }
 
-        /* Trigger signal */
-        .trigger-bar {
-            padding: 0.85rem 2rem;
-            border-top: 1px solid var(--border);
-            background: var(--surface2);
-            display: flex; align-items: center; gap: 0.65rem;
-            font-size: 0.85rem;
-            flex-wrap: wrap;
+      /* Incident cards */
+      .inc-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .inc-card.confirmed {
+        border-color: rgba(255, 59, 59, 0.3);
+      }
+      .inc-card.suspicious {
+        border-color: rgba(245, 158, 11, 0.3);
+      }
+      .inc-card.suppressed {
+        border-color: var(--border);
+      }
+      .inc-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+        padding: 0.85rem 1.2rem;
+        border-bottom: 1px solid var(--border);
+        background: var(--surface2);
+      }
+      .inc-time {
+        font-weight: 700;
+        font-size: 0.88rem;
+      }
+      .inc-loc {
+        font-size: 0.75rem;
+        color: var(--txt2);
+        margin-top: 0.1rem;
+      }
+      .inc-src {
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 0.18rem 0.45rem;
+        border-radius: 5px;
+      }
+      .src-web {
+        background: var(--blue-dim);
+        color: #93c5fd;
+      }
+      .src-stream {
+        background: var(--green-dim);
+        color: var(--green);
+      }
+      .inc-body {
+        padding: 1.1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .inc-media {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.9rem;
+      }
+      @media (max-width: 580px) {
+        .inc-media {
+          grid-template-columns: 1fr;
         }
-        .trigger-label { color: var(--txt2); font-weight: 600; }
-        .trigger-val { color: var(--txt); font-weight: 600; }
+      }
+      .inc-media-label {
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--txt3);
+        margin-bottom: 0.4rem;
+      }
+      .inc-media video,
+      .inc-media img {
+        width: 100%;
+        border-radius: 7px;
+        border: 1px solid var(--border);
+        display: block;
+      }
+      .inc-media img {
+        border-color: var(--red);
+      }
+      .inc-conf-row {
+        display: flex;
+        gap: 0.65rem;
+        flex-wrap: wrap;
+      }
+      .inc-pill {
+        flex: 1;
+        min-width: 100px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 0.65rem;
+        text-align: center;
+      }
+      .inc-pill-l {
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--txt3);
+      }
+      .inc-pill-v {
+        font-family: var(--mono);
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-top: 0.2rem;
+      }
+      .inc-trigger {
+        font-size: 0.8rem;
+        color: var(--txt2);
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        padding: 0.55rem 0.85rem;
+        border-radius: 6px;
+      }
+      .inc-trigger strong {
+        color: var(--txt);
+      }
+      .inc-phases {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 0.4rem;
+      }
+      @media (max-width: 580px) {
+        .inc-phases {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+      .mini-score {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.5rem 0.3rem;
+        text-align: center;
+      }
+      .ms-l {
+        font-size: 0.58rem;
+        color: var(--txt3);
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .ms-v {
+        font-family: var(--mono);
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--txt);
+        margin-top: 0.1rem;
+      }
+      .inc-llm {
+        font-size: 0.83rem;
+        line-height: 1.6;
+        color: var(--txt);
+        background: var(--surface2);
+        border-left: 3px solid var(--cyan);
+        padding: 0.8rem 0.95rem;
+        border-radius: 0 7px 7px 0;
+        font-style: italic;
+      }
+      .empty-state {
+        text-align: center;
+        color: var(--txt2);
+        padding: 2.5rem;
+        border: 1px dashed var(--border);
+        border-radius: 10px;
+        font-size: 0.85rem;
+      }
 
-        /* Threshold slider */
-        .threshold-row {
-            padding: 0.85rem 2rem;
-            border-top: 1px solid var(--border);
-            display: flex; align-items: center; gap: 1.25rem;
-            flex-wrap: wrap;
-        }
-        .threshold-info { font-size: 0.82rem; color: var(--txt2); }
-        .threshold-info span { color: var(--accent2); font-weight: 700; font-family: var(--mono); }
-        #threshold-slider {
-            flex: 1; min-width: 160px;
-            -webkit-appearance: none; appearance: none;
-            height: 5px; background: var(--border); border-radius: 3px; outline: none; cursor: pointer;
-        }
-        #threshold-slider::-webkit-slider-thumb {
-            -webkit-appearance: none; appearance: none;
-            width: 16px; height: 16px; border-radius: 50%;
-            background: var(--accent2); cursor: pointer;
-        }
-
-        /* ── PIPELINE STATUS ── */
-        .pipeline-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 1.25rem;
-        }
-        .pipeline-head {
-            padding: 0.9rem 1.5rem;
-            border-bottom: 1px solid var(--border);
-            font-size: 0.85rem; font-weight: 700;
-            background: var(--surface2);
-            display: flex; align-items: center; gap: 0.5rem;
-        }
-        .pipeline-steps {
-            display: flex; align-items: stretch;
-            padding: 1.5rem;
-            gap: 0;
-            flex-wrap: wrap;
-        }
-        .pipeline-step {
-            flex: 1; min-width: 140px;
-            display: flex; flex-direction: column; align-items: center;
-            gap: 0.65rem; text-align: center;
-            padding: 1rem;
-            position: relative;
-        }
-        .pipeline-step + .pipeline-step::before {
-            content: '→';
-            position: absolute; left: 0; top: 50%; transform: translateY(-50%);
-            color: var(--txt3); font-size: 1rem;
-        }
-        .step-circle {
-            width: 48px; height: 48px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.1rem; border: 2px solid var(--border);
-            background: var(--surface2);
-            transition: all 0.3s;
-        }
-        .step-circle.confirmed { border-color: var(--success); background: var(--success-dim); }
-        .step-circle.failed    { border-color: var(--danger); background: var(--danger-dim); }
-        .step-circle.pending   { border-color: var(--border); }
-        .step-name { font-size: 0.78rem; font-weight: 700; color: var(--txt2); }
-        .step-val  {
-            font-family: var(--mono); font-size: 0.85rem; font-weight: 600;
-            color: var(--txt3);
-        }
-        .step-val.confirmed { color: var(--success); }
-        .step-val.failed    { color: var(--danger); }
-        .step-status { font-size: 0.68rem; color: var(--txt3); }
-
-        /* ── METRICS GRID ── */
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-            margin-bottom: 1.25rem;
-        }
-        @media (max-width: 640px) { .metrics-grid { grid-template-columns: 1fr 1fr; } }
-
-        .metric-tile {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 1rem 1.25rem;
-            display: flex; flex-direction: column; gap: 0.4rem;
-        }
-        .metric-tile-label {
-            font-size: 0.67rem; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 1.2px;
-            color: var(--txt3);
-        }
-        .metric-tile-val {
-            font-family: var(--mono); font-size: 1.4rem; font-weight: 600;
-        }
-        .metric-tile-sub { font-size: 0.72rem; color: var(--txt2); }
-
-        /* ── PHASE BREAKDOWN ── */
-        .phases-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
-            margin-bottom: 1.25rem;
-        }
-        @media (max-width: 700px) { .phases-grid { grid-template-columns: 1fr 1fr; } }
-
-        .phase-tile {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 1rem;
-            display: flex; flex-direction: column; gap: 0.75rem;
-        }
-        .phase-tile-head {
-            display: flex; align-items: center; justify-content: space-between;
-        }
-        .phase-chip {
-            font-size: 0.65rem; font-weight: 700;
-            padding: 0.2rem 0.5rem;
-            border-radius: 100px;
-            font-family: var(--mono);
-        }
-        .phase-chip.A { background: rgba(0,207,255,0.12); color: var(--accent2); border: 1px solid rgba(0,207,255,0.2); }
-        .phase-chip.B { background: rgba(245,158,11,0.12); color: var(--warn); border: 1px solid rgba(245,158,11,0.2); }
-        .phase-chip.C { background: rgba(255,59,59,0.12); color: var(--danger); border: 1px solid rgba(255,59,59,0.2); }
-        .phase-chip.DL { background: rgba(168,85,247,0.12); color: var(--purple); border: 1px solid rgba(168,85,247,0.2); }
-        .phase-confirm-dot {
-            width: 10px; height: 10px; border-radius: 50%;
-            background: var(--border);
-            transition: background 0.3s;
-        }
-        .phase-confirm-dot.on  { background: var(--success); box-shadow: 0 0 6px var(--success); }
-        .phase-confirm-dot.off { background: var(--danger); }
-        .phase-name { font-size: 0.8rem; font-weight: 700; color: var(--txt2); }
-        .phase-score-val {
-            font-family: var(--mono); font-size: 1.6rem; font-weight: 600;
-            line-height: 1;
-        }
-        .phase-score-val.A  { color: var(--accent2); }
-        .phase-score-val.B  { color: var(--warn); }
-        .phase-score-val.C  { color: var(--danger); }
-        .phase-score-val.DL { color: var(--purple); }
-        .phase-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
-        .phase-bar-fill { height: 100%; width: 0%; border-radius: 2px; transition: width 0.8s ease; }
-        .phase-bar-fill.A  { background: var(--accent2); }
-        .phase-bar-fill.B  { background: var(--warn); }
-        .phase-bar-fill.C  { background: var(--danger); }
-        .phase-bar-fill.DL { background: var(--purple); }
-
-        /* ── SUB-SIGNALS ── */
-        .sub-signals-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 0.75rem;
-            margin-bottom: 1.25rem;
-        }
-        @media (max-width: 700px) { .sub-signals-grid { grid-template-columns: 1fr 1fr; } }
-
-        .signal-tile {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 0.85rem 1rem;
-            display: flex; flex-direction: column; gap: 0.25rem;
-        }
-        .signal-label {
-            font-size: 0.65rem; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 1px;
-            color: var(--txt3);
-        }
-        .signal-val {
-            font-family: var(--mono); font-size: 1.05rem; font-weight: 600;
-            color: var(--txt);
-        }
-        .signal-val.high { color: var(--danger); }
-        .signal-val.mid  { color: var(--warn); }
-
-        /* ── VIDEO + LLM PANEL ── */
-        .result-media {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.25rem;
-            margin-bottom: 1.25rem;
-        }
-        @media (max-width: 900px) { .result-media { grid-template-columns: 1fr; } }
-
-        .media-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        .media-card-head {
-            padding: 0.85rem 1.25rem;
-            font-size: 0.75rem; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 1.5px; color: var(--txt3);
-            border-bottom: 1px solid var(--border);
-            background: var(--surface2);
-        }
-        .media-card-body { padding: 1.25rem; }
-        #processed-video-preview, #processed-image-preview {
-            width: 100%; display: none; border-radius: 8px; border: 1px solid var(--border);
-        }
-        .exact-frame-img {
-            width: 100%; border-radius: 8px; border: 1px solid var(--border-bright);
-            display: block;
-        }
-        .llm-text {
-            font-size: 0.9rem; line-height: 1.65; color: var(--txt);
-            background: var(--surface2);
-            border-left: 3px solid var(--accent2);
-            padding: 1rem; border-radius: 0 8px 8px 0;
-            margin-top: 1rem;
-            font-style: italic;
-        }
-        #visual-output-fallback {
-            display: none; padding: 1.5rem; text-align: center;
-            color: var(--txt2); font-size: 0.85rem;
-        }
-
-        /* ── LOGGING PANEL ── */
-        .log-panel {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.25rem;
-            display: flex; align-items: center; justify-content: space-between;
-            flex-wrap: wrap; gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        .log-panel-left { display: flex; flex-direction: column; gap: 0.25rem; }
-        .log-panel-left h3 { font-size: 0.9rem; font-weight: 700; }
-        .log-panel-left p  { font-size: 0.78rem; color: var(--txt2); }
-        .log-btns { display: flex; gap: 0.75rem; }
-        .log-btn {
-            font-family: inherit; font-size: 0.82rem; font-weight: 600;
-            padding: 0.55rem 1.1rem; border-radius: 8px; cursor: pointer;
-            border: 1px solid; transition: all 0.2s;
-        }
-        .log-btn.no  { background: var(--success-dim); border-color: rgba(0,224,122,0.35); color: var(--success); }
-        .log-btn.yes { background: var(--danger-dim);  border-color: rgba(255,59,59,0.35);  color: var(--danger); }
-        .log-btn:hover.no  { background: rgba(0,224,122,0.2); }
-        .log-btn:hover.yes { background: rgba(255,59,59,0.2); }
-        #log-status { font-size: 0.78rem; color: var(--txt2); }
-
-        /* ── XGBOOST CARD ── */
-        .xgb-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 2rem;
-        }
-        .xgb-head {
-            display: flex; align-items: center; gap: 0.65rem;
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--border);
-            background: var(--surface2);
-        }
-        .xgb-head h2 { font-size: 0.95rem; font-weight: 700; }
+      /* XGB CARD */
+      .xgb-body {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.4rem;
+        padding: 1.4rem;
+      }
+      @media (max-width: 640px) {
         .xgb-body {
-            display: grid; grid-template-columns: 1fr 1fr;
-            gap: 0; padding: 1.5rem; gap: 1.5rem;
-            flex-wrap: wrap;
+          grid-template-columns: 1fr;
         }
-        @media (max-width: 640px) { .xgb-body { grid-template-columns: 1fr; } }
-        .stat-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
-        .stat-row:last-child { border: none; }
-        .stat-key { color: var(--txt2); }
-        .stat-val { font-family: var(--mono); color: var(--txt); font-weight: 600; }
-        .xgb-actions { display: flex; flex-direction: column; gap: 0.75rem; }
-        .btn-outline {
-            font-family: inherit; font-size: 0.85rem; font-weight: 600;
-            padding: 0.65rem 1rem; border-radius: 8px; cursor: pointer;
-            background: transparent;
-            border: 1px solid var(--border-bright);
-            color: var(--txt);
-            transition: all 0.2s;
-        }
-        .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
-        .btn-outline:disabled { opacity: 0.4; cursor: not-allowed; }
-        #train-result { font-size: 0.8rem; color: var(--txt2); }
+      }
+      .stat-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.83rem;
+        padding: 0.45rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .stat-row:last-child {
+        border: none;
+      }
+      .sk {
+        color: var(--txt2);
+      }
+      .sv {
+        font-family: var(--mono);
+        font-weight: 600;
+      }
+      .btn-outline {
+        font-family: inherit;
+        font-size: 0.83rem;
+        font-weight: 600;
+        padding: 0.6rem 1rem;
+        border-radius: 7px;
+        cursor: pointer;
+        background: transparent;
+        border: 1px solid var(--border2);
+        color: var(--txt);
+        transition: 0.2s;
+      }
+      .btn-outline:hover {
+        border-color: var(--blue);
+        color: var(--blue);
+      }
+      .btn-outline:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
 
-        /* ── INCIDENT HISTORY ── */
-        .incident-section { }
-        .incident-section-head {
-            display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 1rem;
-        }
-        .incident-section-head h2 { font-size: 1.1rem; font-weight: 800; }
-        .refresh-btn {
-            font-family: inherit; font-size: 0.8rem; font-weight: 600;
-            padding: 0.45rem 0.9rem; border-radius: 7px;
-            background: var(--surface); border: 1px solid var(--border);
-            color: var(--txt2); cursor: pointer; transition: all 0.2s;
-        }
-        .refresh-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+      /* ALERT */
+      .alert {
+        display: none;
+        background: var(--red-dim);
+        border: 1px solid rgba(255, 59, 59, 0.25);
+        color: #f87171;
+        padding: 0.8rem 1.1rem;
+        border-radius: 9px;
+        font-size: 0.85rem;
+        margin-bottom: 1.2rem;
+      }
 
-        .incident-list { display: flex; flex-direction: column; gap: 1.25rem; }
+      /* VERDICT GLOW */
+      .verdict-card.acc-glow {
+        animation: glow 2.5s ease-in-out infinite;
+      }
+      @keyframes glow {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 transparent;
+        }
+        50% {
+          box-shadow: 0 0 24px 4px rgba(255, 59, 59, 0.2);
+        }
+      }
 
-        .incident-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px; overflow: hidden;
-        }
-        .incident-card.is-collapsed .incident-body { display: none; }
-        .incident-card.is-collapsed .incident-card-head { border-bottom: none; }
-
-        .incident-card-head {
-            display: flex; align-items: center; justify-content: space-between;
-            flex-wrap: wrap; gap: 0.75rem;
-            padding: 0.9rem 1.25rem;
-            border-bottom: 1px solid var(--border);
-            background: var(--surface2);
-            cursor: pointer;
-            user-select: none;
-        }
-        .incident-card-head:hover { background: rgba(255,255,255,0.03); }
-
-        .incident-card-actions {
-            display: flex; align-items: center; gap: 0.5rem;
-        }
-        .incident-toggle-btn, .incident-delete-btn {
-            font-family: inherit; font-size: 0.78rem; font-weight: 600;
-            padding: 0.35rem 0.65rem; border-radius: 6px;
-            background: var(--surface); border: 1px solid var(--border);
-            color: var(--txt2); cursor: pointer; transition: all 0.2s;
-            line-height: 1;
-        }
-        .incident-toggle-btn:hover { border-color: var(--accent2); color: var(--accent2); }
-        .incident-delete-btn:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-dim); }
-        .incident-time { font-weight: 700; font-size: 0.9rem; }
-        .incident-loc  { font-size: 0.78rem; color: var(--txt2); margin-top: 0.1rem; }
-        .source-chip {
-            font-size: 0.68rem; font-weight: 700;
-            padding: 0.2rem 0.5rem; border-radius: 6px;
-        }
-        .source-chip.web    { background: rgba(59,127,255,0.15); color: #93c5fd; }
-        .source-chip.stream { background: rgba(0,224,122,0.12); color: var(--success); }
-
-        .incident-body { padding: 1.25rem; display: flex; flex-direction: column; gap: 1.25rem; }
-
-        .incident-media {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
-        }
-        @media (max-width: 640px) { .incident-media { grid-template-columns: 1fr; } }
-
-        .incident-media-label {
-            font-size: 0.68rem; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 1px; color: var(--txt3);
-            margin-bottom: 0.5rem;
-        }
-        .incident-media video, .incident-media img {
-            width: 100%; border-radius: 8px; border: 1px solid var(--border); display: block;
-        }
-        .incident-media img { border-color: var(--danger); }
-
-        .incident-metrics-row {
-            display: flex; gap: 0.75rem; flex-wrap: wrap;
-        }
-        .conf-pill {
-            flex: 1; min-width: 120px;
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            border-radius: 8px; padding: 0.75rem;
-            text-align: center;
-        }
-        .conf-pill-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--txt3); }
-        .conf-pill-val { font-family: var(--mono); font-size: 1.3rem; font-weight: 700; margin-top: 0.25rem; }
-
-        .incident-phases-row {
-            display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem;
-        }
-        @media (max-width: 640px) { .incident-phases-row { grid-template-columns: repeat(4, 1fr); } }
-
-        .mini-score {
-            background: var(--surface2); border: 1px solid var(--border);
-            border-radius: 7px; padding: 0.55rem 0.35rem; text-align: center;
-        }
-        .mini-score-label { font-size: 0.6rem; color: var(--txt3); font-weight: 700; text-transform: uppercase; }
-        .mini-score-val { font-family: var(--mono); font-size: 0.9rem; font-weight: 700; color: var(--txt); margin-top: 0.15rem; }
-
-        .incident-trigger {
-            font-size: 0.82rem; color: var(--txt2);
-            background: var(--surface2); border: 1px solid var(--border);
-            padding: 0.6rem 0.9rem; border-radius: 7px;
-        }
-        .incident-trigger strong { color: var(--txt); }
-
-        .incident-llm {
-            font-size: 0.85rem; line-height: 1.6; color: var(--txt);
-            background: var(--surface2); border-left: 3px solid var(--accent2);
-            padding: 0.85rem 1rem; border-radius: 0 7px 7px 0;
-            font-style: italic;
-        }
-        .incident-empty {
-            text-align: center; color: var(--txt2); padding: 3rem 2rem;
-            border: 1px dashed var(--border); border-radius: 10px;
-        }
-
-        /* ── ALERTS ── */
-        .alert-banner {
-            display: none;
-            background: var(--danger-dim);
-            border: 1px solid rgba(255,59,59,0.2);
-            color: #f87171;
-            padding: 0.85rem 1.25rem;
-            border-radius: 10px; font-size: 0.88rem; font-weight: 500;
-            margin-bottom: 1.5rem;
-        }
-
-        /* ── FOOTER ── */
-        footer {
-            text-align: center; margin-top: 3rem;
-            font-size: 0.78rem; color: var(--txt3);
-        }
-
-        /* ── ANIMATIONS ── */
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(16px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        .fade-up { animation: fadeUp 0.4s ease-out both; }
-
-        @keyframes glow-danger {
-            0%,100% { box-shadow: 0 0 0 0 rgba(255,59,59,0); }
-            50%      { box-shadow: 0 0 20px 4px rgba(255,59,59,0.25); }
-        }
-        .result-hero.accident { animation: glow-danger 2.5s ease-in-out infinite; }
+      /* FOOTER */
+      footer {
+        text-align: center;
+        margin-top: 2.5rem;
+        font-size: 0.75rem;
+        color: var(--txt3);
+      }
     </style>
-</head>
-<body>
-
-<!-- TOPBAR -->
-<nav class="topbar">
-    <div class="logo">
+  </head>
+  <body>
+    <nav class="topbar">
+      <div class="logo">
         <div class="logo-mark">U</div>
         <div>
-            <div class="logo-text">UYIR Road Safety</div>
-            <div class="logo-sub">Accident Detection System · Tamil Nadu Pilot</div>
+          <div class="logo-text">UYIR Road Safety</div>
+          <div class="logo-sub">
+            Accident Detection System · Tamil Nadu Police Pilot
+          </div>
         </div>
-    </div>
-    <div class="status-chip">System Online</div>
-</nav>
+      </div>
+      <div class="status-pill">System Online</div>
+    </nav>
 
-<div class="page">
-    <div class="alert-banner" id="error-alert"></div>
+    <div class="page">
+      <div class="alert" id="err-alert"></div>
 
-    <!-- UPLOAD -->
-    <div class="section-label">Upload Media</div>
-    <div class="upload-grid">
-        <!-- Image card -->
+      <!-- UPLOAD -->
+      <div class="sec-label">Upload & Analyse</div>
+      <div class="upload-grid">
         <div class="upload-card">
-            <div class="upload-card-head">
-                <div class="card-icon">IMG</div>
-                <h2>Analyze Image</h2>
+          <div class="upload-head">
+            <div
+              class="tag"
+              style="background: var(--blue-dim); color: var(--blue)"
+            >
+              IMG
             </div>
-            <div class="drop-zone" id="img-dropzone">
-                <div class="drop-icon">🖼</div>
-                <div class="drop-text">Drop image here or <span>browse</span></div>
-                <div class="drop-sub">JPG · PNG · WEBP</div>
-                <input type="file" id="img-input" accept="image/*">
-            </div>
-            <div class="preview-wrap" id="img-preview-wrap">
-                <button class="remove-btn" onclick="clearImage()">✕</button>
-                <img id="img-preview" src="" alt="Preview">
-            </div>
-            <button class="btn" id="predict-image-btn" onclick="uploadImage()" disabled>Analyze Image</button>
+            <h2>Analyse Image</h2>
+          </div>
+          <div class="drop-zone" id="img-zone">
+            <div class="drop-icon">🖼</div>
+            <div class="drop-txt">Drop image here or <span>browse</span></div>
+            <div class="drop-sub">JPG · PNG · WEBP</div>
+            <input type="file" id="img-inp" accept="image/*" />
+          </div>
+          <div class="preview-wrap" id="img-pw">
+            <button class="rm-btn" onclick="clearImg()">✕</button
+            ><img id="img-prev" src="" alt="" />
+          </div>
+          <button class="btn" id="img-btn" onclick="runImage()" disabled>
+            Analyse Image
+          </button>
         </div>
-
-        <!-- Video card -->
         <div class="upload-card">
-            <div class="upload-card-head">
-                <div class="card-icon">VID</div>
-                <h2>Analyze Video</h2>
+          <div class="upload-head">
+            <div
+              class="tag"
+              style="background: var(--cyan-dim); color: var(--cyan)"
+            >
+              VID
             </div>
-            <div class="drop-zone" id="vid-dropzone">
-                <div class="drop-icon">🎥</div>
-                <div class="drop-text">Drop video here or <span>browse</span></div>
-                <div class="drop-sub">MP4 · AVI · MOV</div>
-                <input type="file" id="vid-input" accept="video/*">
+            <h2>Analyse Video / IP Stream</h2>
+          </div>
+          <div class="drop-zone" id="vid-zone">
+            <div class="drop-icon">🎥</div>
+            <div class="drop-txt">Drop video here or <span>browse</span></div>
+            <div class="drop-sub">
+              MP4 · AVI · MOV — live results shown frame-by-frame
             </div>
-            <div class="preview-wrap" id="vid-preview-wrap">
-                <button class="remove-btn" onclick="clearVideo()">✕</button>
-                <video id="vid-preview" controls></video>
-            </div>
-            <button class="btn" id="predict-video-btn" onclick="uploadVideo()" disabled>Analyze Video</button>
+            <input type="file" id="vid-inp" accept="video/*" />
+          </div>
+          <div class="preview-wrap" id="vid-pw">
+            <button class="rm-btn" onclick="clearVid()">✕</button
+            ><video id="vid-prev" controls></video>
+          </div>
+          <button class="btn" id="vid-btn" onclick="runVideo()" disabled>
+            Analyse Video
+          </button>
         </div>
-    </div>
+      </div>
 
-    <!-- PROCESSING PANEL -->
-    <div id="processing-panel">
-        <div class="proc-header">
-            <div class="proc-title">🔍 Processing Video</div>
-            <div class="proc-badge running" id="proc-status-chip">SCANNING</div>
+      <!-- LIVE PANEL -->
+      <div class="card" id="live-panel">
+        <div class="card-head">
+          <div
+            class="tag"
+            style="background: var(--red-dim); color: var(--red)"
+          >
+            LIVE
+          </div>
+          <h2>Live Detection Feed</h2>
+          <div style="margin-left: auto" id="live-det-badge">
+            <span class="det-badge det-scanning">● Scanning</span>
+          </div>
         </div>
-        <div class="proc-body">
-            <!-- Live preview -->
-            <div class="proc-video-wrap">
-                <video id="live-video-feed" autoplay muted loop playsinline></video>
-                <div class="proc-video-overlay">
-                    <div class="proc-corner tl"></div>
-                    <div class="proc-corner tr"></div>
-                    <div class="proc-corner bl"></div>
-                    <div class="proc-corner br"></div>
-                    <div class="proc-scanning"></div>
-                </div>
+        <div class="live-layout">
+          <div class="live-video-wrap no-signal" id="live-vw">
+            <img
+              id="live-feed"
+              style="
+                display: none;
+                width: 100%;
+                max-height: 460px;
+                object-fit: contain;
+              "
+            />
+            <div class="scan-line" id="scan-line"></div>
+            <div class="corner tl"></div>
+            <div class="corner tr"></div>
+            <div class="corner bl"></div>
+            <div class="corner br"></div>
+          </div>
+          <div class="live-sidebar">
+            <div class="ls-label">Processing Metrics</div>
+            <div class="ls-group">
+              <div class="lm">
+                <div class="lm-l">Processing FPS</div>
+                <div class="lm-v" id="lv-fps">—</div>
+              </div>
+              <div class="lm">
+                <div class="lm-l">Frame</div>
+                <div class="lm-v" id="lv-frame">—</div>
+              </div>
+              <div class="lm">
+                <div class="lm-l">Elapsed</div>
+                <div class="lm-v" id="lv-elapsed">—</div>
+              </div>
+              <div class="lm">
+                <div class="lm-l">Tracked Vehicles</div>
+                <div class="lm-v" id="lv-tracks">—</div>
+              </div>
             </div>
-            <!-- Live metrics sidebar -->
-            <div class="proc-sidebar">
-                <div class="proc-sidebar-title">Live Metrics</div>
-                <div class="live-metric">
-                    <div class="live-metric-label">Elapsed Time</div>
-                    <div class="live-metric-val" id="live-elapsed">0.0s</div>
-                </div>
-                <div class="live-metric">
-                    <div class="live-metric-label">Est. Processing FPS</div>
-                    <div class="live-metric-val" id="live-fps">—</div>
-                </div>
-                <div class="live-metric">
-                    <div class="live-metric-label">Frames Processed</div>
-                    <div class="live-metric-val" id="live-frames">0</div>
-                </div>
-                <div class="live-metric">
-                    <div class="live-metric-label">DL Model Status</div>
-                    <div class="live-metric-val" id="live-dl-status">Warming up…</div>
-                </div>
-                <div class="live-metric">
-                    <div class="live-metric-label">Detection Status</div>
-                    <div class="live-metric-val success" id="live-det-status">Scanning…</div>
-                </div>
-                <div class="live-metric">
-                    <div class="live-metric-label">File</div>
-                    <div class="live-metric-val" id="live-filename" style="font-size:0.78rem; word-break:break-all;">—</div>
-                </div>
+            <div class="ls-label">Scene State</div>
+            <div class="ls-group">
+              <div class="lm">
+                <div class="lm-l">Traffic Density</div>
+                <div class="lm-v" id="lv-density">—</div>
+              </div>
+              <div class="lm">
+                <div class="lm-l">Avg Speed (px/f)</div>
+                <div class="lm-v" id="lv-speed">—</div>
+              </div>
+              <div class="lm">
+                <div class="lm-l">Stopped Ratio</div>
+                <div class="lm-v" id="lv-stopped">—</div>
+              </div>
             </div>
+            <div class="ls-label">Detection Pipeline</div>
+            <div class="ls-group">
+              <div class="lm">
+                <div class="lm-l">DL Model Score</div>
+                <div class="lm-v" id="lv-dl">—</div>
+              </div>
+              <div class="lm">
+                <div class="lm-l">Phase Votes</div>
+                <div class="lm-v" id="lv-votes">—</div>
+              </div>
+              <div class="lm">
+                <div class="lm-l">Fused Score</div>
+                <div class="lm-v" id="lv-score">—</div>
+              </div>
+            </div>
+            <div class="ls-label">Phase Scores</div>
+            <div class="mini-bar-wrap" id="lv-phase-bars">
+              <div class="mini-bar-row">
+                <div class="mini-bar-l">Phase A</div>
+                <div class="mini-bar-track">
+                  <div
+                    class="mini-bar-fill bar-a"
+                    id="lb-a"
+                    style="width: 0%"
+                  ></div>
+                </div>
+                <div class="mini-bar-v" id="lv-a">0.00</div>
+              </div>
+              <div class="mini-bar-row">
+                <div class="mini-bar-l">Phase B</div>
+                <div class="mini-bar-track">
+                  <div
+                    class="mini-bar-fill bar-b"
+                    id="lb-b"
+                    style="width: 0%"
+                  ></div>
+                </div>
+                <div class="mini-bar-v" id="lv-b">0.00</div>
+              </div>
+              <div class="mini-bar-row">
+                <div class="mini-bar-l">Phase C</div>
+                <div class="mini-bar-track">
+                  <div
+                    class="mini-bar-fill bar-c"
+                    id="lb-c"
+                    style="width: 0%"
+                  ></div>
+                </div>
+                <div class="mini-bar-v" id="lv-c">0.00</div>
+              </div>
+              <div class="mini-bar-row">
+                <div class="mini-bar-l">DL Peak</div>
+                <div class="mini-bar-track">
+                  <div
+                    class="mini-bar-fill bar-dl"
+                    id="lb-dl"
+                    style="width: 0%"
+                  ></div>
+                </div>
+                <div class="mini-bar-v" id="lv-dl2">0.00</div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="proc-progress-wrap">
-            <div class="proc-progress-row">
-                <span id="proc-step-label">Uploading…</span>
-                <span id="proc-pct">0%</span>
-            </div>
-            <div class="progress-track">
-                <div class="progress-fill" id="proc-progress-fill"></div>
-            </div>
+        <div class="prog-wrap">
+          <div class="prog-row">
+            <span id="prog-label">Uploading…</span><span id="prog-pct">0%</span>
+          </div>
+          <div class="prog-track">
+            <div class="prog-fill" id="prog-fill"></div>
+          </div>
         </div>
-    </div>
+      </div>
 
-    <!-- RESULTS PANEL -->
-    <div id="results-panel">
-
-        <!-- Verdict + confidence -->
-        <div class="result-hero fade-up" id="result-hero">
-            <div class="result-hero-top">
-                <div class="result-verdict">
-                    <div class="verdict-icon" id="verdict-icon">⚠️</div>
-                    <div class="verdict-text">
-                        <h2 id="verdict-text">INCIDENT DETECTED</h2>
-                        <p id="verdict-sub">Multi-stage pipeline confirmed accident</p>
-                    </div>
+      <!-- RESULT PANEL -->
+      <div id="result-panel">
+        <div class="verdict-card" id="verdict-card">
+          <div class="verdict-top">
+            <div class="verdict-left">
+              <div class="v-icon" id="v-icon">⚠️</div>
+              <div class="v-text">
+                <h2 id="v-text">—</h2>
+                <p id="v-sub">—</p>
+              </div>
+            </div>
+            <div class="conf-right">
+              <div class="conf-num" id="conf-num">—</div>
+              <div class="conf-sub">Fused Confidence Score</div>
+              <div class="conf-bar-wrap">
+                <div class="conf-track">
+                  <div class="conf-fill" id="conf-fill"></div>
+                  <div
+                    class="thr-marker"
+                    id="thr-marker"
+                    style="left: 55%"
+                  ></div>
                 </div>
-                <div class="confidence-block">
-                    <div class="conf-num" id="conf-num">0.00%</div>
-                    <div class="conf-label">Fused Confidence Score</div>
-                    <div class="conf-bar-wrap">
-                        <div class="conf-bar-track">
-                            <div class="conf-bar-fill" id="conf-bar"></div>
-                            <div class="conf-threshold-marker" id="conf-threshold-marker"></div>
-                        </div>
-                        <div class="conf-bar-labels">
-                            <span>0%</span>
-                            <span id="conf-threshold-label">Threshold: 55%</span>
-                            <span>100%</span>
-                        </div>
-                    </div>
+                <div class="conf-labels">
+                  <span>0%</span><span id="thr-label">Threshold: 55%</span
+                  ><span>100%</span>
                 </div>
+              </div>
             </div>
-            <div class="trigger-bar">
-                <span class="trigger-label">Triggering Signal:</span>
-                <span class="trigger-val" id="trigger-text">—</span>
-            </div>
-            <div class="threshold-row">
-                <span class="threshold-info">Alarm threshold: <span id="threshold-val-label">55%</span></span>
-                <input type="range" id="threshold-slider" min="10" max="95" value="55" step="1">
-                <span class="threshold-info" style="color:var(--txt3); font-size:0.75rem;">Drag to tune sensitivity</span>
-            </div>
+          </div>
+          <div class="trigger-bar">
+            <span style="color: var(--txt2); font-weight: 600">Trigger:</span
+            ><span id="trig-txt" style="font-weight: 600">—</span>
+          </div>
+          <div class="thr-row">
+            <span class="thr-info"
+              >Alarm threshold: <span id="thr-val">55%</span></span
+            >
+            <input
+              type="range"
+              id="thr-slider"
+              min="10"
+              max="95"
+              value="55"
+              step="1"
+            />
+            <span
+              class="thr-info"
+              style="color: var(--txt3); font-size: 0.72rem"
+              >Drag to tune sensitivity</span
+            >
+          </div>
         </div>
 
         <!-- Pipeline status -->
-        <div class="pipeline-card fade-up" id="pipeline-status-card">
-            <div class="pipeline-head">🔬 Option 2 Detection Pipeline Status</div>
-            <div class="pipeline-steps">
-                <div class="pipeline-step">
-                    <div class="step-circle" id="step-dl-circle">🧠</div>
-                    <div class="step-name">DL Gate</div>
-                    <div class="step-val" id="step-dl-val">—</div>
-                    <div class="step-status" id="step-dl-status">EfficientNet+BiLSTM</div>
-                </div>
-                <div class="pipeline-step">
-                    <div class="step-circle" id="step-a-circle">A</div>
-                    <div class="step-name">Phase A</div>
-                    <div class="step-val" id="step-a-val">—</div>
-                    <div class="step-status">Proximity / TTC</div>
-                </div>
-                <div class="pipeline-step">
-                    <div class="step-circle" id="step-b-circle">B</div>
-                    <div class="step-name">Phase B</div>
-                    <div class="step-val" id="step-b-val">—</div>
-                    <div class="step-status">Trajectory / Stop</div>
-                </div>
-                <div class="pipeline-step">
-                    <div class="step-circle" id="step-c-circle">C</div>
-                    <div class="step-name">Phase C</div>
-                    <div class="step-val" id="step-c-val">—</div>
-                    <div class="step-status">Optical Flow / Anomaly</div>
-                </div>
-                <div class="pipeline-step">
-                    <div class="step-circle" id="step-vote-circle">🗳</div>
-                    <div class="step-name">Phase Votes</div>
-                    <div class="step-val" id="step-vote-val">—</div>
-                    <div class="step-status">Need ≥ 2 of 3</div>
-                </div>
+        <div class="card" style="margin-bottom: 1.2rem">
+          <div class="card-head"><h2>🔬 Option 2 Detection Pipeline</h2></div>
+          <div class="pipeline-steps">
+            <div class="pipe-step">
+              <div class="step-circle" id="sc-dl">🧠</div>
+              <div class="step-name">DL Gate</div>
+              <div class="step-val" id="sv-dl">—</div>
+              <div class="step-sub">
+                EfficientNet+BiLSTM<br />Must be ≥ 0.55
+              </div>
             </div>
+            <div class="pipe-step">
+              <div class="step-circle" id="sc-a">A</div>
+              <div class="step-name">Phase A</div>
+              <div class="step-val" id="sv-a">—</div>
+              <div class="step-sub">Proximity / TTC</div>
+            </div>
+            <div class="pipe-step">
+              <div class="step-circle" id="sc-b">B</div>
+              <div class="step-name">Phase B</div>
+              <div class="step-val" id="sv-b">—</div>
+              <div class="step-sub">Trajectory Stop</div>
+            </div>
+            <div class="pipe-step">
+              <div class="step-circle" id="sc-c">C</div>
+              <div class="step-name">Phase C</div>
+              <div class="step-val" id="sv-c">—</div>
+              <div class="step-sub">Optical Flow</div>
+            </div>
+            <div class="pipe-step">
+              <div class="step-circle" id="sc-vote">🗳</div>
+              <div class="step-name">Phase Votes</div>
+              <div class="step-val" id="sv-vote">—</div>
+              <div class="step-sub">Need ≥ 2 of 3</div>
+            </div>
+          </div>
         </div>
 
-        <!-- Traffic metrics -->
-        <div class="section-label">Scene Telemetry</div>
-        <div class="metrics-grid fade-up">
-            <div class="metric-tile">
-                <div class="metric-tile-label">Traffic Density</div>
-                <div class="metric-tile-val" id="metric-density" style="color:var(--accent2);">—</div>
-                <div class="metric-tile-sub">Vehicles in scene / max</div>
+        <!-- Scene telemetry -->
+        <div class="sec-label">Scene Telemetry</div>
+        <div class="metrics3">
+          <div class="met-tile">
+            <div class="met-label">Traffic Density</div>
+            <div class="met-val" id="r-density" style="color: var(--cyan)">
+              —
             </div>
-            <div class="metric-tile">
-                <div class="metric-tile-label">Avg Scene Speed</div>
-                <div class="metric-tile-val" id="metric-speed" style="color:#a5b4fc;">—</div>
-                <div class="metric-tile-sub">Pixels per frame</div>
+            <div class="met-sub">Vehicles / max</div>
+          </div>
+          <div class="met-tile">
+            <div class="met-label">Avg Scene Speed</div>
+            <div class="met-val" id="r-speed" style="color: #a5b4fc">—</div>
+            <div class="met-sub">Pixels per frame</div>
+          </div>
+          <div class="met-tile">
+            <div class="met-label">Stopped Ratio</div>
+            <div class="met-val" id="r-stopped" style="color: var(--warn)">
+              —
             </div>
-            <div class="metric-tile">
-                <div class="metric-tile-label">Stopped Ratio</div>
-                <div class="metric-tile-val" id="metric-stopped" style="color:var(--warn);">—</div>
-                <div class="metric-tile-sub">% of tracked vehicles</div>
-            </div>
+            <div class="met-sub">% of tracked vehicles</div>
+          </div>
         </div>
 
         <!-- Phase scores -->
-        <div class="section-label">Phase Scores</div>
-        <div class="phases-grid fade-up">
-            <div class="phase-tile">
-                <div class="phase-tile-head">
-                    <div><div class="phase-chip A">PHASE A</div><div class="phase-name" style="margin-top:0.4rem;">Proximity / TTC</div></div>
-                    <div class="phase-confirm-dot" id="dot-a"></div>
+        <div class="sec-label">Phase Scores</div>
+        <div class="phases4">
+          <div class="phase-tile">
+            <div class="pt-head">
+              <div>
+                <div class="pt-chip ch-a">PHASE A</div>
+                <div class="pt-name" style="margin-top: 0.35rem">
+                  Proximity / TTC
                 </div>
-                <div class="phase-score-val A" id="score-prox">0.00</div>
-                <div class="phase-bar"><div class="phase-bar-fill A" id="bar-prox"></div></div>
+              </div>
+              <div class="pt-dot" id="dot-a"></div>
             </div>
-            <div class="phase-tile">
-                <div class="phase-tile-head">
-                    <div><div class="phase-chip B">PHASE B</div><div class="phase-name" style="margin-top:0.4rem;">Trajectory Stop</div></div>
-                    <div class="phase-confirm-dot" id="dot-b"></div>
+            <div class="pt-score s-a" id="ps-a">0.00</div>
+            <div class="pt-bar"><div class="pt-fill f-a" id="pb-a"></div></div>
+          </div>
+          <div class="phase-tile">
+            <div class="pt-head">
+              <div>
+                <div class="pt-chip ch-b">PHASE B</div>
+                <div class="pt-name" style="margin-top: 0.35rem">
+                  Trajectory Stop
                 </div>
-                <div class="phase-score-val B" id="score-traj">0.00</div>
-                <div class="phase-bar"><div class="phase-bar-fill B" id="bar-traj"></div></div>
+              </div>
+              <div class="pt-dot" id="dot-b"></div>
             </div>
-            <div class="phase-tile">
-                <div class="phase-tile-head">
-                    <div><div class="phase-chip C">PHASE C</div><div class="phase-name" style="margin-top:0.4rem;">Optical Flow</div></div>
-                    <div class="phase-confirm-dot" id="dot-c"></div>
+            <div class="pt-score s-b" id="ps-b">0.00</div>
+            <div class="pt-bar"><div class="pt-fill f-b" id="pb-b"></div></div>
+          </div>
+          <div class="phase-tile">
+            <div class="pt-head">
+              <div>
+                <div class="pt-chip ch-c">PHASE C</div>
+                <div class="pt-name" style="margin-top: 0.35rem">
+                  Optical Flow
                 </div>
-                <div class="phase-score-val C" id="score-anom">0.00</div>
-                <div class="phase-bar"><div class="phase-bar-fill C" id="bar-anom"></div></div>
+              </div>
+              <div class="pt-dot" id="dot-c"></div>
             </div>
-            <div class="phase-tile">
-                <div class="phase-tile-head">
-                    <div><div class="phase-chip DL">CNN-LSTM DL</div><div class="phase-name" style="margin-top:0.4rem;">EfficientNet Peak</div></div>
-                    <div class="phase-confirm-dot" id="dot-dl"></div>
+            <div class="pt-score s-c" id="ps-c">0.00</div>
+            <div class="pt-bar"><div class="pt-fill f-c" id="pb-c"></div></div>
+          </div>
+          <div class="phase-tile">
+            <div class="pt-head">
+              <div>
+                <div class="pt-chip ch-dl">CNN-LSTM DL</div>
+                <div class="pt-name" style="margin-top: 0.35rem">
+                  EfficientNet Peak
                 </div>
-                <div class="phase-score-val DL" id="score-dl">0.00</div>
-                <div class="phase-bar"><div class="phase-bar-fill DL" id="bar-dl"></div></div>
+              </div>
+              <div class="pt-dot" id="dot-dl"></div>
             </div>
+            <div class="pt-score s-dl" id="ps-dl">0.00</div>
+            <div class="pt-bar">
+              <div class="pt-fill f-dl" id="pb-dl"></div>
+            </div>
+          </div>
         </div>
 
         <!-- Sub-signals -->
-        <div class="section-label">Sub-signal Breakdown</div>
-        <div class="sub-signals-grid fade-up">
-            <div class="signal-tile"><div class="signal-label">Occlusion</div><div class="signal-val" id="sig-occl">0.00</div></div>
-            <div class="signal-tile"><div class="signal-label">BBox Merge</div><div class="signal-val" id="sig-merge">0.00</div></div>
-            <div class="signal-tile"><div class="signal-label">Kinetic Drop</div><div class="signal-val" id="sig-ke">0.00</div></div>
-            <div class="signal-tile"><div class="signal-label">Scene Interrupt</div><div class="signal-val" id="sig-scene">0.00</div></div>
-            <div class="signal-tile"><div class="signal-label">Emerg. Stop</div><div class="signal-val" id="sig-emerg">0.00</div></div>
-            <div class="signal-tile"><div class="signal-label">Traj. Stop</div><div class="signal-val" id="sig-trajstop">0.00</div></div>
-            <div class="signal-tile"><div class="signal-label">Rel. Velocity</div><div class="signal-val" id="sig-relvel">0.00</div></div>
-            <div class="signal-tile"><div class="signal-label">Spin / Chaos</div><div class="signal-val" id="sig-spin">0.00</div></div>
+        <div class="sec-label">Sub-Signal Breakdown</div>
+        <div class="sigs8">
+          <div class="sig-tile">
+            <div class="sig-l">Occlusion</div>
+            <div class="sig-v" id="sig-occl">0.00</div>
+          </div>
+          <div class="sig-tile">
+            <div class="sig-l">BBox Merge</div>
+            <div class="sig-v" id="sig-merge">0.00</div>
+          </div>
+          <div class="sig-tile">
+            <div class="sig-l">Kinetic Drop</div>
+            <div class="sig-v" id="sig-ke">0.00</div>
+          </div>
+          <div class="sig-tile">
+            <div class="sig-l">Scene Interrupt</div>
+            <div class="sig-v" id="sig-scene">0.00</div>
+          </div>
+          <div class="sig-tile">
+            <div class="sig-l">Emerg. Stop</div>
+            <div class="sig-v" id="sig-emerg">0.00</div>
+          </div>
+          <div class="sig-tile">
+            <div class="sig-l">Traj. Stop</div>
+            <div class="sig-v" id="sig-trajstop">0.00</div>
+          </div>
+          <div class="sig-tile">
+            <div class="sig-l">Rel. Velocity</div>
+            <div class="sig-v" id="sig-relvel">0.00</div>
+          </div>
+          <div class="sig-tile">
+            <div class="sig-l">Spin / Chaos</div>
+            <div class="sig-v" id="sig-spin">0.00</div>
+          </div>
         </div>
 
         <!-- Video + LLM -->
-        <div class="result-media fade-up">
-            <div class="media-card">
-                <div class="media-card-head">Processed Visual Output</div>
-                <div class="media-card-body" style="padding:0; background:#000; min-height:220px; display:flex; align-items:center; justify-content:center;">
-                    <video id="processed-video-preview" controls autoplay loop muted playsinline></video>
-                    <img id="processed-image-preview" alt="Processed frame">
-                    <div id="visual-output-fallback">
-                        Video could not load. <a id="visual-output-download" href="#" target="_blank" style="color:var(--accent2);">Download clip</a>
-                    </div>
-                </div>
+        <div class="media-grid">
+          <div class="media-card">
+            <div class="media-head">Processed Visual Output</div>
+            <div class="media-body">
+              <video
+                id="proc-vid"
+                controls
+                autoplay
+                loop
+                muted
+                playsinline
+              ></video>
+              <img id="proc-img" alt="Processed frame" />
+              <div class="vid-fallback" id="vid-fallback">
+                Video could not load in browser.
+                <a
+                  id="vid-dl"
+                  href="#"
+                  target="_blank"
+                  style="color: var(--cyan)"
+                  >Download clip</a
+                >
+              </div>
             </div>
-            <div class="media-card">
-                <div class="media-card-head">Automated Scene Assessment</div>
-                <div class="media-card-body" id="llm-panel" style="display:none; flex-direction:column; gap:1rem;">
-                    <div style="font-size:0.72rem; color:var(--txt3); font-weight:700; text-transform:uppercase; letter-spacing:1px;">Exact Collision Frame</div>
-                    <img id="exact-frame" class="exact-frame-img" src="" alt="Collision frame">
-                    <div class="llm-text" id="llm-text">Analysis loading…</div>
-                </div>
-                <div class="media-card-body" id="llm-empty" style="color:var(--txt2); font-size:0.85rem; text-align:center; padding:3rem 1rem;">
-                    Scene analysis will appear here when an accident is detected.
-                </div>
+          </div>
+          <div class="media-card">
+            <div class="media-head">Automated Scene Assessment</div>
+            <div class="llm-body" id="llm-body">
+              <div class="met-label">Exact Collision Frame</div>
+              <img id="llm-frame" class="llm-frame-img" src="" alt="" />
+              <div class="llm-text" id="llm-txt">Analysis loading…</div>
             </div>
+            <div class="llm-empty" id="llm-empty">
+              Scene assessment will appear here when an accident is confirmed.
+            </div>
+          </div>
         </div>
 
-        <!-- Log for improvement -->
-        <div class="log-panel fade-up">
-            <div class="log-panel-left">
-                <h3>Log for Model Improvement</h3>
-                <p>Label this result to improve the XGBoost classifier</p>
+        <!-- Log -->
+        <div class="log-panel">
+          <div class="log-left">
+            <h3>Log for Model Improvement</h3>
+            <p>Label this result to train the XGBoost refinement model</p>
+          </div>
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              align-items: flex-end;
+              gap: 0.45rem;
+            "
+          >
+            <div class="log-btns">
+              <button class="log-btn lb-no" onclick="logFeature(0)">
+                ✓ No Incident
+              </button>
+              <button class="log-btn lb-yes" onclick="logFeature(1)">
+                ⚠ Mark Incident
+              </button>
             </div>
-            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.5rem;">
-                <div class="log-btns">
-                    <button class="log-btn no"  onclick="submitFeatureLog(0)">✓ No Incident</button>
-                    <button class="log-btn yes" onclick="submitFeatureLog(1)">⚠ Incident</button>
-                </div>
-                <div id="log-status"></div>
-            </div>
+            <div id="log-msg"></div>
+          </div>
         </div>
-    </div>
+      </div>
 
-    <!-- XGBOOST -->
-    <div class="xgb-card">
-        <div class="xgb-head">
-            <div class="card-icon">DB</div>
-            <h2>XGBoost Refinement Model</h2>
+      <!-- INCIDENT HISTORY — 3 TABS -->
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 0.75rem;
+          margin-bottom: 1rem;
+        "
+      >
+        <h2 style="font-size: 1.1rem; font-weight: 800">Incident History</h2>
+        <button class="btn btn-sm" onclick="loadHistory()">↻ Refresh</button>
+      </div>
+      <p style="font-size: 0.78rem; color: var(--txt2); margin-bottom: 1.1rem">
+        Each detected event with 5-second clip before and after. Confirmed = all
+        pipeline stages passed. Suspicious = DL confirmed but only 1 phase.
+        Suppressed = DL triggered but 0 phases confirmed.
+      </p>
+      <div class="tab-bar">
+        <button
+          class="tab-btn active"
+          id="tab-conf"
+          onclick="switchTab('confirmed')"
+        >
+          🚨 Confirmed <span class="tab-count" id="cnt-conf">0</span>
+        </button>
+        <button class="tab-btn" id="tab-susp" onclick="switchTab('suspicious')">
+          ⚠ Suspicious <span class="tab-count" id="cnt-susp">0</span>
+        </button>
+        <button class="tab-btn" id="tab-supp" onclick="switchTab('suppressed')">
+          🔇 Suppressed <span class="tab-count" id="cnt-supp">0</span>
+        </button>
+      </div>
+      <div class="tab-content active" id="tc-confirmed">
+        <div class="empty-state">No confirmed incidents yet.</div>
+      </div>
+      <div class="tab-content" id="tc-suspicious">
+        <div class="empty-state">No suspicious events yet.</div>
+      </div>
+      <div class="tab-content" id="tc-suppressed">
+        <div class="empty-state">No suppressed events yet.</div>
+      </div>
+
+      <!-- XGBOOST -->
+      <div class="card" style="margin-top: 2rem">
+        <div class="card-head">
+          <div
+            class="tag"
+            style="background: var(--blue-dim); color: var(--blue)"
+          >
+            ML
+          </div>
+          <h2>XGBoost Refinement Model</h2>
         </div>
         <div class="xgb-body">
-            <div>
-                <div class="section-label" style="margin-bottom:0.75rem;">Dataset Status</div>
-                <div class="stat-row"><span class="stat-key">Total Rows Logged</span><span class="stat-val" id="ds-total">—</span></div>
-                <div class="stat-row"><span class="stat-key">Incident Rows (label 1)</span><span class="stat-val" id="ds-acc">—</span></div>
-                <div class="stat-row"><span class="stat-key">No-Incident Rows (label 0)</span><span class="stat-val" id="ds-nor">—</span></div>
-                <div class="stat-row"><span class="stat-key">Model Status</span><span class="stat-val" id="ds-status" style="color:var(--txt2);">—</span></div>
-                <div class="stat-row"><span class="stat-key">Min rows per class to activate</span><span class="stat-val">50</span></div>
+          <div>
+            <div class="sec-label">Dataset Status</div>
+            <div class="stat-row">
+              <span class="sk">Total Rows Logged</span
+              ><span class="sv" id="ds-total">—</span>
             </div>
-            <div class="xgb-actions">
-                <div class="section-label">Train Model</div>
-                <p style="font-size:0.82rem; color:var(--txt2); margin-bottom:0.5rem;">Requires ≥ 50 labeled rows per class. XGBoost refines (but cannot override) confirmed DL+phase detections.</p>
-                <button class="btn-outline" id="train-xgb-btn" onclick="trainXGBoost()">Train XGBoost Classifier</button>
-                <div id="train-result"></div>
+            <div class="stat-row">
+              <span class="sk">Incident Rows (label 1)</span
+              ><span class="sv" id="ds-acc">—</span>
             </div>
+            <div class="stat-row">
+              <span class="sk">No-Incident Rows (label 0)</span
+              ><span class="sv" id="ds-nor">—</span>
+            </div>
+            <div class="stat-row">
+              <span class="sk">Model Status</span
+              ><span class="sv" id="ds-status" style="color: var(--txt2)"
+                >—</span
+              >
+            </div>
+            <div class="stat-row">
+              <span class="sk">Rows needed per class</span
+              ><span class="sv">50</span>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 0.85rem">
+            <div class="sec-label">Train Model</div>
+            <p style="font-size: 0.8rem; color: var(--txt2)">
+              Requires ≥ 50 labeled rows per class. XGBoost only refines — it
+              cannot override a DL+phase confirmed detection.
+            </p>
+            <button class="btn-outline" id="xgb-train-btn" onclick="trainXGB()">
+              Train XGBoost Classifier
+            </button>
+            <div
+              id="xgb-result"
+              style="font-size: 0.78rem; color: var(--txt2)"
+            ></div>
+          </div>
         </div>
+      </div>
+
+      <footer>
+        UYIR Foundation · Road Accident Detection System · Tamil Nadu Police
+        Pilot Programme
+      </footer>
     </div>
 
-    <!-- INCIDENT HISTORY -->
-    <div class="incident-section">
-        <div class="incident-section-head">
-            <h2>Incident History</h2>
-            <button class="refresh-btn" onclick="loadIncidents()">↻ Refresh</button>
-        </div>
-        <p style="font-size:0.8rem; color:var(--txt2); margin-bottom:1.25rem;">5 seconds before and after each confirmed accident, with full phase and DL metrics.</p>
-        <div class="incident-list" id="incident-list">
-            <div class="incident-empty">No incidents recorded yet.</div>
-        </div>
-    </div>
+    <script>
+      // ── State ──────────────────────────────────────────────────────
+      const $ = (id) => document.getElementById(id);
+      let selImg = null,
+        selVid = null,
+        curFeatures = null,
+        lastConf = 0,
+        sseConn = null;
+      let incidentStore = { confirmed: [], suspicious: [], suppressed: [] };
+      let curTab = "confirmed";
+      let liveStartTime = null;
 
-    <footer>UYIR Foundation · Road Accident Detection System · Tamil Nadu Police Pilot Programme</footer>
-</div>
-
-<script>
-    // ── State ──────────────────────────────────────────────────────────────
-    let selectedImage = null;
-    let selectedVideo = null;
-    let currentFeatures = null;
-    let lastConfidence = 0;
-    let processingTimer = null;
-    let processingStart = null;
-    let frameCounter = 0;
-
-    // ── DOM refs ──────────────────────────────────────────────────────────
-    const $ = id => document.getElementById(id);
-
-    // ── Drag & Drop setup ─────────────────────────────────────────────────
-    function setupDrop(zoneId, inputId, handler) {
-        const zone  = $(zoneId);
-        const input = $(inputId);
-        zone.addEventListener('click', () => input.click());
-        zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
-        zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
-        zone.addEventListener('drop', e => {
-            e.preventDefault(); zone.classList.remove('dragover');
-            if (e.dataTransfer.files.length) { input.files = e.dataTransfer.files; handler(e.dataTransfer.files[0]); }
+      // ── Drop zones ─────────────────────────────────────────────────
+      function setupDrop(zoneId, inputId, handler) {
+        const zone = $(zoneId),
+          inp = $(inputId);
+        zone.addEventListener("click", () => inp.click());
+        zone.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          zone.classList.add("over");
         });
-        input.addEventListener('change', () => { if (input.files.length) handler(input.files[0]); });
-    }
+        zone.addEventListener("dragleave", () => zone.classList.remove("over"));
+        zone.addEventListener("drop", (e) => {
+          e.preventDefault();
+          zone.classList.remove("over");
+          if (e.dataTransfer.files.length) {
+            inp.files = e.dataTransfer.files;
+            handler(e.dataTransfer.files[0]);
+          }
+        });
+        inp.addEventListener("change", () => {
+          if (inp.files.length) handler(inp.files[0]);
+        });
+      }
+      setupDrop("img-zone", "img-inp", handleImg);
+      setupDrop("vid-zone", "vid-inp", handleVid);
 
-    setupDrop('img-dropzone', 'img-input', handleImageSelect);
-    setupDrop('vid-dropzone', 'vid-input', handleVideoSelect);
-
-    function handleImageSelect(file) {
-        if (!file.type.startsWith('image/')) return showError('Please select an image file.');
-        selectedImage = file;
-        hideError();
-        const reader = new FileReader();
-        reader.onload = e => {
-            $('img-preview').src = e.target.result;
-            $('img-dropzone').style.display = 'none';
-            $('img-preview-wrap').style.display = 'block';
-            $('predict-image-btn').disabled = false;
+      function handleImg(f) {
+        if (!f.type.startsWith("image/"))
+          return showErr("Please select an image file.");
+        selImg = f;
+        hideErr();
+        const r = new FileReader();
+        r.onload = (e) => {
+          $("img-prev").src = e.target.result;
+          $("img-zone").style.display = "none";
+          $("img-pw").style.display = "block";
+          $("img-btn").disabled = false;
         };
-        reader.readAsDataURL(file);
-    }
+        r.readAsDataURL(f);
+      }
+      function handleVid(f) {
+        if (!f.type.startsWith("video/"))
+          return showErr("Please select a video file.");
+        selVid = f;
+        hideErr();
+        $("vid-prev").src = URL.createObjectURL(f);
+        $("vid-zone").style.display = "none";
+        $("vid-pw").style.display = "block";
+        $("vid-btn").disabled = false;
+      }
+      function clearImg() {
+        selImg = null;
+        $("img-inp").value = "";
+        $("img-zone").style.display = "flex";
+        $("img-pw").style.display = "none";
+        $("img-prev").src = "";
+        $("img-btn").disabled = true;
+        hideResult();
+      }
+      function clearVid() {
+        selVid = null;
+        $("vid-inp").value = "";
+        $("vid-zone").style.display = "flex";
+        $("vid-pw").style.display = "none";
+        $("vid-prev").src = "";
+        $("vid-btn").disabled = true;
+        hideResult();
+      }
 
-    function handleVideoSelect(file) {
-        if (!file.type.startsWith('video/')) return showError('Please select a video file.');
-        selectedVideo = file;
-        hideError();
-        $('vid-preview').src = URL.createObjectURL(file);
-        $('vid-dropzone').style.display = 'none';
-        $('vid-preview-wrap').style.display = 'block';
-        $('predict-video-btn').disabled = false;
-    }
+      // ── Alerts ─────────────────────────────────────────────────────
+      function showErr(m) {
+        $("err-alert").textContent = m;
+        $("err-alert").style.display = "block";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      function hideErr() {
+        $("err-alert").style.display = "none";
+      }
+      function hideResult() {
+        $("result-panel").style.display = "none";
+      }
 
-    function clearImage() {
-        selectedImage = null; $('img-input').value = '';
-        $('img-dropzone').style.display = 'flex';
-        $('img-preview-wrap').style.display = 'none';
-        $('img-preview').src = '';
-        $('predict-image-btn').disabled = true;
-        hideResults();
-    }
-
-    function clearVideo() {
-        selectedVideo = null; $('vid-input').value = '';
-        $('vid-dropzone').style.display = 'flex';
-        $('vid-preview-wrap').style.display = 'none';
-        $('vid-preview').src = '';
-        $('predict-video-btn').disabled = true;
-        hideResults();
-    }
-
-    // ── Error/Results visibility ──────────────────────────────────────────
-    function showError(msg) {
-        $('error-alert').textContent = msg;
-        $('error-alert').style.display = 'block';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    function hideError() { $('error-alert').style.display = 'none'; }
-    function hideResults() { $('results-panel').style.display = 'none'; }
-
-    // ── Processing panel helpers ──────────────────────────────────────────
-    function showProcessing(filename) {
-        hideResults();
-        $('processing-panel').style.display = 'block';
-        $('live-filename').textContent = filename || '—';
-        $('live-elapsed').textContent = '0.0s';
-        $('live-fps').textContent = '—';
-        $('live-frames').textContent = '0';
-        $('live-dl-status').textContent = 'Warming up…';
-        $('live-det-status').textContent = 'Scanning…';
-        $('live-det-status').className = 'live-metric-val success';
-        $('proc-progress-fill').style.width = '0%';
-        $('proc-pct').textContent = '0%';
-        $('proc-step-label').textContent = 'Uploading…';
-        $('proc-status-chip').textContent = 'SCANNING';
-        frameCounter = 0;
-        processingStart = Date.now();
-
-        // Show preview of the video being processed
-        if (selectedVideo) {
-            const liveVid = $('live-video-feed');
-            liveVid.src = URL.createObjectURL(selectedVideo);
-            liveVid.play().catch(() => {});
-        }
-
-        // Animate progress and metrics during processing
-        processingTimer = setInterval(() => {
-            const elapsed = (Date.now() - processingStart) / 1000;
-            $('live-elapsed').textContent = elapsed.toFixed(1) + 's';
-
-            // Simulate frame counter (backend processes ~2-3 fps on CPU, 8-10 on GPU)
-            frameCounter += Math.floor(Math.random() * 3) + 2;
-            $('live-frames').textContent = frameCounter;
-
-            const fps = elapsed > 1 ? (frameCounter / elapsed).toFixed(1) : '—';
-            $('live-fps').textContent = fps !== '—' ? fps + ' fps' : '—';
-
-            if (elapsed > 3) $('live-dl-status').textContent = 'Active';
-            if (elapsed > 5) $('live-det-status').textContent = 'Analyzing…';
-
-            // Smoothly fill progress bar (reaches ~85% while waiting for response)
-            const fakeProgress = Math.min(85, (elapsed / 30) * 100);
-            $('proc-progress-fill').style.width = fakeProgress + '%';
-            $('proc-pct').textContent = Math.round(fakeProgress) + '%';
-            if (fakeProgress > 20) $('proc-step-label').textContent = 'Running phase analysis…';
-            if (fakeProgress > 50) $('proc-step-label').textContent = 'DL model + 3-phase verification…';
-            if (fakeProgress > 75) $('proc-step-label').textContent = 'Finalizing results…';
-        }, 500);
-    }
-
-    function hideProcessing() {
-        clearInterval(processingTimer);
-        processingTimer = null;
-        $('proc-progress-fill').style.width = '100%';
-        $('proc-pct').textContent = '100%';
-        $('proc-step-label').textContent = 'Done';
-        setTimeout(() => { $('processing-panel').style.display = 'none'; }, 600);
-    }
-
-    // ── Upload handlers ───────────────────────────────────────────────────
-    async function uploadImage() {
-        if (!selectedImage) return;
-        hideError(); hideResults();
-        showProcessing(selectedImage.name);
-        $('predict-image-btn').disabled = true;
-
-        const formData = new FormData();
-        formData.append('file', selectedImage);
-        const threshold = parseFloat($('threshold-slider').value) / 100;
-
+      // ── Image analysis ─────────────────────────────────────────────
+      async function runImage() {
+        if (!selImg) return;
+        hideErr();
+        hideResult();
+        $("img-btn").disabled = true;
+        $("img-btn").textContent = "Analysing…";
+        const fd = new FormData();
+        fd.append("file", selImg);
+        const thr = parseFloat($("thr-slider").value) / 100;
         try {
-            const res = await fetch(`/predict-image?threshold=${threshold}`, { method: 'POST', body: formData });
-            if (!res.ok) throw new Error(`Server error (HTTP ${res.status})`);
-            const data = await res.json();
-            hideProcessing();
-            displayResults(data, 'image');
+          const res = await fetch(`/predict-image?threshold=${thr}`, {
+            method: "POST",
+            body: fd,
+          });
+          if (!res.ok) throw new Error(`Server error HTTP ${res.status}`);
+          const data = await res.json();
+          showResult(data, "image");
         } catch (e) {
-            hideProcessing();
-            showError(e.message || 'Prediction failed.');
+          showErr(e.message || "Prediction failed.");
         } finally {
-            $('predict-image-btn').disabled = false;
+          $("img-btn").disabled = false;
+          $("img-btn").textContent = "Analyse Image";
         }
-    }
+      }
 
-    async function uploadVideo() {
-        if (!selectedVideo) return;
-        hideError(); hideResults();
-        showProcessing(selectedVideo.name);
-        $('predict-video-btn').disabled = true;
+      // ── Video analysis — SSE streaming ────────────────────────────
+      async function runVideo() {
+        if (!selVid) return;
+        hideErr();
+        hideResult();
+        $("vid-btn").disabled = true;
+        $("vid-btn").textContent = "Processing…";
+        if (sseConn) {
+          sseConn.close();
+          sseConn = null;
+        }
 
-        const formData = new FormData();
-        formData.append('file', selectedVideo);
-        const threshold = parseFloat($('threshold-slider').value) / 100;
+        // Show live panel
+        $("live-panel").style.display = "block";
+        resetLivePanel();
+        liveStartTime = Date.now();
 
+        // Start background job
+        const fd = new FormData();
+        fd.append("file", selVid);
+        const thr = parseFloat($("thr-slider").value) / 100;
+        let jobId;
         try {
-            const res = await fetch(`/predict-video?threshold=${threshold}`, { method: 'POST', body: formData });
-            if (!res.ok) throw new Error(`Server error (HTTP ${res.status})`);
-            const data = await res.json();
-            hideProcessing();
-            displayResults(data, 'video');
+          const res = await fetch(`/start-stream?threshold=${thr}`, {
+            method: "POST",
+            body: fd,
+          });
+          if (!res.ok) throw new Error(`Upload failed HTTP ${res.status}`);
+          const data = await res.json();
+          jobId = data.job_id;
         } catch (e) {
-            hideProcessing();
-            showError(e.message || 'Prediction failed.');
-        } finally {
-            $('predict-video-btn').disabled = false;
+          showErr(e.message || "Failed to start processing.");
+          $("vid-btn").disabled = false;
+          $("vid-btn").textContent = "Analyse Video";
+          $("live-panel").style.display = "none";
+          return;
         }
-    }
 
-    // ── Threshold slider ──────────────────────────────────────────────────
-    $('threshold-slider').addEventListener('input', () => {
-        const t = parseInt($('threshold-slider').value);
-        $('threshold-val-label').textContent = t + '%';
-        $('conf-threshold-label').textContent = 'Threshold: ' + t + '%';
-        $('conf-threshold-marker').style.left = t + '%';
-        if ($('results-panel').style.display !== 'none') {
-            applyThreshold(lastConfidence, t);
+        // Connect SSE
+        $("prog-label").textContent = "Processing video…";
+        sseConn = new EventSource(`/stream/${jobId}`);
+        sseConn.onmessage = (e) => {
+          let msg;
+          try {
+            msg = JSON.parse(e.data);
+          } catch {
+            return;
+          }
+
+          if (msg.error) {
+            showErr(msg.error);
+            endLive();
+            return;
+          }
+
+          if (msg.frame) {
+            // Show annotated frame
+            const img = $("live-feed");
+            if (img.style.display === "none") {
+              img.style.display = "block";
+              $("live-vw").classList.remove("no-signal");
+            }
+            img.src = "data:image/jpeg;base64," + msg.frame;
+          }
+
+          if (msg.metrics) {
+            const m = msg.metrics;
+            // Progress
+            $("prog-fill").style.width = m.progress + "%";
+            $("prog-pct").textContent = m.progress + "%";
+            if (m.progress > 5)
+              $("prog-label").textContent = "Running detection pipeline…";
+            if (m.progress > 80) $("prog-label").textContent = "Finalising…";
+
+            // Live sidebar
+            $("lv-fps").textContent = (m.fps || 0) + " fps";
+            $("lv-frame").textContent = m.frame + " / " + m.total_frames;
+            $("lv-elapsed").textContent = (m.elapsed || 0) + "s";
+            $("lv-tracks").textContent = m.tracks || 0;
+            $("lv-density").textContent = (m.density || 0).toFixed(2);
+            $("lv-speed").textContent = (m.speed || 0).toFixed(2);
+            $("lv-stopped").textContent =
+              Math.round((m.stopped || 0) * 100) + "%";
+            $("lv-dl").textContent =
+              (m.dl || 0).toFixed(3) + (m.dl_confirmed ? " ✓" : " ✗");
+            $("lv-dl").className = "lm-v " + (m.dl_confirmed ? "ok" : "");
+            $("lv-votes").textContent = (m.votes || 0) + " / 3";
+            $("lv-score").textContent = (m.score || 0).toFixed(3);
+
+            // Phase bars
+            const pa = m.phase_a || 0,
+              pb = m.phase_b || 0,
+              pc = m.phase_c || 0,
+              dl = m.dl || 0;
+            $("lb-a").style.width = pa * 100 + "%";
+            $("lv-a").textContent = pa.toFixed(2);
+            $("lb-b").style.width = pb * 100 + "%";
+            $("lv-b").textContent = pb.toFixed(2);
+            $("lb-c").style.width = pc * 100 + "%";
+            $("lv-c").textContent = pc.toFixed(2);
+            $("lb-dl").style.width = dl * 100 + "%";
+            $("lv-dl2").textContent = dl.toFixed(2);
+
+            // Detection badge
+            const badgeEl = $("live-det-badge");
+            const s = m.status || "scanning";
+            const badges = {
+              confirmed:
+                '<span class="det-badge det-confirmed">🚨 ACCIDENT DETECTED</span>',
+              suspicious:
+                '<span class="det-badge det-suspicious">⚠ Suspicious</span>',
+              suppressed:
+                '<span class="det-badge det-suppressed">🔇 Suppressed</span>',
+              scanning:
+                '<span class="det-badge det-scanning">● Scanning</span>',
+            };
+            badgeEl.innerHTML = badges[s] || badges.scanning;
+          }
+
+          if (msg.incident) {
+            // A new incident arrived — add to live history immediately
+            const inc = msg.incident;
+            addLiveIncident(inc);
+          }
+
+          if (msg.done) {
+            const result = msg.result || {};
+            sseConn.close();
+            sseConn = null;
+            endLive();
+            if (result.class) showResult(result, "video");
+            loadHistory();
+          }
+        };
+        sseConn.onerror = () => {
+          if (sseConn && sseConn.readyState === EventSource.CLOSED) {
+            endLive();
+            $("vid-btn").disabled = false;
+            $("vid-btn").textContent = "Analyse Video";
+          }
+        };
+      }
+
+      function resetLivePanel() {
+        $("live-feed").style.display = "none";
+        $("live-vw").classList.add("no-signal");
+        $("prog-fill").style.width = "0%";
+        $("prog-pct").textContent = "0%";
+        $("prog-label").textContent = "Uploading…";
+        $("lv-fps").textContent = "—";
+        $("lv-frame").textContent = "—";
+        $("lv-elapsed").textContent = "—";
+        $("lv-tracks").textContent = "—";
+        $("lv-density").textContent = "—";
+        $("lv-speed").textContent = "—";
+        $("lv-stopped").textContent = "—";
+        $("lv-dl").textContent = "—";
+        $("lv-votes").textContent = "—";
+        $("lv-score").textContent = "—";
+        $("lb-a").style.width = "0%";
+        $("lb-b").style.width = "0%";
+        $("lb-c").style.width = "0%";
+        $("lb-dl").style.width = "0%";
+        $("lv-a").textContent = "0.00";
+        $("lv-b").textContent = "0.00";
+        $("lv-c").textContent = "0.00";
+        $("lv-dl2").textContent = "0.00";
+        $("live-det-badge").innerHTML =
+          '<span class="det-badge det-scanning">● Scanning</span>';
+      }
+
+      function endLive() {
+        $("prog-fill").style.width = "100%";
+        $("prog-pct").textContent = "100%";
+        $("prog-label").textContent = "Done";
+        $("vid-btn").disabled = false;
+        $("vid-btn").textContent = "Analyse Video";
+      }
+
+      function addLiveIncident(inc) {
+        const bucket = inc.status || "confirmed";
+        // Build a minimal incident object for immediate display
+        const fake = {
+          id: "live-" + Date.now(),
+          source: "web",
+          location: "Live feed",
+          time_in_video_sec: inc.time_sec,
+          frame_number: inc.frame,
+          confidence: inc.confidence,
+          dl_confidence: inc.dl_confidence,
+          trigger_phase: inc.trigger_phase,
+          details: inc.details || {},
+          status: bucket,
+          clip_url: null,
+          snapshot_url: null,
+          llm_analysis: null,
+          _live: true,
+        };
+        if (!incidentStore[bucket]) incidentStore[bucket] = [];
+        incidentStore[bucket].unshift(fake);
+        renderTab(bucket);
+        updateTabCounts();
+        // Flash tab
+        const tabEl = $("tab-" + bucket);
+        if (tabEl) {
+          tabEl.style.color = "var(--red)";
+          setTimeout(() => {
+            tabEl.style.color = "";
+          }, 1500);
         }
-    });
+      }
 
-    function applyThreshold(confidence, threshold) {
-        const isAcc = confidence >= threshold;
-        const hero = $('result-hero');
-        hero.className = 'result-hero fade-up' + (isAcc ? ' accident' : '');
+      // ── Threshold slider ───────────────────────────────────────────
+      $("thr-slider").addEventListener("input", () => {
+        const t = parseInt($("thr-slider").value);
+        $("thr-val").textContent = t + "%";
+        $("thr-label").textContent = "Threshold: " + t + "%";
+        $("thr-marker").style.left = t + "%";
+        if ($("result-panel").style.display !== "none")
+          applyThreshold(lastConf, t);
+      });
 
-        const icon   = $('verdict-icon');
-        const text   = $('verdict-text');
-        const sub    = $('verdict-sub');
-        const confEl = $('conf-num');
-        const bar    = $('conf-bar');
+      function applyThreshold(conf, thr) {
+        const acc = conf >= thr;
+        const vc = $("verdict-card");
+        vc.className = "verdict-card" + (acc ? " acc-glow" : "");
+        $("v-icon").className = "v-icon " + (acc ? "acc" : "ok");
+        $("v-icon").textContent = acc ? "🚨" : "✅";
+        $("v-text").className = acc ? "acc" : "ok";
+        $("v-text").textContent = acc ? "INCIDENT DETECTED" : "NO INCIDENT";
+        $("v-sub").textContent = acc
+          ? "Multi-stage pipeline confirmed accident"
+          : "No accident detected in this footage";
+        $("conf-num").className = "conf-num " + (acc ? "acc" : "ok");
+        $("conf-fill").className = "conf-fill " + (acc ? "acc" : "ok");
+      }
 
-        if (isAcc) {
-            icon.className = 'verdict-icon danger'; icon.textContent = '🚨';
-            text.className = 'danger'; text.textContent = 'INCIDENT DETECTED';
-            sub.textContent = 'Multi-stage pipeline confirmed accident';
-            confEl.className = 'conf-num danger';
-            bar.className = 'conf-bar-fill danger';
-        } else {
-            icon.className = 'verdict-icon success'; icon.textContent = '✅';
-            text.className = 'success'; text.textContent = 'NO INCIDENT';
-            sub.textContent = 'No accident detected in this footage';
-            confEl.className = 'conf-num success';
-            bar.className = 'conf-bar-fill success';
-        }
-    }
-
-    // ── Display results ───────────────────────────────────────────────────
-    function sv(details, ...keys) {
+      // ── Show results ───────────────────────────────────────────────
+      function sv(d, ...keys) {
         for (const k of keys) {
-            if (details && details[k] != null) return Number(details[k]) || 0;
+          if (d && d[k] != null) return Number(d[k]) || 0;
         }
         return 0;
-    }
+      }
+      function clr(v) {
+        return v >= 0.6 ? "hi" : v >= 0.3 ? "md" : "";
+      }
 
-    function colorClass(val) {
-        if (val >= 0.6) return 'high';
-        if (val >= 0.3) return 'mid';
-        return '';
-    }
-
-    function displayResults(data, type) {
-        let confidence = parseFloat(data.confidence || 0);
-        if (type === 'video' && Array.isArray(data.incidents) && data.incidents.length) {
-            confidence = Math.max(...data.incidents.map(inc => (parseFloat(inc.confidence) || 0) * 100));
-        }
-        lastConfidence = confidence;
-        const threshold = parseInt($('threshold-slider').value);
-        const details   = data.details || {};
+      function showResult(data, type) {
+        const conf = parseFloat(data.confidence || 0);
+        lastConf = conf;
+        const d = data.details || {};
+        const thr = parseInt($("thr-slider").value);
 
         // Save features for logging
-        currentFeatures = {
-            proximity:     sv(details, 'proximity_score', 'ttc_score'),
-            trajectory:    sv(details, 'trajectory_score'),
-            anomaly:       sv(details, 'flow_score'),
-            cnn:           sv(details, 'lstm_peak', 'cnn_lstm_prob'),
-            occlusion:     sv(details, 'occlusion_score'),
-            merge:         sv(details, 'merge_score'),
-            kinetic:       sv(details, 'energy_drop', 'emergency_stop_score'),
-            density:       sv(details, 'traffic_density'),
-            avg_speed:     sv(details, 'avg_speed'),
-            stopped_ratio: sv(details, 'stopped_ratio'),
+        curFeatures = {
+          proximity: sv(d, "proximity_score", "ttc_score"),
+          trajectory: sv(d, "trajectory_score"),
+          anomaly: sv(d, "flow_score"),
+          cnn: sv(d, "lstm_peak", "cnn_lstm_prob"),
+          occlusion: sv(d, "occlusion_score"),
+          merge: sv(d, "merge_score"),
+          kinetic: sv(d, "energy_drop", "emergency_stop_score"),
+          density: sv(d, "traffic_density"),
+          avg_speed: sv(d, "avg_speed"),
+          stopped_ratio: sv(d, "stopped_ratio"),
         };
 
-        // Verdict + confidence
-        applyThreshold(confidence, threshold);
-        $('conf-num').textContent = confidence.toFixed(2) + '%';
-        $('log-status').textContent = '';
-        const confFrac = confidence / 100;
-        setTimeout(() => { $('conf-bar').style.width = confidence + '%'; }, 50);
-        $('conf-threshold-marker').style.left = threshold + '%';
-        $('conf-threshold-label').textContent = 'Threshold: ' + threshold + '%';
-        $('threshold-val-label').textContent  = threshold + '%';
+        applyThreshold(conf, thr);
+        $("conf-num").textContent = conf.toFixed(1) + "%";
+        $("thr-marker").style.left = thr + "%";
+        $("thr-label").textContent = "Threshold: " + thr + "%";
+        $("thr-val").textContent = thr + "%";
+        setTimeout(() => {
+          $("conf-fill").style.width = Math.min(conf, 100) + "%";
+        }, 50);
+        $("trig-txt").textContent = data.trigger_phase || "—";
+        $("log-msg").textContent = "";
 
-        // Trigger text
-        $('trigger-text').textContent = data.trigger_phase || '—';
-
-        // Pipeline steps
-        const dlPeak     = sv(details, 'lstm_peak', 'cnn_lstm_prob');
-        const dlConf     = details.dl_confirmed;
-        const phaseVotes = details.phases_signalling || 0;
-        const aConf      = details.phase_a_confirmed;
-        const bConf      = details.phase_b_confirmed;
-        const cConf      = details.phase_c_confirmed;
-
-        function setStep(circleId, valId, confirmed, val, neutral) {
-            const el = $(circleId);
-            const v  = $(valId);
-            if (neutral) {
-                el.className = 'step-circle pending';
-                v.className  = 'step-val';
-            } else if (confirmed) {
-                el.className = 'step-circle confirmed';
-                v.className  = 'step-val confirmed';
-            } else {
-                el.className = 'step-circle failed';
-                v.className  = 'step-val failed';
-            }
-            if (val !== undefined) v.textContent = val;
+        // Pipeline
+        const dlPeak = sv(d, "lstm_peak", "cnn_lstm_prob");
+        const dlC = d.dl_confirmed;
+        const votes = d.phases_signalling || 0;
+        const aC = d.phase_a_confirmed;
+        const bC = d.phase_b_confirmed;
+        const cC = d.phase_c_confirmed;
+        function setStep(cId, vId, pass, val, neutral) {
+          $(cId).className =
+            "step-circle" + (neutral ? "" : pass ? " pass" : " fail");
+          $(vId).className =
+            "step-val" + (neutral ? "" : pass ? " pass" : " fail");
+          if (val !== undefined) $(vId).textContent = val;
         }
-
-        setStep('step-dl-circle', 'step-dl-val', dlConf, dlPeak.toFixed(2) + (dlConf ? ' ✓' : ' ✗'), dlConf === undefined);
-        setStep('step-a-circle',  'step-a-val',  aConf,  sv(details,'proximity_score').toFixed(2), aConf === undefined);
-        setStep('step-b-circle',  'step-b-val',  bConf,  sv(details,'trajectory_score').toFixed(2), bConf === undefined);
-        setStep('step-c-circle',  'step-c-val',  cConf,  sv(details,'flow_score').toFixed(2), cConf === undefined);
-
-        const votesEl = $('step-vote-val');
-        if (dlConf === undefined) {
-            $('step-vote-circle').className = 'step-circle pending';
-            votesEl.className = 'step-val'; votesEl.textContent = '—';
-        } else if (phaseVotes >= 2) {
-            $('step-vote-circle').className = 'step-circle confirmed';
-            votesEl.className = 'step-val confirmed'; votesEl.textContent = phaseVotes + ' / 3 ✓';
+        setStep(
+          "sc-dl",
+          "sv-dl",
+          dlC,
+          dlPeak != null ? dlPeak.toFixed(2) + (dlC ? " ✓" : " ✗") : undefined,
+          dlC === undefined,
+        );
+        setStep(
+          "sc-a",
+          "sv-a",
+          aC,
+          sv(d, "proximity_score").toFixed(2),
+          aC === undefined,
+        );
+        setStep(
+          "sc-b",
+          "sv-b",
+          bC,
+          sv(d, "trajectory_score").toFixed(2),
+          bC === undefined,
+        );
+        setStep(
+          "sc-c",
+          "sv-c",
+          cC,
+          sv(d, "flow_score").toFixed(2),
+          cC === undefined,
+        );
+        if (dlC === undefined) {
+          $("sc-vote").className = "step-circle";
+          $("sv-vote").className = "step-val";
+          $("sv-vote").textContent = "—";
+        } else if (votes >= 2) {
+          $("sc-vote").className = "step-circle pass";
+          $("sv-vote").className = "step-val pass";
+          $("sv-vote").textContent = votes + "/3 ✓";
         } else {
-            $('step-vote-circle').className = 'step-circle failed';
-            votesEl.className = 'step-val failed'; votesEl.textContent = phaseVotes + ' / 3 ✗';
+          $("sc-vote").className = "step-circle fail";
+          $("sv-vote").className = "step-val fail";
+          $("sv-vote").textContent = votes + "/3 ✗";
         }
 
-        // Scene telemetry
-        $('metric-density').textContent  = sv(details,'traffic_density').toFixed(2);
-        $('metric-speed').textContent    = sv(details,'avg_speed').toFixed(2) + ' px/f';
-        $('metric-stopped').textContent  = Math.round(sv(details,'stopped_ratio') * 100) + '%';
+        // Scene
+        $("r-density").textContent = sv(d, "traffic_density").toFixed(2);
+        $("r-speed").textContent = sv(d, "avg_speed").toFixed(2) + " px/f";
+        $("r-stopped").textContent =
+          Math.round(sv(d, "stopped_ratio") * 100) + "%";
 
-        // Phase bars + dots
-        function setPhase(scoreId, barId, dotId, val) {
-            $(scoreId).textContent = val.toFixed(2);
-            setTimeout(() => { $(barId).style.width = (val * 100) + '%'; }, 80);
-            const dot = $(dotId);
-            if (val >= 0.3) { dot.className = 'phase-confirm-dot on'; }
-            else if (val > 0) { dot.className = 'phase-confirm-dot'; }
-            else { dot.className = 'phase-confirm-dot'; }
+        // Phases
+        function setPhase(sId, bId, dId, v) {
+          $(sId).textContent = v.toFixed(2);
+          setTimeout(() => {
+            $(bId).style.width = v * 100 + "%";
+          }, 80);
+          $(dId).className =
+            "pt-dot" + (v >= 0.3 ? " on" : v > 0 ? " off" : "");
         }
-        setPhase('score-prox', 'bar-prox', 'dot-a', sv(details,'proximity_score','ttc_score'));
-        setPhase('score-traj', 'bar-traj', 'dot-b', sv(details,'trajectory_score','trajectory_stop_score'));
-        setPhase('score-anom', 'bar-anom', 'dot-c', sv(details,'flow_score'));
-        setPhase('score-dl',   'bar-dl',   'dot-dl', dlPeak);
+        setPhase(
+          "ps-a",
+          "pb-a",
+          "dot-a",
+          sv(d, "proximity_score", "ttc_score"),
+        );
+        setPhase(
+          "ps-b",
+          "pb-b",
+          "dot-b",
+          sv(d, "trajectory_score", "trajectory_stop_score"),
+        );
+        setPhase("ps-c", "pb-c", "dot-c", sv(d, "flow_score"));
+        setPhase("ps-dl", "pb-dl", "dot-dl", dlPeak);
 
         // Sub-signals
-        function setSig(id, val) {
-            $(id).textContent = val.toFixed(2);
-            $(id).className = 'signal-val ' + colorClass(val);
+        function setSig(id, v) {
+          $(id).textContent = v.toFixed(2);
+          $(id).className = "sig-v " + clr(v);
         }
-        setSig('sig-occl',    sv(details,'occlusion_score'));
-        setSig('sig-merge',   sv(details,'merge_score'));
-        setSig('sig-ke',      sv(details,'energy_drop','emergency_stop_score'));
-        setSig('sig-scene',   sv(details,'scene_interruption'));
-        setSig('sig-emerg',   sv(details,'emergency_stop_score'));
-        setSig('sig-trajstop',sv(details,'trajectory_stop_score'));
-        setSig('sig-relvel',  sv(details,'relative_velocity_score'));
-        setSig('sig-spin',    sv(details,'spin_score'));
+        setSig("sig-occl", sv(d, "occlusion_score"));
+        setSig("sig-merge", sv(d, "merge_score"));
+        setSig("sig-ke", sv(d, "energy_drop", "emergency_stop_score"));
+        setSig("sig-scene", sv(d, "scene_interruption"));
+        setSig("sig-emerg", sv(d, "emergency_stop_score"));
+        setSig("sig-trajstop", sv(d, "trajectory_stop_score"));
+        setSig("sig-relvel", sv(d, "relative_velocity_score"));
+        setSig("sig-spin", sv(d, "spin_score"));
 
-        // Video / image output
-        const vidEl  = $('processed-video-preview');
-        const imgEl  = $('processed-image-preview');
-        const fallEl = $('visual-output-fallback');
-        vidEl.style.display = 'none'; imgEl.style.display = 'none'; fallEl.style.display = 'none';
-
-        if (type === 'video' && data.processed_video_url) {
-            const url = data.processed_video_url + '?t=' + Date.now();
-            vidEl.onerror = () => {
-                vidEl.style.display = 'none';
-                $('visual-output-download').href = url;
-                fallEl.style.display = 'block';
-            };
-            vidEl.onloadeddata = () => { fallEl.style.display = 'none'; };
-            vidEl.src = url; vidEl.style.display = 'block';
-            vidEl.load();
-            vidEl.play().catch(() => {});
-        } else if (type === 'image' && data.processed_image_url) {
-            imgEl.src = data.processed_image_url + '?t=' + Date.now();
-            imgEl.style.display = 'block';
+        // Video
+        const vid = $("proc-vid"),
+          img = $("proc-img"),
+          fb = $("vid-fallback");
+        vid.style.display = "none";
+        img.style.display = "none";
+        fb.style.display = "none";
+        if (type === "video" && data.processed_video_url) {
+          const url = data.processed_video_url + "?t=" + Date.now();
+          vid.onerror = () => {
+            vid.style.display = "none";
+            $("vid-dl").href = url;
+            fb.style.display = "block";
+          };
+          vid.src = url;
+          vid.style.display = "block";
+          vid.load();
+          vid.play().catch(() => {});
+        } else if (type === "image" && data.processed_image_url) {
+          img.src = data.processed_image_url + "?t=" + Date.now();
+          img.style.display = "block";
         }
 
-        // LLM / exact frame
-        const llmPanel = $('llm-panel');
-        const llmEmpty = $('llm-empty');
+        // LLM
         if (data.accident_frame_url) {
-            $('exact-frame').src = data.accident_frame_url + '?t=' + Date.now();
-            $('llm-text').textContent = data.llm_analysis || 'No analysis provided.';
-            llmPanel.style.display = 'flex';
-            llmEmpty.style.display = 'none';
+          $("llm-frame").src = data.accident_frame_url + "?t=" + Date.now();
+          $("llm-txt").textContent =
+            data.llm_analysis || "No analysis provided.";
+          $("llm-body").style.display = "flex";
+          $("llm-empty").style.display = "none";
         } else {
-            llmPanel.style.display = 'none';
-            llmEmpty.style.display = 'block';
+          $("llm-body").style.display = "none";
+          $("llm-empty").style.display = "block";
         }
 
-        $('results-panel').style.display = 'block';
-        setTimeout(() => { $('results-panel').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+        $("result-panel").style.display = "block";
+        setTimeout(
+          () =>
+            $("result-panel").scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            }),
+          120,
+        );
+      }
 
-        if (type === 'video') loadIncidents();
-    }
-
-    // ── Feature logging ───────────────────────────────────────────────────
-    async function submitFeatureLog(label) {
-        if (!currentFeatures) return;
-        $('log-status').style.color = 'var(--txt2)';
-        $('log-status').textContent = 'Logging…';
+      // ── Feature logging ────────────────────────────────────────────
+      async function logFeature(label) {
+        if (!curFeatures) return;
+        $("log-msg").style.color = "var(--txt2)";
+        $("log-msg").textContent = "Logging…";
         try {
-            const res = await fetch('/log-feature', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...currentFeatures, label })
-            });
-            if (!res.ok) throw new Error('Failed');
-            const data = await res.json();
-            $('log-status').style.color = 'var(--success)';
-            $('log-status').textContent = `Logged ✓ (${data.total_rows} total rows)`;
-            refreshDatasetStatus();
+          const res = await fetch("/log-feature", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...curFeatures, label }),
+          });
+          if (!res.ok) throw new Error("Failed");
+          const data = await res.json();
+          $("log-msg").style.color = "var(--green)";
+          $("log-msg").textContent = `Logged ✓ (${data.total_rows} total rows)`;
+          refreshDS();
         } catch {
-            $('log-status').style.color = 'var(--danger)';
-            $('log-status').textContent = 'Log failed.';
+          $("log-msg").style.color = "var(--red)";
+          $("log-msg").textContent = "Log failed.";
         }
-    }
+      }
 
-    // ── Dataset status ────────────────────────────────────────────────────
-    async function refreshDatasetStatus() {
+      // ── Dataset status ─────────────────────────────────────────────
+      async function refreshDS() {
         try {
-            const res = await fetch('/dataset-status');
-            if (!res.ok) return;
-            const d = await res.json();
-            $('ds-total').textContent = d.total_rows ?? '—';
-            $('ds-acc').textContent   = (d.class_1 ?? '—') + ' / 200';
-            $('ds-nor').textContent   = (d.class_0 ?? '—') + ' / 200';
-            const s = $('ds-status');
-            if (d.xgboost_active) {
-                s.textContent = 'Active — Refining detections'; s.style.color = 'var(--success)';
-            } else {
-                const n0 = d.class_0 || 0, n1 = d.class_1 || 0;
-                const needed = Math.max(0, 50 - Math.min(n0, n1));
-                s.textContent = needed > 0
-                    ? `Inactive — Need ${needed} more rows per class`
-                    : 'Inactive — Ready to train';
-                s.style.color = 'var(--txt2)';
-            }
+          const res = await fetch("/dataset-status");
+          if (!res.ok) return;
+          const d = await res.json();
+          $("ds-total").textContent = d.total_rows ?? "—";
+          $("ds-acc").textContent = (d.class_1 ?? "—") + " / 200";
+          $("ds-nor").textContent = (d.class_0 ?? "—") + " / 200";
+          const s = $("ds-status");
+          if (d.xgboost_active) {
+            s.textContent = "Active — Refining detections";
+            s.style.color = "var(--green)";
+          } else {
+            const n = Math.max(
+              0,
+              50 - Math.min(d.class_0 || 0, d.class_1 || 0),
+            );
+            s.textContent =
+              n > 0
+                ? `Inactive — Need ${n} more rows per class`
+                : "Inactive — Ready to train";
+            s.style.color = "var(--txt2)";
+          }
         } catch {}
-    }
-
-    async function trainXGBoost() {
-        const btn = $('train-xgb-btn');
-        const res = $('train-result');
+      }
+      async function trainXGB() {
+        const btn = $("xgb-train-btn"),
+          r = $("xgb-result");
         btn.disabled = true;
-        res.style.color = 'var(--txt2)';
-        res.textContent = 'Training…';
+        r.style.color = "var(--txt2)";
+        r.textContent = "Training…";
         try {
-            const r = await fetch('/train-model', { method: 'POST' });
-            const d = await r.json();
-            if (!r.ok) throw new Error(d.error || 'Training failed.');
-            res.style.color = 'var(--success)';
-            res.innerHTML = `<strong>Done.</strong> Accuracy: ${(d.accuracy*100).toFixed(1)}% · ${d.total_rows} rows`;
-            refreshDatasetStatus();
+          const res = await fetch("/train-model", { method: "POST" });
+          const d = await res.json();
+          if (!res.ok) throw new Error(d.error || "Training failed.");
+          r.style.color = "var(--green)";
+          r.innerHTML = `Done. Accuracy: ${(d.accuracy * 100).toFixed(1)}% · ${d.total_rows} rows`;
+          refreshDS();
         } catch (e) {
-            res.style.color = 'var(--danger)';
-            res.textContent = e.message;
+          r.style.color = "var(--red)";
+          r.textContent = e.message;
         } finally {
-            btn.disabled = false;
+          btn.disabled = false;
         }
-    }
+      }
 
-    // ── Incident history ──────────────────────────────────────────────────
-    function fmtTime(ts) {
-        if (!ts) return '—';
+      // ── Incident history ───────────────────────────────────────────
+      function fmtTime(ts) {
+        if (!ts) return "—";
         const d = new Date(ts);
         return isNaN(d) ? ts : d.toLocaleString();
-    }
+      }
 
-    function renderIncident(inc) {
+      function incCard(inc) {
         const d = inc.details || {};
-        const fused  = ((inc.confidence || 0) * 100).toFixed(1);
-        const dlPct  = ((inc.dl_confidence || sv(d,'lstm_peak','cnn_lstm_prob')) * 100).toFixed(1);
-        const src    = inc.source === 'stream' ? 'stream' : 'web';
-        const clip   = inc.clip_url
-            ? `<video controls preload="metadata" src="${inc.clip_url}?t=${Date.now()}"></video>`
-            : `<div style="padding:1.5rem;text-align:center;color:var(--txt2);font-size:0.8rem;">Clip unavailable</div>`;
-        const snap   = inc.snapshot_url
-            ? `<img src="${inc.snapshot_url}?t=${Date.now()}" alt="Frame">`
-            : `<div style="padding:1.5rem;text-align:center;color:var(--txt2);font-size:0.8rem;">Frame unavailable</div>`;
-        const llm    = inc.llm_analysis
-            ? `<div class="incident-llm">${inc.llm_analysis}</div>` : '';
+        const bucket = inc.status || "confirmed";
+        const fused = ((inc.confidence || 0) * 100).toFixed(1);
+        const dlPct = (
+          (inc.dl_confidence || sv(d, "lstm_peak", "cnn_lstm_prob")) * 100
+        ).toFixed(1);
+        const src = inc.source === "stream" ? "stream" : "web";
+        const isLive = !!inc._live;
+        const clip = inc.clip_url
+          ? `<video controls preload="metadata" src="${inc.clip_url}?t=${Date.now()}"></video>`
+          : `<div style="padding:1.2rem;text-align:center;color:var(--txt2);font-size:.78rem">${isLive ? "Clip will appear after processing completes" : "Clip unavailable"}</div>`;
+        const snap = inc.snapshot_url
+          ? `<img src="${inc.snapshot_url}?t=${Date.now()}" alt="Accident frame">`
+          : `<div style="padding:1.2rem;text-align:center;color:var(--txt2);font-size:.78rem">${isLive ? "Frame captured at t=" + inc.time_in_video_sec + "s" : "Frame unavailable"}</div>`;
+        const llmHtml = inc.llm_analysis
+          ? `<div class="inc-llm">${inc.llm_analysis}</div>`
+          : "";
+        const statusColors = {
+          confirmed: "var(--red)",
+          suspicious: "var(--warn)",
+          suppressed: "var(--txt2)",
+        };
+        const mi = (l, v) =>
+          `<div class="mini-score"><div class="ms-l">${l}</div><div class="ms-v">${typeof v === "number" ? v.toFixed(2) : v}</div></div>`;
+        return `<article class="inc-card ${bucket}" data-iid="${inc.id || ""}">
+    <div class="inc-head">
+      <div><div class="inc-time">${fmtTime(inc.timestamp) || fmtTime(new Date().toISOString())}</div>
+        <div class="inc-loc">${inc.location || "Upload"} ${inc.time_in_video_sec != null ? `· t=${inc.time_in_video_sec}s` : ""} ${inc.frame_number != null ? `· frame ${inc.frame_number}` : ""}</div></div>
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <span style="font-size:.68rem;font-weight:700;color:${statusColors[bucket]};text-transform:uppercase">${bucket}</span>
+        <span class="inc-src src-${src}">${src === "stream" ? inc.camera_id || "Camera" : "Upload"}</span>
+      </div>
+    </div>
+    <div class="inc-body">
+      <div class="inc-media"><div><div class="inc-media-label">Incident Clip (±5s)</div>${clip}</div><div><div class="inc-media-label">Accident Frame</div>${snap}</div></div>
+      <div class="inc-conf-row">
+        <div class="inc-pill"><div class="inc-pill-l">Fused Confidence</div><div class="inc-pill-v" style="color:var(--red)">${fused}%</div></div>
+        <div class="inc-pill"><div class="inc-pill-l">CNN-LSTM DL</div><div class="inc-pill-v" style="color:var(--purple)">${dlPct}%</div></div>
+      </div>
+      <div class="inc-trigger"><strong>Trigger:</strong> ${inc.trigger_phase || "—"}</div>
+      <div class="inc-phases">
+        ${mi("Phase A", sv(d, "proximity_score", "ttc_score"))}
+        ${mi("Phase B", sv(d, "trajectory_score", "trajectory_stop_score"))}
+        ${mi("Phase C", sv(d, "flow_score"))}
+        ${mi("Occlusion", sv(d, "occlusion_score"))}
+        ${mi("Merge", sv(d, "merge_score"))}
+        ${mi("Kinetic", sv(d, "energy_drop", "emergency_stop_score"))}
+        ${mi("Scene", sv(d, "scene_interruption"))}
+      </div>
+      ${llmHtml}
+    </div>
+  </article>`;
+      }
 
-        const mini = (label, val) => `
-            <div class="mini-score">
-                <div class="mini-score-label">${label}</div>
-                <div class="mini-score-val">${typeof val === 'number' ? val.toFixed(2) : val}</div>
-            </div>`;
+      function renderTab(bucket) {
+        const el = $("tc-" + bucket);
+        const items = incidentStore[bucket] || [];
+        el.innerHTML = items.length
+          ? items.map(incCard).join("")
+          : `<div class="empty-state">No ${bucket} events yet.</div>`;
+      }
 
-        const id = inc.id || '';
-        return `
-        <article class="incident-card is-collapsed" data-incident-id="${id}">
-            <div class="incident-card-head" onclick="toggleIncidentCard('${id}')">
-                <div>
-                    <div class="incident-time">${fmtTime(inc.timestamp)}</div>
-                    <div class="incident-loc">
-                        ${inc.location || 'Unknown'}
-                        ${inc.time_in_video_sec != null ? ` · t=${inc.time_in_video_sec}s` : ''}
-                        ${inc.frame_number != null ? ` · frame ${inc.frame_number}` : ''}
-                        · ${fused}% confidence
-                    </div>
-                </div>
-                <div class="incident-card-actions" onclick="event.stopPropagation()">
-                    <span class="source-chip ${src}">${src === 'stream' ? inc.camera_id || 'Camera' : 'Upload'}</span>
-                    <button type="button" class="incident-toggle-btn" title="Expand / collapse" onclick="toggleIncidentCard('${id}')">▸</button>
-                    <button type="button" class="incident-delete-btn" title="Delete incident" onclick="deleteIncident('${id}')">✕</button>
-                </div>
-            </div>
-            <div class="incident-body">
-                <div class="incident-media">
-                    <div>
-                        <div class="incident-media-label">Incident Clip (±5s)</div>
-                        ${clip}
-                    </div>
-                    <div>
-                        <div class="incident-media-label">Accident Frame</div>
-                        ${snap}
-                    </div>
-                </div>
-                <div class="incident-metrics-row">
-                    <div class="conf-pill">
-                        <div class="conf-pill-label">Fused Confidence</div>
-                        <div class="conf-pill-val" style="color:var(--danger);">${fused}%</div>
-                    </div>
-                    <div class="conf-pill">
-                        <div class="conf-pill-label">CNN-LSTM DL</div>
-                        <div class="conf-pill-val" style="color:var(--purple);">${dlPct}%</div>
-                    </div>
-                </div>
-                <div class="incident-trigger">
-                    <strong>Trigger:</strong> ${inc.trigger_phase || '—'}
-                </div>
-                <div class="incident-phases-row">
-                    ${mini('Phase A', sv(d,'proximity_score','ttc_score'))}
-                    ${mini('Phase B', sv(d,'trajectory_score','trajectory_stop_score'))}
-                    ${mini('Phase C', sv(d,'flow_score'))}
-                    ${mini('Occlusion', sv(d,'occlusion_score'))}
-                    ${mini('Merge', sv(d,'merge_score'))}
-                    ${mini('Kinetic', sv(d,'energy_drop','emergency_stop_score'))}
-                    ${mini('Scene', sv(d,'scene_interruption'))}
-                </div>
-                ${llm}
-            </div>
-        </article>`;
-    }
+      function updateTabCounts() {
+        ["confirmed", "suspicious", "suppressed"].forEach((b) => {
+          $(
+            "cnt-" +
+              b.substring(0, 4).replace("susp", "susp").replace("supp", "supp"),
+          ).textContent = (incidentStore[b] || []).length;
+        });
+        // Fix id mapping
+        $("cnt-conf").textContent = (incidentStore.confirmed || []).length;
+        $("cnt-susp").textContent = (incidentStore.suspicious || []).length;
+        $("cnt-supp").textContent = (incidentStore.suppressed || []).length;
+      }
 
-    function toggleIncidentCard(incidentId) {
-        const card = document.querySelector(`.incident-card[data-incident-id="${incidentId}"]`);
-        if (!card) return;
-        const collapsed = card.classList.toggle('is-collapsed');
-        const btn = card.querySelector('.incident-toggle-btn');
-        if (btn) btn.textContent = collapsed ? '▸' : '▾';
-    }
+      function switchTab(bucket) {
+        curTab = bucket;
+        document
+          .querySelectorAll(".tab-btn")
+          .forEach((b) => b.classList.remove("active"));
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((c) => c.classList.remove("active"));
+        $("tab-" + bucket).classList.add("active");
+        $("tc-" + bucket).classList.add("active");
+      }
 
-    async function deleteIncident(incidentId) {
-        if (!incidentId) return;
-        if (!confirm('Delete this incident and its saved clip/frame?')) return;
+      async function loadHistory() {
         try {
-            const res = await fetch(`/api/incidents/${incidentId}`, { method: 'DELETE' });
-            if (!res.ok) {
-                const data = await res.json().catch(() => ({}));
-                throw new Error(data.error || 'Delete failed.');
-            }
-            await loadIncidents();
+          const res = await fetch("/api/incidents?limit=100");
+          if (!res.ok) return;
+          const data = await res.json();
+          const items = data.incidents || [];
+          incidentStore = { confirmed: [], suspicious: [], suppressed: [] };
+          items.forEach((inc) => {
+            const bucket = inc.status || "confirmed";
+            if (!incidentStore[bucket]) incidentStore[bucket] = [];
+            incidentStore[bucket].push(inc);
+          });
+          renderTab("confirmed");
+          renderTab("suspicious");
+          renderTab("suppressed");
+          updateTabCounts();
         } catch (e) {
-            alert(`Could not delete incident: ${e.message}`);
+          console.error("loadHistory:", e);
         }
-    }
+      }
 
-    async function loadIncidents() {
-        const list = $('incident-list');
-        try {
-            const res = await fetch('/api/incidents?limit=50');
-            if (!res.ok) throw new Error('Failed to load.');
-            const data = await res.json();
-            const items = data.incidents || [];
-            list.innerHTML = items.length
-                ? items.map(renderIncident).join('')
-                : `<div class="incident-empty">No incidents recorded yet. Upload a video to begin.</div>`;
-        } catch (e) {
-            list.innerHTML = `<div class="incident-empty">Could not load incidents: ${e.message}</div>`;
-        }
-    }
-
-    // ── Init ──────────────────────────────────────────────────────────────
-    window.addEventListener('DOMContentLoaded', () => {
-        refreshDatasetStatus();
-        loadIncidents();
-        // Set threshold marker initial position
-        $('conf-threshold-marker').style.left = '55%';
-    });
-</script>
-</body>
+      // ── Init ──────────────────────────────────────────────────────
+      window.addEventListener("DOMContentLoaded", () => {
+        refreshDS();
+        loadHistory();
+        $("thr-marker").style.left = "55%";
+      });
+    </script>
+  </body>
 </html>
