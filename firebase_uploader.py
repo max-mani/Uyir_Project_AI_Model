@@ -1,5 +1,6 @@
 """UYIR Firebase Uploader — async accident event upload with local fallback."""
 
+import base64
 import json
 import logging
 import os
@@ -13,12 +14,16 @@ import config
 
 logger = logging.getLogger("FirebaseUploader")
 
+# Firestore document size limit is 1 MB; leave headroom for metadata fields.
+_MAX_EMBED_BYTES = 750_000
+
 
 class FirebaseUploader:
     def __init__(self):
         self._db = None
         self._bucket = None
         self._enabled = False
+        self._storage_enabled = False
         self._lock = threading.Lock()
         os.makedirs(config.LOCAL_EVENTS_DIR, exist_ok=True)
         os.makedirs(config.SNAPSHOTS_DIR, exist_ok=True)
@@ -30,15 +35,30 @@ class FirebaseUploader:
             return
         try:
             import firebase_admin
-            from firebase_admin import credentials, firestore, storage
+            from firebase_admin import credentials, firestore
+
             with self._lock:
                 if not firebase_admin._apps:
                     cred = credentials.Certificate(config.FIREBASE_KEY_PATH)
-                    firebase_admin.initialize_app(cred, {"storageBucket": config.FIREBASE_BUCKET})
+                    if config.FIREBASE_USE_STORAGE:
+                        firebase_admin.initialize_app(
+                            cred, {"storageBucket": config.FIREBASE_BUCKET}
+                        )
+                    else:
+                        firebase_admin.initialize_app(cred)
+
                 self._db = firestore.client()
-                self._bucket = storage.bucket()
                 self._enabled = True
-                logger.info("Firebase connected successfully.")
+
+                if config.FIREBASE_USE_STORAGE:
+                    from firebase_admin import storage
+                    self._bucket = storage.bucket()
+                    self._storage_enabled = True
+                    logger.info("Firebase connected (Firestore + Storage).")
+                else:
+                    logger.info(
+                        "Firebase connected (Firestore only — Storage disabled, free Spark plan)."
+                    )
         except ImportError:
             logger.warning("firebase-admin not installed. Run: pip install firebase-admin")
         except Exception as e:
@@ -48,40 +68,69 @@ class FirebaseUploader:
         threading.Thread(target=self._upload, args=(event, record), daemon=True).start()
 
     def upload_incident_record_async(self, record):
-        """Upload a dashboard incident record (from incident_store) to Firestore + Storage."""
+        """Upload a dashboard incident record to Firestore (and Storage if enabled)."""
         threading.Thread(target=self._upload_incident_record, args=(record,), daemon=True).start()
 
     @property
     def enabled(self):
         return self._enabled
 
+    @property
+    def storage_enabled(self):
+        return self._storage_enabled
+
+    def _embed_snapshot_field(self, snap_path):
+        """Return Firestore field dict with base64 JPEG thumbnail when small enough."""
+        if not config.FIREBASE_EMBED_SNAPSHOT or not snap_path or not os.path.exists(snap_path):
+            return {}
+        try:
+            size = os.path.getsize(snap_path)
+            if size > _MAX_EMBED_BYTES:
+                logger.info(
+                    f"Snapshot too large to embed ({size} bytes) — skipped Firestore thumbnail."
+                )
+                return {}
+            with open(snap_path, "rb") as f:
+                encoded = base64.b64encode(f.read()).decode("ascii")
+            return {
+                "snapshot_base64": encoded,
+                "snapshot_mime": "image/jpeg",
+                "snapshot_embedded": True,
+            }
+        except Exception as e:
+            logger.warning(f"Snapshot embed failed: {e}")
+            return {}
+
+    def _upload_to_storage(self, local_path, blob_path, content_type):
+        if not self._storage_enabled or not local_path or not os.path.exists(local_path):
+            return ""
+        try:
+            blob = self._bucket.blob(blob_path)
+            blob.upload_from_filename(local_path, content_type=content_type)
+            blob.make_public()
+            return blob.public_url
+        except Exception as e:
+            logger.error(f"Storage upload failed ({blob_path}): {e}")
+            return ""
+
     def _upload_incident_record(self, record):
         from utils import incident_store
 
         incident_id = record.get("id", "unknown")
-        clip_fs, snap_fs, _, _ = incident_store.build_incident_paths(incident_id)
+        clip_fs, snap_fs, local_clip_url, local_snap_url = incident_store.build_incident_paths(
+            incident_id
+        )
 
-        image_url = record.get("snapshot_url") or ""
-        clip_url = record.get("clip_url") or ""
+        image_url = record.get("snapshot_url") or local_snap_url or ""
+        clip_url = record.get("clip_url") or local_clip_url or ""
 
-        if self._enabled:
-            if os.path.exists(snap_fs):
-                try:
-                    blob = self._bucket.blob(f"incidents/{incident_id}/snapshot.jpg")
-                    blob.upload_from_filename(snap_fs, content_type="image/jpeg")
-                    blob.make_public()
-                    image_url = blob.public_url
-                except Exception as e:
-                    logger.error(f"Snapshot upload failed: {e}")
-
-            if clip_fs and os.path.exists(clip_fs):
-                try:
-                    blob = self._bucket.blob(f"incidents/{incident_id}/clip.mp4")
-                    blob.upload_from_filename(clip_fs, content_type="video/mp4")
-                    blob.make_public()
-                    clip_url = blob.public_url
-                except Exception as e:
-                    logger.error(f"Clip upload failed: {e}")
+        if self._storage_enabled:
+            image_url = self._upload_to_storage(
+                snap_fs, f"incidents/{incident_id}/snapshot.jpg", "image/jpeg"
+            ) or image_url
+            clip_url = self._upload_to_storage(
+                clip_fs, f"incidents/{incident_id}/clip.mp4", "video/mp4"
+            ) or clip_url
 
         doc = {
             "incident_id": incident_id,
@@ -99,10 +148,16 @@ class FirebaseUploader:
             "time_in_video_sec": record.get("time_in_video_sec"),
             "image_url": image_url,
             "clip_url": clip_url,
+            "local_snapshot_path": snap_fs if os.path.exists(snap_fs) else "",
+            "local_clip_path": clip_fs if os.path.exists(clip_fs) else "",
             "llm_analysis": record.get("llm_analysis"),
             "details": record.get("details") or {},
             "created_at": time.time(),
+            "storage_mode": "cloud" if self._storage_enabled else "local_media",
         }
+
+        if not self._storage_enabled:
+            doc.update(self._embed_snapshot_field(snap_fs))
 
         if self._enabled:
             try:
@@ -126,25 +181,14 @@ class FirebaseUploader:
 
         image_url = ""
         clip_url = ""
-        if self._enabled:
-            try:
-                blob = self._bucket.blob(f"snapshots/{snap_name}")
-                blob.upload_from_filename(snap_path, content_type="image/jpeg")
-                blob.make_public()
-                image_url = blob.public_url
-            except Exception as e:
-                logger.error(f"Storage upload failed: {e}")
-
+        if self._storage_enabled:
+            image_url = self._upload_to_storage(snap_path, f"snapshots/{snap_name}", "image/jpeg")
             clip_path = getattr(event, "clip_path", None) or (record or {}).get("clip_path")
             if clip_path and os.path.exists(clip_path):
-                try:
-                    clip_name = f"{event.camera_id}_{ts_int}.mp4"
-                    clip_blob = self._bucket.blob(f"clips/{clip_name}")
-                    clip_blob.upload_from_filename(clip_path, content_type="video/mp4")
-                    clip_blob.make_public()
-                    clip_url = clip_blob.public_url
-                except Exception as e:
-                    logger.error(f"Clip upload failed: {e}")
+                clip_name = f"{event.camera_id}_{ts_int}.mp4"
+                clip_url = self._upload_to_storage(
+                    clip_path, f"clips/{clip_name}", "video/mp4"
+                )
 
         details = getattr(event, "fusion_details", None) or (record or {}).get("details") or {}
         doc = {
@@ -162,10 +206,14 @@ class FirebaseUploader:
             "frame_number": event.frame_num,
             "details": details,
             "created_at": time.time(),
+            "storage_mode": "cloud" if self._storage_enabled else "local_media",
         }
 
         if record:
             doc["incident_id"] = record.get("id")
+
+        if not self._storage_enabled:
+            doc.update(self._embed_snapshot_field(snap_path))
 
         if self._enabled:
             try:

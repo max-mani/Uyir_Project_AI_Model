@@ -736,7 +736,11 @@ def api_incidents(limit: int = 50):
 
 @app.get("/api/firebase/status")
 def api_firebase_status():
-    return {"connected": _firebase.enabled}
+    return {
+        "connected": _firebase.enabled,
+        "storage": _firebase.storage_enabled,
+        "mode": "firestore+storage" if _firebase.storage_enabled else "firestore_only",
+    }
 
 
 @app.delete("/api/incidents/{incident_id}")

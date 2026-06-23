@@ -93,6 +93,10 @@ FIREBASE_BUCKET = "kapaan-web.firebasestorage.app"
 FIRESTORE_COLLECTION = "accident_events"
 HEALTH_COLLECTION = "pi_health"
 HEALTH_INTERVAL_SEC = 30
+# Storage requires Blaze (billing). Set False to use Firestore-only on free Spark plan.
+FIREBASE_USE_STORAGE = False
+# When storage is off, optionally embed a JPEG thumbnail in Firestore (max ~1 MB/doc).
+FIREBASE_EMBED_SNAPSHOT = True
 
 # ── Local Fallback ───────────────────────────────────────────
 LOCAL_EVENTS_DIR = "local_events"
