@@ -4,1558 +4,294 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>UYIR — Road Accident Detection</title>
-    <link
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <style>
       :root {
-        --bg: #07101f;
-        --surface: #0c1a2e;
-        --surface2: #111f38;
-        --border: #1a2f50;
-        --border2: #2a4470;
-        --txt: #dde8f5;
-        --txt2: #6b8aae;
-        --txt3: #2e4a6e;
-        --blue: #3b7fff;
-        --cyan: #00cfff;
-        --green: #00e07a;
-        --red: #ff3b3b;
-        --warn: #f59e0b;
-        --purple: #a855f7;
-        --red-dim: rgba(255, 59, 59, 0.1);
-        --green-dim: rgba(0, 224, 122, 0.1);
-        --warn-dim: rgba(245, 158, 11, 0.1);
-        --blue-dim: rgba(59, 127, 255, 0.1);
-        --cyan-dim: rgba(0, 207, 255, 0.08);
-        --purple-dim: rgba(168, 85, 247, 0.1);
+        --bg: #07101f; --surface: #0c1a2e; --surface2: #111f38;
+        --border: #1a2f50; --border2: #2a4470;
+        --txt: #dde8f5; --txt2: #6b8aae; --txt3: #2e4a6e;
+        --blue: #3b7fff; --cyan: #00cfff; --green: #00e07a;
+        --red: #ff3b3b; --warn: #f59e0b; --purple: #a855f7;
+        --red-dim: rgba(255,59,59,0.1); --green-dim: rgba(0,224,122,0.1);
+        --warn-dim: rgba(245,158,11,0.1); --blue-dim: rgba(59,127,255,0.1);
+        --cyan-dim: rgba(0,207,255,0.08); --purple-dim: rgba(168,85,247,0.1);
         --mono: "JetBrains Mono", monospace;
       }
-      *,
-      *::before,
-      *::after {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
-      html {
-        scroll-behavior: smooth;
-      }
-      body {
-        font-family: "Inter", sans-serif;
-        background: var(--bg);
-        color: var(--txt);
-        min-height: 100vh;
-        padding-bottom: 4rem;
-        overflow-x: hidden;
-      }
+      *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+      html{scroll-behavior:smooth}
+      body{font-family:"Inter",sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;padding-bottom:4rem;overflow-x:hidden}
 
       /* TOPBAR */
-      .topbar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0.9rem 2rem;
-        border-bottom: 1px solid var(--border);
-        background: rgba(7, 16, 31, 0.95);
-        backdrop-filter: blur(8px);
-        position: sticky;
-        top: 0;
-        z-index: 200;
-      }
-      .logo {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-      }
-      .logo-mark {
-        width: 36px;
-        height: 36px;
-        background: var(--blue);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 800;
-        font-size: 1rem;
-        color: #fff;
-      }
-      .logo-text {
-        font-size: 0.95rem;
-        font-weight: 700;
-      }
-      .logo-sub {
-        font-size: 0.7rem;
-        color: var(--txt2);
-      }
-      .status-pill {
-        display: flex;
-        align-items: center;
-        gap: 0.45rem;
-        font-size: 0.72rem;
-        font-weight: 600;
-        color: var(--green);
-        background: var(--green-dim);
-        border: 1px solid rgba(0, 224, 122, 0.25);
-        padding: 0.3rem 0.75rem;
-        border-radius: 100px;
-      }
-      .status-pill::before {
-        content: "";
-        width: 7px;
-        height: 7px;
-        background: var(--green);
-        border-radius: 50%;
-        animation: blink 2s infinite;
-      }
-      @keyframes blink {
-        0%,
-        100% {
-          opacity: 1;
-        }
-        50% {
-          opacity: 0.3;
-        }
-      }
+      .topbar{display:flex;align-items:center;justify-content:space-between;padding:.9rem 2rem;border-bottom:1px solid var(--border);background:rgba(7,16,31,.95);backdrop-filter:blur(8px);position:sticky;top:0;z-index:200}
+      .logo{display:flex;align-items:center;gap:.75rem}
+      .logo-mark{width:36px;height:36px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;color:#fff}
+      .logo-text{font-size:.95rem;font-weight:700}
+      .logo-sub{font-size:.7rem;color:var(--txt2)}
+      .status-pill{display:flex;align-items:center;gap:.45rem;font-size:.72rem;font-weight:600;color:var(--green);background:var(--green-dim);border:1px solid rgba(0,224,122,.25);padding:.3rem .75rem;border-radius:100px}
+      .status-pill::before{content:"";width:7px;height:7px;background:var(--green);border-radius:50%;animation:blink 2s infinite}
+      @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+      /* TOAST */
+      .toast-container{position:fixed;top:5.5rem;right:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:.65rem;pointer-events:none;max-width:360px}
+      .toast{background:rgba(12,5,5,.97);border:1px solid var(--red);border-radius:12px;padding:1rem 1.25rem;pointer-events:all;box-shadow:0 8px 32px rgba(255,59,59,.4),0 0 0 1px rgba(255,59,59,.15);animation:toast-in .35s cubic-bezier(.34,1.56,.64,1) forwards}
+      .toast.removing{animation:toast-out .28s ease forwards}
+      @keyframes toast-in{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+      @keyframes toast-out{from{transform:translateX(0);opacity:1}to{transform:translateX(110%);opacity:0}}
+      .toast-head{display:flex;align-items:center;gap:.5rem;font-weight:800;font-size:.9rem;color:var(--red);margin-bottom:.3rem}
+      .toast-body{font-size:.77rem;color:var(--txt2);line-height:1.5}
+      .toast-prog{height:2px;background:var(--red);border-radius:2px;margin-top:.65rem;animation:toast-prog 5s linear forwards}
+      @keyframes toast-prog{from{width:100%}to{width:0%}}
 
       /* PAGE */
-      .page {
-        max-width: 1300px;
-        margin: 0 auto;
-        padding: 2rem 1.5rem;
-      }
-      .sec-label {
-        font-size: 0.68rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        color: var(--txt3);
-        margin-bottom: 0.9rem;
-      }
+      .page{max-width:1300px;margin:0 auto;padding:2rem 1.5rem}
+      .sec-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--txt3);margin-bottom:.9rem}
 
       /* CARD */
-      .card {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        overflow: hidden;
-      }
-      .card-head {
-        display: flex;
-        align-items: center;
-        gap: 0.65rem;
-        padding: 0.9rem 1.4rem;
-        border-bottom: 1px solid var(--border);
-        background: var(--surface2);
-      }
-      .card-head h2 {
-        font-size: 0.95rem;
-        font-weight: 700;
-      }
-      .tag {
-        font-size: 0.65rem;
-        font-weight: 700;
-        font-family: var(--mono);
-        padding: 0.25rem 0.5rem;
-        border-radius: 6px;
-      }
+      .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+      .card-head{display:flex;align-items:center;gap:.65rem;padding:.9rem 1.4rem;border-bottom:1px solid var(--border);background:var(--surface2)}
+      .card-head h2{font-size:.95rem;font-weight:700}
+      .tag{font-size:.65rem;font-weight:700;font-family:var(--mono);padding:.25rem .5rem;border-radius:6px}
 
       /* UPLOAD GRID */
-      .upload-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1.2rem;
-        margin-bottom: 1.5rem;
-      }
-      @media (max-width: 660px) {
-        .upload-grid {
-          grid-template-columns: 1fr;
-        }
-      }
-      .upload-card {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 1.4rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-      }
-      .upload-head {
-        display: flex;
-        align-items: center;
-        gap: 0.65rem;
-      }
-      .upload-head h2 {
-        font-size: 0.95rem;
-        font-weight: 700;
-      }
-      .drop-zone {
-        border: 1.5px dashed var(--border2);
-        border-radius: 10px;
-        padding: 2rem 1rem;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 0.6rem;
-        cursor: pointer;
-        transition: 0.2s;
-        min-height: 150px;
-        text-align: center;
-      }
-      .drop-zone:hover,
-      .drop-zone.over {
-        border-color: var(--cyan);
-        background: var(--cyan-dim);
-      }
-      .drop-zone input {
-        display: none;
-      }
-      .drop-icon {
-        font-size: 1.8rem;
-        opacity: 0.45;
-      }
-      .drop-txt {
-        font-size: 0.88rem;
-        color: var(--txt2);
-      }
-      .drop-txt span {
-        color: var(--cyan);
-      }
-      .drop-sub {
-        font-size: 0.72rem;
-        color: var(--txt3);
-      }
-      .preview-wrap {
-        display: none;
-        border-radius: 8px;
-        overflow: hidden;
-        border: 1px solid var(--border);
-        background: #000;
-        position: relative;
-      }
-      .preview-wrap img,
-      .preview-wrap video {
-        width: 100%;
-        display: block;
-        max-height: 190px;
-        object-fit: contain;
-      }
-      .rm-btn {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        background: rgba(7, 16, 31, 0.85);
-        border: 1px solid var(--border);
-        color: var(--txt);
-        border-radius: 50%;
-        width: 26px;
-        height: 26px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        font-size: 0.8rem;
-        z-index: 5;
-        transition: 0.2s;
-      }
-      .rm-btn:hover {
-        background: var(--red);
-      }
-      .btn {
-        font-family: inherit;
-        background: var(--blue);
-        color: #fff;
-        border: none;
-        padding: 0.7rem 1rem;
-        border-radius: 8px;
-        font-size: 0.88rem;
-        font-weight: 600;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        transition: 0.2s;
-      }
-      .btn:hover {
-        background: #2563eb;
-      }
-      .btn:disabled {
-        background: var(--surface2);
-        color: var(--txt3);
-        cursor: not-allowed;
-      }
-      .btn-sm {
-        padding: 0.45rem 0.85rem;
-        font-size: 0.78rem;
-        border-radius: 7px;
-      }
+      .upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.5rem}
+      @media(max-width:660px){.upload-grid{grid-template-columns:1fr}}
+      .upload-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.4rem;display:flex;flex-direction:column;gap:1rem}
+      .upload-head{display:flex;align-items:center;gap:.65rem}
+      .upload-head h2{font-size:.95rem;font-weight:700}
+      .drop-zone{border:1.5px dashed var(--border2);border-radius:10px;padding:2rem 1rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6rem;cursor:pointer;transition:.2s;min-height:150px;text-align:center}
+      .drop-zone:hover,.drop-zone.over{border-color:var(--cyan);background:var(--cyan-dim)}
+      .drop-zone input{display:none}
+      .drop-icon{font-size:1.8rem;opacity:.45}
+      .drop-txt{font-size:.88rem;color:var(--txt2)}
+      .drop-txt span{color:var(--cyan)}
+      .drop-sub{font-size:.72rem;color:var(--txt3)}
+      .preview-wrap{display:none;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:#000;position:relative}
+      .preview-wrap img,.preview-wrap video{width:100%;display:block;max-height:190px;object-fit:contain}
+      .rm-btn{position:absolute;top:8px;right:8px;background:rgba(7,16,31,.85);border:1px solid var(--border);color:var(--txt);border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.8rem;z-index:5;transition:.2s}
+      .rm-btn:hover{background:var(--red)}
+      .btn{font-family:inherit;background:var(--blue);color:#fff;border:none;padding:.7rem 1rem;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;transition:.2s}
+      .btn:hover{background:#2563eb}
+      .btn:disabled{background:var(--surface2);color:var(--txt3);cursor:not-allowed}
+      .btn-sm{padding:.45rem .85rem;font-size:.78rem;border-radius:7px}
 
       /* LIVE PANEL */
-      #live-panel {
-        display: none;
-        margin-bottom: 1.5rem;
-      }
-      .live-layout {
-        display: grid;
-        grid-template-columns: 1fr 280px;
-        height: 460px;
-      }
-      @media (max-width: 860px) {
-        .live-layout {
-          grid-template-columns: 1fr;
-          height: auto;
-        }
-      }
-      .live-video-wrap {
-        position: relative;
-        background: #000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 300px;
-      }
-      #live-feed {
-        width: 100%;
-        display: block;
-        max-height: 460px;
-        object-fit: contain;
-      }
-      .live-video-wrap.no-signal::after {
-        content: "Waiting for stream…";
-        position: absolute;
-        color: var(--txt2);
-        font-size: 0.85rem;
-      }
-      .scan-line {
-        position: absolute;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: linear-gradient(
-          90deg,
-          transparent,
-          var(--cyan),
-          transparent
-        );
-        animation: scan 1.8s linear infinite;
-        pointer-events: none;
-      }
-      @keyframes scan {
-        from {
-          top: 0;
-        }
-        to {
-          top: 100%;
-        }
-      }
-      .corner {
-        position: absolute;
-        width: 18px;
-        height: 18px;
-        border-color: var(--cyan);
-        border-style: solid;
-        opacity: 0.55;
-        pointer-events: none;
-      }
-      .tl {
-        top: 10px;
-        left: 10px;
-        border-width: 2px 0 0 2px;
-      }
-      .tr {
-        top: 10px;
-        right: 10px;
-        border-width: 2px 2px 0 0;
-      }
-      .bl {
-        bottom: 10px;
-        left: 10px;
-        border-width: 0 0 2px 2px;
-      }
-      .br {
-        bottom: 10px;
-        right: 10px;
-        border-width: 0 2px 2px 0;
-      }
+      #live-panel{display:none;margin-bottom:1.5rem}
+      .live-layout{display:grid;grid-template-columns:1fr 290px;height:460px}
+      @media(max-width:860px){.live-layout{grid-template-columns:1fr;height:auto}}
+      .live-video-wrap{position:relative;background:#000;display:flex;align-items:center;justify-content:center;min-height:300px}
+      #live-feed{width:100%;display:block;max-height:460px;object-fit:contain}
+      .live-video-wrap.no-signal::after{content:"Waiting for stream…";position:absolute;color:var(--txt2);font-size:.85rem}
+      .scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);animation:scan 1.8s linear infinite;pointer-events:none}
+      @keyframes scan{from{top:0}to{top:100%}}
+      .corner{position:absolute;width:18px;height:18px;border-color:var(--cyan);border-style:solid;opacity:.55;pointer-events:none}
+      .tl{top:10px;left:10px;border-width:2px 0 0 2px}.tr{top:10px;right:10px;border-width:2px 2px 0 0}
+      .bl{bottom:10px;left:10px;border-width:0 0 2px 2px}.br{bottom:10px;right:10px;border-width:0 2px 2px 0}
 
       /* Live sidebar */
-      .live-sidebar {
-        border-left: 1px solid var(--border);
-        background: var(--surface2);
-        padding: 1.2rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.9rem;
-        overflow-y: auto;
-      }
-      .ls-label {
-        font-size: 0.65rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1.2px;
-        color: var(--txt3);
-      }
-      .ls-group {
-        display: flex;
-        flex-direction: column;
-        gap: 0.6rem;
-      }
-      .lm {
-        display: flex;
-        flex-direction: column;
-        gap: 0.15rem;
-      }
-      .lm-l {
-        font-size: 0.68rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        color: var(--txt2);
-      }
-      .lm-v {
-        font-family: var(--mono);
-        font-size: 1.05rem;
-        font-weight: 600;
-        color: var(--cyan);
-      }
-      .lm-v.ok {
-        color: var(--green);
-      }
-      .lm-v.bad {
-        color: var(--red);
-      }
-      .lm-v.warn {
-        color: var(--warn);
-      }
-
-      /* Mini bars */
-      .mini-bar-wrap {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-      .mini-bar-row {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
-      .mini-bar-l {
-        font-size: 0.68rem;
-        color: var(--txt2);
-        width: 42px;
-        flex-shrink: 0;
-      }
-      .mini-bar-track {
-        flex: 1;
-        height: 5px;
-        background: var(--border);
-        border-radius: 3px;
-        overflow: hidden;
-      }
-      .mini-bar-fill {
-        height: 100%;
-        border-radius: 3px;
-        transition: width 0.3s ease;
-      }
-      .bar-a {
-        background: var(--cyan);
-      }
-      .bar-b {
-        background: var(--warn);
-      }
-      .bar-c {
-        background: var(--red);
-      }
-      .bar-dl {
-        background: var(--purple);
-      }
-      .mini-bar-v {
-        font-family: var(--mono);
-        font-size: 0.65rem;
-        color: var(--txt);
-        width: 28px;
-        text-align: right;
-        flex-shrink: 0;
-      }
+      .live-sidebar{border-left:1px solid var(--border);background:var(--surface2);padding:1rem;display:flex;flex-direction:column;gap:.75rem;overflow-y:auto}
+      .ls-label{font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--txt3)}
+      .ls-group{display:flex;flex-direction:column;gap:.5rem}
+      .lm{display:flex;flex-direction:column;gap:.1rem}
+      .lm-l{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--txt2)}
+      .lm-v{font-family:var(--mono);font-size:1rem;font-weight:600;color:var(--cyan)}
+      .lm-v.ok{color:var(--green)}.lm-v.bad{color:var(--red)}.lm-v.warn{color:var(--warn)}
+      .mini-bar-wrap{display:flex;flex-direction:column;gap:.45rem}
+      .mini-bar-row{display:flex;align-items:center;gap:.5rem}
+      .mini-bar-l{font-size:.65rem;color:var(--txt2);width:44px;flex-shrink:0}
+      .mini-bar-track{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+      .mini-bar-fill{height:100%;border-radius:3px;transition:width .3s ease}
+      .bar-a{background:var(--cyan)}.bar-b{background:var(--warn)}.bar-c{background:var(--red)}.bar-dl{background:var(--purple)}
+      .mini-bar-v{font-family:var(--mono);font-size:.65rem;color:var(--txt);width:30px;text-align:right;flex-shrink:0}
 
       /* Status badge */
-      .det-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        font-size: 0.72rem;
-        font-weight: 700;
-        padding: 0.3rem 0.65rem;
-        border-radius: 6px;
-        transition: all 0.3s;
-      }
-      .det-scanning {
-        background: var(--blue-dim);
-        color: var(--blue);
-        border: 1px solid rgba(59, 127, 255, 0.3);
-      }
-      .det-confirmed {
-        background: var(--red-dim);
-        color: var(--red);
-        border: 1px solid rgba(255, 59, 59, 0.35);
-        animation: pulse-red 1.5s infinite;
-      }
-      .det-suspicious {
-        background: var(--warn-dim);
-        color: var(--warn);
-        border: 1px solid rgba(245, 158, 11, 0.3);
-      }
-      .det-suppressed {
-        background: var(--blue-dim);
-        color: var(--txt2);
-        border: 1px solid var(--border);
-      }
-      @keyframes pulse-red {
-        0%,
-        100% {
-          box-shadow: 0 0 0 0 rgba(255, 59, 59, 0);
-        }
-        50% {
-          box-shadow: 0 0 8px 2px rgba(255, 59, 59, 0.35);
-        }
-      }
+      .det-badge{display:inline-flex;align-items:center;gap:.4rem;font-size:.72rem;font-weight:700;padding:.3rem .65rem;border-radius:6px;transition:all .3s}
+      .det-scanning{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(59,127,255,.3)}
+      .det-confirmed{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,59,59,.35);animation:pulse-red 1.5s infinite}
+      .det-suspicious{background:var(--warn-dim);color:var(--warn);border:1px solid rgba(245,158,11,.3)}
+      .det-pending{background:rgba(245,158,11,.15);color:var(--warn);border:1px solid rgba(245,158,11,.4);animation:pulse-warn 1.2s infinite}
+      .det-suppressed{background:var(--blue-dim);color:var(--txt2);border:1px solid var(--border)}
+      @keyframes pulse-red{0%,100%{box-shadow:0 0 0 0 rgba(255,59,59,0)}50%{box-shadow:0 0 8px 2px rgba(255,59,59,.35)}}
+      @keyframes pulse-warn{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0)}50%{box-shadow:0 0 6px 2px rgba(245,158,11,.25)}}
 
-      /* Progress bar */
-      .prog-wrap {
-        padding: 0.9rem 1.4rem;
-        border-top: 1px solid var(--border);
-        background: var(--surface);
-      }
-      .prog-row {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.75rem;
-        color: var(--txt2);
-        margin-bottom: 0.4rem;
-      }
-      .prog-track {
-        height: 4px;
-        background: var(--border);
-        border-radius: 2px;
-        overflow: hidden;
-      }
-      .prog-fill {
-        height: 100%;
-        width: 0%;
-        background: linear-gradient(90deg, var(--blue), var(--cyan));
-        border-radius: 2px;
-        transition: width 0.4s ease;
-      }
+      /* Progress */
+      .prog-wrap{padding:.9rem 1.4rem;border-top:1px solid var(--border);background:var(--surface)}
+      .prog-row{display:flex;justify-content:space-between;font-size:.75rem;color:var(--txt2);margin-bottom:.4rem}
+      .prog-track{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+      .prog-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:2px;transition:width .4s ease}
 
       /* RESULT PANEL */
-      #result-panel {
-        display: none;
-        margin-bottom: 1.5rem;
-      }
-      .verdict-card {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        overflow: hidden;
-        margin-bottom: 1.2rem;
-      }
-      .verdict-top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 1rem;
-        padding: 1.5rem 2rem;
-      }
-      .verdict-left {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-      }
-      .v-icon {
-        width: 52px;
-        height: 52px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.4rem;
-      }
-      .v-icon.acc {
-        background: var(--red-dim);
-      }
-      .v-icon.ok {
-        background: var(--green-dim);
-      }
-      .v-text h2 {
-        font-size: 1.4rem;
-        font-weight: 800;
-      }
-      .v-text h2.acc {
-        color: var(--red);
-      }
-      .v-text h2.ok {
-        color: var(--green);
-      }
-      .v-text p {
-        font-size: 0.82rem;
-        color: var(--txt2);
-        margin-top: 0.2rem;
-      }
-      .conf-right {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 0.5rem;
-      }
-      .conf-num {
-        font-family: var(--mono);
-        font-size: 2.2rem;
-        font-weight: 600;
-        line-height: 1;
-      }
-      .conf-num.acc {
-        color: var(--red);
-      }
-      .conf-num.ok {
-        color: var(--green);
-      }
-      .conf-sub {
-        font-size: 0.7rem;
-        color: var(--txt2);
-      }
-      .conf-bar-wrap {
-        width: 220px;
-      }
-      .conf-track {
-        height: 8px;
-        background: var(--border);
-        border-radius: 4px;
-        overflow: hidden;
-        position: relative;
-      }
-      .conf-fill {
-        height: 100%;
-        width: 0%;
-        border-radius: 4px;
-        transition: width 1s cubic-bezier(0.1, 0.8, 0.2, 1);
-      }
-      .conf-fill.acc {
-        background: linear-gradient(90deg, #ef4444, #f87171);
-      }
-      .conf-fill.ok {
-        background: linear-gradient(90deg, #10b981, #34d399);
-      }
-      .thr-marker {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        background: var(--warn);
-      }
-      .conf-labels {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.65rem;
-        color: var(--txt3);
-        margin-top: 0.3rem;
-      }
-
-      .trigger-bar {
-        padding: 0.8rem 2rem;
-        border-top: 1px solid var(--border);
-        background: var(--surface2);
-        font-size: 0.84rem;
-        display: flex;
-        align-items: center;
-        gap: 0.65rem;
-        flex-wrap: wrap;
-      }
-      .thr-row {
-        padding: 0.8rem 2rem;
-        border-top: 1px solid var(--border);
-        display: flex;
-        align-items: center;
-        gap: 1.2rem;
-        flex-wrap: wrap;
-      }
-      .thr-info {
-        font-size: 0.8rem;
-        color: var(--txt2);
-      }
-      .thr-info span {
-        color: var(--cyan);
-        font-family: var(--mono);
-        font-weight: 700;
-      }
-      #thr-slider {
-        flex: 1;
-        min-width: 140px;
-        -webkit-appearance: none;
-        appearance: none;
-        height: 5px;
-        background: var(--border);
-        border-radius: 3px;
-        outline: none;
-        cursor: pointer;
-      }
-      #thr-slider::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        background: var(--cyan);
-        cursor: pointer;
-      }
+      #result-panel{display:none;margin-bottom:1.5rem}
+      .verdict-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1.2rem}
+      .verdict-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;padding:1.5rem 2rem}
+      .verdict-left{display:flex;align-items:center;gap:1rem}
+      .v-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem}
+      .v-icon.acc{background:var(--red-dim)}.v-icon.ok{background:var(--green-dim)}
+      .v-text h2{font-size:1.4rem;font-weight:800}
+      .v-text h2.acc{color:var(--red)}.v-text h2.ok{color:var(--green)}
+      .v-text p{font-size:.82rem;color:var(--txt2);margin-top:.2rem}
+      .conf-right{display:flex;flex-direction:column;align-items:flex-end;gap:.5rem}
+      .conf-num{font-family:var(--mono);font-size:2.2rem;font-weight:600;line-height:1}
+      .conf-num.acc{color:var(--red)}.conf-num.ok{color:var(--green)}
+      .conf-sub{font-size:.7rem;color:var(--txt2)}
+      .conf-bar-wrap{width:220px}
+      .conf-track{height:8px;background:var(--border);border-radius:4px;overflow:hidden;position:relative}
+      .conf-fill{height:100%;width:0%;border-radius:4px;transition:width 1s cubic-bezier(.1,.8,.2,1)}
+      .conf-fill.acc{background:linear-gradient(90deg,#ef4444,#f87171)}.conf-fill.ok{background:linear-gradient(90deg,#10b981,#34d399)}
+      .thr-marker{position:absolute;top:0;bottom:0;width:2px;background:var(--warn)}
+      .conf-labels{display:flex;justify-content:space-between;font-size:.65rem;color:var(--txt3);margin-top:.3rem}
+      .trigger-bar{padding:.8rem 2rem;border-top:1px solid var(--border);background:var(--surface2);font-size:.84rem;display:flex;align-items:center;gap:.65rem;flex-wrap:wrap}
+      .thr-row{padding:.8rem 2rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap}
+      .thr-info{font-size:.8rem;color:var(--txt2)}
+      .thr-info span{color:var(--cyan);font-family:var(--mono);font-weight:700}
+      #thr-slider{flex:1;min-width:140px;-webkit-appearance:none;appearance:none;height:5px;background:var(--border);border-radius:3px;outline:none;cursor:pointer}
+      #thr-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;background:var(--cyan);cursor:pointer}
 
       /* PIPELINE */
-      .pipeline-steps {
-        display: flex;
-        align-items: stretch;
-        padding: 1.4rem;
-        gap: 0;
-        flex-wrap: wrap;
-      }
-      .pipe-step {
-        flex: 1;
-        min-width: 120px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.6rem;
-        text-align: center;
-        padding: 0.9rem;
-        position: relative;
-      }
-      .pipe-step + .pipe-step::before {
-        content: "→";
-        position: absolute;
-        left: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--txt3);
-      }
-      .step-circle {
-        width: 46px;
-        height: 46px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1rem;
-        border: 2px solid var(--border);
-        background: var(--surface2);
-        transition: 0.3s;
-      }
-      .step-circle.pass {
-        border-color: var(--green);
-        background: var(--green-dim);
-      }
-      .step-circle.fail {
-        border-color: var(--red);
-        background: var(--red-dim);
-      }
-      .step-circle.warn-s {
-        border-color: var(--warn);
-        background: var(--warn-dim);
-      }
-      .step-name {
-        font-size: 0.75rem;
-        font-weight: 700;
-        color: var(--txt2);
-      }
-      .step-val {
-        font-family: var(--mono);
-        font-size: 0.82rem;
-        color: var(--txt3);
-        transition: 0.3s;
-      }
-      .step-val.pass {
-        color: var(--green);
-      }
-      .step-val.fail {
-        color: var(--red);
-      }
-      .step-val.warn-s {
-        color: var(--warn);
-      }
-      .step-sub {
-        font-size: 0.65rem;
-        color: var(--txt3);
-      }
+      .pipeline-steps{display:flex;align-items:stretch;padding:1.4rem;gap:0;flex-wrap:wrap}
+      .pipe-step{flex:1;min-width:120px;display:flex;flex-direction:column;align-items:center;gap:.6rem;text-align:center;padding:.9rem;position:relative}
+      .pipe-step+.pipe-step::before{content:"→";position:absolute;left:0;top:50%;transform:translateY(-50%);color:var(--txt3)}
+      .step-circle{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;border:2px solid var(--border);background:var(--surface2);transition:.3s}
+      .step-circle.pass{border-color:var(--green);background:var(--green-dim)}.step-circle.fail{border-color:var(--red);background:var(--red-dim)}.step-circle.warn-s{border-color:var(--warn);background:var(--warn-dim)}
+      .step-name{font-size:.75rem;font-weight:700;color:var(--txt2)}
+      .step-val{font-family:var(--mono);font-size:.82rem;color:var(--txt3);transition:.3s}
+      .step-val.pass{color:var(--green)}.step-val.fail{color:var(--red)}.step-val.warn-s{color:var(--warn)}
+      .step-sub{font-size:.65rem;color:var(--txt3)}
 
       /* METRICS & PHASES */
-      .metrics3 {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1rem;
-        margin-bottom: 1.2rem;
-      }
-      @media (max-width: 580px) {
-        .metrics3 {
-          grid-template-columns: 1fr 1fr;
-        }
-      }
-      .met-tile {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 0.9rem 1.1rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.3rem;
-      }
-      .met-label {
-        font-size: 0.65rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        color: var(--txt3);
-      }
-      .met-val {
-        font-family: var(--mono);
-        font-size: 1.35rem;
-        font-weight: 600;
-      }
-      .met-sub {
-        font-size: 0.7rem;
-        color: var(--txt2);
-      }
-      .phases4 {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 1rem;
-        margin-bottom: 1.2rem;
-      }
-      @media (max-width: 700px) {
-        .phases4 {
-          grid-template-columns: 1fr 1fr;
-        }
-      }
-      .phase-tile {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 0.9rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.7rem;
-      }
-      .pt-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-      .pt-chip {
-        font-size: 0.62rem;
-        font-weight: 700;
-        padding: 0.2rem 0.45rem;
-        border-radius: 100px;
-        font-family: var(--mono);
-      }
-      .ch-a {
-        background: var(--cyan-dim);
-        color: var(--cyan);
-        border: 1px solid rgba(0, 207, 255, 0.2);
-      }
-      .ch-b {
-        background: var(--warn-dim);
-        color: var(--warn);
-        border: 1px solid rgba(245, 158, 11, 0.2);
-      }
-      .ch-c {
-        background: var(--red-dim);
-        color: var(--red);
-        border: 1px solid rgba(255, 59, 59, 0.2);
-      }
-      .ch-dl {
-        background: var(--purple-dim);
-        color: var(--purple);
-        border: 1px solid rgba(168, 85, 247, 0.2);
-      }
-      .pt-dot {
-        width: 9px;
-        height: 9px;
-        border-radius: 50%;
-        background: var(--border);
-        transition: 0.3s;
-      }
-      .pt-dot.on {
-        background: var(--green);
-        box-shadow: 0 0 5px var(--green);
-      }
-      .pt-dot.off {
-        background: var(--red);
-      }
-      .pt-name {
-        font-size: 0.77rem;
-        font-weight: 700;
-        color: var(--txt2);
-      }
-      .pt-score {
-        font-family: var(--mono);
-        font-size: 1.5rem;
-        font-weight: 600;
-        line-height: 1;
-      }
-      .s-a {
-        color: var(--cyan);
-      }
-      .s-b {
-        color: var(--warn);
-      }
-      .s-c {
-        color: var(--red);
-      }
-      .s-dl {
-        color: var(--purple);
-      }
-      .pt-bar {
-        height: 3px;
-        background: var(--border);
-        border-radius: 2px;
-        overflow: hidden;
-      }
-      .pt-fill {
-        height: 100%;
-        width: 0%;
-        border-radius: 2px;
-        transition: width 0.8s ease;
-      }
-      .f-a {
-        background: var(--cyan);
-      }
-      .f-b {
-        background: var(--warn);
-      }
-      .f-c {
-        background: var(--red);
-      }
-      .f-dl {
-        background: var(--purple);
-      }
-      .sigs8 {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 0.7rem;
-        margin-bottom: 1.2rem;
-      }
-      @media (max-width: 700px) {
-        .sigs8 {
-          grid-template-columns: 1fr 1fr;
-        }
-      }
-      .sig-tile {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 0.75rem 0.9rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.2rem;
-      }
-      .sig-l {
-        font-size: 0.62rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        color: var(--txt3);
-      }
-      .sig-v {
-        font-family: var(--mono);
-        font-size: 0.95rem;
-        font-weight: 600;
-        color: var(--txt);
-      }
-      .sig-v.hi {
-        color: var(--red);
-      }
-      .sig-v.md {
-        color: var(--warn);
-      }
+      .metrics3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.2rem}
+      @media(max-width:580px){.metrics3{grid-template-columns:1fr 1fr}}
+      .met-tile{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.9rem 1.1rem;display:flex;flex-direction:column;gap:.3rem}
+      .met-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--txt3)}
+      .met-val{font-family:var(--mono);font-size:1.35rem;font-weight:600}
+      .met-sub{font-size:.7rem;color:var(--txt2)}
+      .phases4{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.2rem}
+      @media(max-width:700px){.phases4{grid-template-columns:1fr 1fr}}
+      .phase-tile{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.9rem;display:flex;flex-direction:column;gap:.7rem}
+      .pt-head{display:flex;align-items:center;justify-content:space-between}
+      .pt-chip{font-size:.62rem;font-weight:700;padding:.2rem .45rem;border-radius:100px;font-family:var(--mono)}
+      .ch-a{background:var(--cyan-dim);color:var(--cyan);border:1px solid rgba(0,207,255,.2)}
+      .ch-b{background:var(--warn-dim);color:var(--warn);border:1px solid rgba(245,158,11,.2)}
+      .ch-c{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,59,59,.2)}
+      .ch-dl{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
+      .pt-dot{width:9px;height:9px;border-radius:50%;background:var(--border);transition:.3s}
+      .pt-dot.on{background:var(--green);box-shadow:0 0 5px var(--green)}.pt-dot.off{background:var(--red)}
+      .pt-name{font-size:.77rem;font-weight:700;color:var(--txt2)}
+      .pt-score{font-family:var(--mono);font-size:1.5rem;font-weight:600;line-height:1}
+      .s-a{color:var(--cyan)}.s-b{color:var(--warn)}.s-c{color:var(--red)}.s-dl{color:var(--purple)}
+      .pt-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+      .pt-fill{height:100%;width:0%;border-radius:2px;transition:width .8s ease}
+      .f-a{background:var(--cyan)}.f-b{background:var(--warn)}.f-c{background:var(--red)}.f-dl{background:var(--purple)}
+      .sigs8{display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;margin-bottom:1.2rem}
+      @media(max-width:700px){.sigs8{grid-template-columns:1fr 1fr}}
+      .sig-tile{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.75rem .9rem;display:flex;flex-direction:column;gap:.2rem}
+      .sig-l{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--txt3)}
+      .sig-v{font-family:var(--mono);font-size:.95rem;font-weight:600;color:var(--txt)}
+      .sig-v.hi{color:var(--red)}.sig-v.md{color:var(--warn)}
 
       /* MEDIA + LLM */
-      .media-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1.2rem;
-        margin-bottom: 1.2rem;
-      }
-      @media (max-width: 860px) {
-        .media-grid {
-          grid-template-columns: 1fr;
-        }
-      }
-      .media-card {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        overflow: hidden;
-      }
-      .media-head {
-        padding: 0.8rem 1.2rem;
-        font-size: 0.7rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-        color: var(--txt3);
-        border-bottom: 1px solid var(--border);
-        background: var(--surface2);
-      }
-      .media-body {
-        background: #000;
-        min-height: 200px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      #proc-vid,
-      #proc-img {
-        width: 100%;
-        display: none;
-        border-radius: 0;
-      }
-      .vid-fallback {
-        display: none;
-        padding: 1.5rem;
-        text-align: center;
-        color: var(--txt2);
-        font-size: 0.82rem;
-        background: var(--surface);
-      }
-      .llm-body {
-        padding: 1.2rem;
-        display: none;
-        flex-direction: column;
-        gap: 0.85rem;
-      }
-      .llm-frame-img {
-        width: 100%;
-        border-radius: 7px;
-        border: 1px solid var(--border);
-        display: block;
-      }
-      .llm-text {
-        font-size: 0.87rem;
-        line-height: 1.65;
-        color: var(--txt);
-        background: var(--surface2);
-        border-left: 3px solid var(--cyan);
-        padding: 0.9rem 1rem;
-        border-radius: 0 7px 7px 0;
-        font-style: italic;
-      }
-      .llm-empty {
-        padding: 2.5rem 1.2rem;
-        text-align: center;
-        color: var(--txt2);
-        font-size: 0.82rem;
-      }
+      .media-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.2rem}
+      @media(max-width:860px){.media-grid{grid-template-columns:1fr}}
+      .media-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+      .media-head{padding:.8rem 1.2rem;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--txt3);border-bottom:1px solid var(--border);background:var(--surface2)}
+      .media-body{background:#000;min-height:200px;display:flex;align-items:center;justify-content:center}
+      #proc-vid,#proc-img{width:100%;display:none;border-radius:0}
+      .vid-fallback{display:none;padding:1.5rem;text-align:center;color:var(--txt2);font-size:.82rem;background:var(--surface)}
+      .llm-body{padding:1.2rem;display:none;flex-direction:column;gap:.85rem}
+      .llm-frame-img{width:100%;border-radius:7px;border:1px solid var(--border);display:block}
+      .llm-text{font-size:.87rem;line-height:1.65;color:var(--txt);background:var(--surface2);border-left:3px solid var(--cyan);padding:.9rem 1rem;border-radius:0 7px 7px 0;font-style:italic}
+      .llm-empty{padding:2.5rem 1.2rem;text-align:center;color:var(--txt2);font-size:.82rem}
 
       /* LOG PANEL */
-      .log-panel {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 1.1rem 1.4rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-      }
-      .log-left h3 {
-        font-size: 0.88rem;
-        font-weight: 700;
-      }
-      .log-left p {
-        font-size: 0.75rem;
-        color: var(--txt2);
-        margin-top: 0.15rem;
-      }
-      .log-btns {
-        display: flex;
-        gap: 0.65rem;
-      }
-      .log-btn {
-        font-family: inherit;
-        font-size: 0.8rem;
-        font-weight: 600;
-        padding: 0.5rem 1rem;
-        border-radius: 7px;
-        cursor: pointer;
-        border: 1px solid;
-        transition: 0.2s;
-      }
-      .lb-no {
-        background: var(--green-dim);
-        border-color: rgba(0, 224, 122, 0.3);
-        color: var(--green);
-      }
-      .lb-yes {
-        background: var(--red-dim);
-        border-color: rgba(255, 59, 59, 0.3);
-        color: var(--red);
-      }
-      #log-msg {
-        font-size: 0.75rem;
-        color: var(--txt2);
-      }
+      .log-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.4rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem}
+      .log-left h3{font-size:.88rem;font-weight:700}
+      .log-left p{font-size:.75rem;color:var(--txt2);margin-top:.15rem}
+      .log-btns{display:flex;gap:.65rem}
+      .log-btn{font-family:inherit;font-size:.8rem;font-weight:600;padding:.5rem 1rem;border-radius:7px;cursor:pointer;border:1px solid;transition:.2s}
+      .lb-no{background:var(--green-dim);border-color:rgba(0,224,122,.3);color:var(--green)}
+      .lb-yes{background:var(--red-dim);border-color:rgba(255,59,59,.3);color:var(--red)}
 
-      /* INCIDENT HISTORY — 3-TAB */
-      .tab-bar {
-        display: flex;
-        gap: 0;
-        border-bottom: 1px solid var(--border);
-        margin-bottom: 1.2rem;
-      }
-      .tab-btn {
-        font-family: inherit;
-        font-size: 0.82rem;
-        font-weight: 600;
-        padding: 0.65rem 1.2rem;
-        border: none;
-        background: transparent;
-        color: var(--txt2);
-        cursor: pointer;
-        border-bottom: 2px solid transparent;
-        transition: 0.2s;
-        display: flex;
-        align-items: center;
-        gap: 0.45rem;
-      }
-      .tab-btn.active {
-        color: var(--txt);
-        border-bottom-color: var(--blue);
-      }
-      .tab-count {
-        font-size: 0.65rem;
-        font-family: var(--mono);
-        padding: 0.1rem 0.4rem;
-        border-radius: 100px;
-        background: var(--surface2);
-        color: var(--txt2);
-      }
-      .tab-content {
-        display: none;
-      }
-      .tab-content.active {
-        display: flex;
-        flex-direction: column;
-        gap: 0.55rem;
-      }
-
-      /* Incident cards */
-      .inc-card {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        overflow: hidden;
-        transition:
-          border-color 0.2s,
-          box-shadow 0.2s;
-      }
-      .inc-card:hover {
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
-      }
-      .inc-card.confirmed {
-        border-color: rgba(255, 59, 59, 0.25);
-      }
-      .inc-card.confirmed:not(.collapsed) {
-        border-color: rgba(255, 59, 59, 0.4);
-      }
-      .inc-card.suspicious {
-        border-color: rgba(245, 158, 11, 0.25);
-      }
-      .inc-card.suspicious:not(.collapsed) {
-        border-color: rgba(245, 158, 11, 0.45);
-      }
-      .inc-card.suppressed {
-        border-color: var(--border);
-      }
-      .inc-card.collapsed .inc-body {
-        display: none;
-      }
-      .inc-card.collapsed .inc-head {
-        border-bottom: none;
-      }
-      .inc-head {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.75rem 1rem;
-        border-bottom: 1px solid var(--border);
-        background: var(--surface2);
-        cursor: pointer;
-        user-select: none;
-        transition: background 0.15s;
-      }
-      .inc-head:hover {
-        background: rgba(255, 255, 255, 0.03);
-      }
-      .inc-toggle {
-        width: 28px;
-        height: 28px;
-        border-radius: 7px;
-        border: 1px solid var(--border);
-        background: var(--surface);
-        color: var(--txt2);
-        flex-shrink: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.7rem;
-        transition:
-          transform 0.22s ease,
-          background 0.2s,
-          color 0.2s,
-          border-color 0.2s;
-      }
-      .inc-card:not(.collapsed) .inc-toggle {
-        transform: rotate(90deg);
-        background: var(--blue-dim);
-        border-color: rgba(59, 130, 246, 0.35);
-        color: var(--blue);
-      }
-      .inc-head-main {
-        flex: 1;
-        min-width: 0;
-      }
-      .inc-head-row {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-      }
-      .inc-head-meta {
-        display: flex;
-        align-items: center;
-        gap: 0.45rem;
-        flex-shrink: 0;
-      }
-      .inc-status-badge {
-        font-size: 0.62rem;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        padding: 0.2rem 0.5rem;
-        border-radius: 5px;
-      }
-      .inc-status-badge.confirmed {
-        background: var(--red-dim);
-        color: var(--red);
-      }
-      .inc-status-badge.suspicious {
-        background: rgba(245, 158, 11, 0.15);
-        color: var(--warn);
-      }
-      .inc-status-badge.suppressed {
-        background: var(--surface);
-        color: var(--txt2);
-        border: 1px solid var(--border);
-      }
-      .inc-conf-chip {
-        font-family: var(--mono);
-        font-size: 0.78rem;
-        font-weight: 700;
-        padding: 0.22rem 0.55rem;
-        border-radius: 6px;
-        background: rgba(255, 59, 59, 0.12);
-        color: var(--red);
-        border: 1px solid rgba(255, 59, 59, 0.2);
-      }
-      .inc-card.suspicious .inc-conf-chip {
-        background: rgba(245, 158, 11, 0.12);
-        color: var(--warn);
-        border-color: rgba(245, 158, 11, 0.25);
-      }
-      .inc-card.suppressed .inc-conf-chip {
-        background: var(--surface);
-        color: var(--txt2);
-        border-color: var(--border);
-      }
-      .inc-delete {
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        border: 1px solid transparent;
-        background: transparent;
-        color: var(--txt2);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1rem;
-        line-height: 1;
-        transition:
-          background 0.15s,
-          border-color 0.15s,
-          color 0.15s;
-        flex-shrink: 0;
-      }
-      .inc-delete:hover {
-        background: var(--red-dim);
-        border-color: rgba(255, 59, 59, 0.35);
-        color: var(--red);
-      }
-      .inc-delete:disabled {
-        opacity: 0.35;
-        cursor: not-allowed;
-        pointer-events: none;
-      }
-      .inc-time {
-        font-weight: 700;
-        font-size: 0.88rem;
-      }
-      .inc-loc {
-        font-size: 0.75rem;
-        color: var(--txt2);
-        margin-top: 0.1rem;
-      }
-      .inc-src {
-        font-size: 0.65rem;
-        font-weight: 700;
-        padding: 0.18rem 0.45rem;
-        border-radius: 5px;
-      }
-      .src-web {
-        background: var(--blue-dim);
-        color: #93c5fd;
-      }
-      .src-stream {
-        background: var(--green-dim);
-        color: var(--green);
-      }
-      .inc-body {
-        padding: 1.1rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-      }
-      .inc-media {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.9rem;
-      }
-      @media (max-width: 580px) {
-        .inc-media {
-          grid-template-columns: 1fr;
-        }
-      }
-      .inc-media-label {
-        font-size: 0.65rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        color: var(--txt3);
-        margin-bottom: 0.4rem;
-      }
-      .inc-media video,
-      .inc-media img {
-        width: 100%;
-        border-radius: 7px;
-        border: 1px solid var(--border);
-        display: block;
-      }
-      .inc-media img {
-        border-color: var(--red);
-      }
-      .inc-media-empty {
-        padding: 1.2rem;
-        text-align: center;
-        color: var(--txt2);
-        font-size: 0.78rem;
-        border: 1px dashed var(--border);
-        border-radius: 7px;
-        background: var(--surface2);
-      }
-      .inc-conf-row {
-        display: flex;
-        gap: 0.65rem;
-        flex-wrap: wrap;
-      }
-      .inc-pill {
-        flex: 1;
-        min-width: 100px;
-        background: var(--surface2);
-        border: 1px solid var(--border);
-        border-radius: 7px;
-        padding: 0.65rem;
-        text-align: center;
-      }
-      .inc-pill-l {
-        font-size: 0.62rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        color: var(--txt3);
-      }
-      .inc-pill-v {
-        font-family: var(--mono);
-        font-size: 1.2rem;
-        font-weight: 700;
-        margin-top: 0.2rem;
-      }
-      .inc-trigger {
-        font-size: 0.8rem;
-        color: var(--txt2);
-        background: var(--surface2);
-        border: 1px solid var(--border);
-        padding: 0.55rem 0.85rem;
-        border-radius: 6px;
-      }
-      .inc-trigger strong {
-        color: var(--txt);
-      }
-      .inc-phases {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 0.4rem;
-      }
-      @media (max-width: 580px) {
-        .inc-phases {
-          grid-template-columns: repeat(4, 1fr);
-        }
-      }
-      .mini-score {
-        background: var(--surface2);
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        padding: 0.5rem 0.3rem;
-        text-align: center;
-      }
-      .ms-l {
-        font-size: 0.58rem;
-        color: var(--txt3);
-        font-weight: 700;
-        text-transform: uppercase;
-      }
-      .ms-v {
-        font-family: var(--mono);
-        font-size: 0.85rem;
-        font-weight: 700;
-        color: var(--txt);
-        margin-top: 0.1rem;
-      }
-      .inc-llm {
-        font-size: 0.83rem;
-        line-height: 1.6;
-        color: var(--txt);
-        background: var(--surface2);
-        border-left: 3px solid var(--cyan);
-        padding: 0.8rem 0.95rem;
-        border-radius: 0 7px 7px 0;
-        font-style: italic;
-      }
-      .empty-state {
-        text-align: center;
-        color: var(--txt2);
-        padding: 2.5rem;
-        border: 1px dashed var(--border);
-        border-radius: 10px;
-        font-size: 0.85rem;
-      }
+      /* INCIDENT HISTORY */
+      .tab-bar{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:1.2rem}
+      .tab-btn{font-family:inherit;font-size:.82rem;font-weight:600;padding:.65rem 1.2rem;border:none;background:transparent;color:var(--txt2);cursor:pointer;border-bottom:2px solid transparent;transition:.2s;display:flex;align-items:center;gap:.45rem}
+      .tab-btn.active{color:var(--txt);border-bottom-color:var(--blue)}
+      .tab-count{font-size:.65rem;font-family:var(--mono);padding:.1rem .4rem;border-radius:100px;background:var(--surface2);color:var(--txt2)}
+      .tab-content{display:none}
+      .tab-content.active{display:flex;flex-direction:column;gap:.55rem}
+      .inc-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .2s,box-shadow .2s}
+      .inc-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.18)}
+      .inc-card.confirmed{border-color:rgba(255,59,59,.25)}.inc-card.confirmed:not(.collapsed){border-color:rgba(255,59,59,.4)}
+      .inc-card.suspicious{border-color:rgba(245,158,11,.25)}.inc-card.suspicious:not(.collapsed){border-color:rgba(245,158,11,.45)}
+      .inc-card.suppressed{border-color:var(--border)}
+      .inc-card.collapsed .inc-body{display:none}.inc-card.collapsed .inc-head{border-bottom:none}
+      .inc-head{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border-bottom:1px solid var(--border);background:var(--surface2);cursor:pointer;user-select:none;transition:background .15s}
+      .inc-head:hover{background:rgba(255,255,255,.03)}
+      .inc-toggle{width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--txt2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.7rem;transition:transform .22s ease,background .2s,color .2s,border-color .2s}
+      .inc-card:not(.collapsed) .inc-toggle{transform:rotate(90deg);background:var(--blue-dim);border-color:rgba(59,130,246,.35);color:var(--blue)}
+      .inc-head-main{flex:1;min-width:0}
+      .inc-head-row{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+      .inc-head-meta{display:flex;align-items:center;gap:.45rem;flex-shrink:0}
+      .inc-status-badge{font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:.2rem .5rem;border-radius:5px}
+      .inc-status-badge.confirmed{background:var(--red-dim);color:var(--red)}
+      .inc-status-badge.suspicious{background:rgba(245,158,11,.15);color:var(--warn)}
+      .inc-status-badge.suppressed{background:var(--surface);color:var(--txt2);border:1px solid var(--border)}
+      .inc-conf-chip{font-family:var(--mono);font-size:.78rem;font-weight:700;padding:.22rem .55rem;border-radius:6px;background:rgba(255,59,59,.12);color:var(--red);border:1px solid rgba(255,59,59,.2)}
+      .inc-card.suspicious .inc-conf-chip{background:rgba(245,158,11,.12);color:var(--warn);border-color:rgba(245,158,11,.25)}
+      .inc-card.suppressed .inc-conf-chip{background:var(--surface);color:var(--txt2);border-color:var(--border)}
+      .inc-delete{width:32px;height:32px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--txt2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;line-height:1;transition:background .15s,border-color .15s,color .15s;flex-shrink:0}
+      .inc-delete:hover{background:var(--red-dim);border-color:rgba(255,59,59,.35);color:var(--red)}
+      .inc-delete:disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
+      .inc-time{font-weight:700;font-size:.88rem}.inc-loc{font-size:.75rem;color:var(--txt2);margin-top:.1rem}
+      .inc-src{font-size:.65rem;font-weight:700;padding:.18rem .45rem;border-radius:5px}
+      .src-web{background:var(--blue-dim);color:#93c5fd}.src-stream{background:var(--green-dim);color:var(--green)}
+      .inc-body{padding:1.1rem;display:flex;flex-direction:column;gap:1rem}
+      .inc-media{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+      @media(max-width:580px){.inc-media{grid-template-columns:1fr}}
+      .inc-media-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--txt3);margin-bottom:.4rem}
+      .inc-media video,.inc-media img{width:100%;border-radius:7px;border:1px solid var(--border);display:block}
+      .inc-media img{border-color:var(--red)}
+      .inc-media-empty{padding:1.2rem;text-align:center;color:var(--txt2);font-size:.78rem;border:1px dashed var(--border);border-radius:7px;background:var(--surface2)}
+      .inc-media-loading{padding:1.2rem;text-align:center;color:var(--cyan);font-size:.78rem;border:1px dashed rgba(0,207,255,.3);border-radius:7px;background:var(--cyan-dim)}
+      .inc-conf-row{display:flex;gap:.65rem;flex-wrap:wrap}
+      .inc-pill{flex:1;min-width:100px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:.65rem;text-align:center}
+      .inc-pill-l{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--txt3)}
+      .inc-pill-v{font-family:var(--mono);font-size:1.2rem;font-weight:700;margin-top:.2rem}
+      .inc-trigger{font-size:.8rem;color:var(--txt2);background:var(--surface2);border:1px solid var(--border);padding:.55rem .85rem;border-radius:6px}
+      .inc-trigger strong{color:var(--txt)}
+      .inc-phases{display:grid;grid-template-columns:repeat(7,1fr);gap:.4rem}
+      @media(max-width:580px){.inc-phases{grid-template-columns:repeat(4,1fr)}}
+      .mini-score{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:.5rem .3rem;text-align:center}
+      .ms-l{font-size:.58rem;color:var(--txt3);font-weight:700;text-transform:uppercase}
+      .ms-v{font-family:var(--mono);font-size:.85rem;font-weight:700;color:var(--txt);margin-top:.1rem}
+      .inc-llm{font-size:.83rem;line-height:1.6;color:var(--txt);background:var(--surface2);border-left:3px solid var(--cyan);padding:.8rem .95rem;border-radius:0 7px 7px 0;font-style:italic}
+      .empty-state{text-align:center;color:var(--txt2);padding:2.5rem;border:1px dashed var(--border);border-radius:10px;font-size:.85rem}
 
       /* XGB CARD */
-      .xgb-body {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1.4rem;
-        padding: 1.4rem;
-      }
-      @media (max-width: 640px) {
-        .xgb-body {
-          grid-template-columns: 1fr;
-        }
-      }
-      .stat-row {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.83rem;
-        padding: 0.45rem 0;
-        border-bottom: 1px solid var(--border);
-      }
-      .stat-row:last-child {
-        border: none;
-      }
-      .sk {
-        color: var(--txt2);
-      }
-      .sv {
-        font-family: var(--mono);
-        font-weight: 600;
-      }
-      .btn-outline {
-        font-family: inherit;
-        font-size: 0.83rem;
-        font-weight: 600;
-        padding: 0.6rem 1rem;
-        border-radius: 7px;
-        cursor: pointer;
-        background: transparent;
-        border: 1px solid var(--border2);
-        color: var(--txt);
-        transition: 0.2s;
-      }
-      .btn-outline:hover {
-        border-color: var(--blue);
-        color: var(--blue);
-      }
-      .btn-outline:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-      }
+      .xgb-body{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;padding:1.4rem}
+      @media(max-width:640px){.xgb-body{grid-template-columns:1fr}}
+      .stat-row{display:flex;justify-content:space-between;font-size:.83rem;padding:.45rem 0;border-bottom:1px solid var(--border)}
+      .stat-row:last-child{border:none}
+      .sk{color:var(--txt2)}.sv{font-family:var(--mono);font-weight:600}
+      .btn-outline{font-family:inherit;font-size:.83rem;font-weight:600;padding:.6rem 1rem;border-radius:7px;cursor:pointer;background:transparent;border:1px solid var(--border2);color:var(--txt);transition:.2s}
+      .btn-outline:hover{border-color:var(--blue);color:var(--blue)}
+      .btn-outline:disabled{opacity:.4;cursor:not-allowed}
 
       /* ALERT */
-      .alert {
-        display: none;
-        background: var(--red-dim);
-        border: 1px solid rgba(255, 59, 59, 0.25);
-        color: #f87171;
-        padding: 0.8rem 1.1rem;
-        border-radius: 9px;
-        font-size: 0.85rem;
-        margin-bottom: 1.2rem;
-      }
-
-      /* VERDICT GLOW */
-      .verdict-card.acc-glow {
-        animation: glow 2.5s ease-in-out infinite;
-      }
-      @keyframes glow {
-        0%,
-        100% {
-          box-shadow: 0 0 0 0 transparent;
-        }
-        50% {
-          box-shadow: 0 0 24px 4px rgba(255, 59, 59, 0.2);
-        }
-      }
-
-      /* FOOTER */
-      footer {
-        text-align: center;
-        margin-top: 2.5rem;
-        font-size: 0.75rem;
-        color: var(--txt3);
-      }
+      .alert{display:none;background:var(--red-dim);border:1px solid rgba(255,59,59,.25);color:#f87171;padding:.8rem 1.1rem;border-radius:9px;font-size:.85rem;margin-bottom:1.2rem}
+      .verdict-card.acc-glow{animation:glow 2.5s ease-in-out infinite}
+      @keyframes glow{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 24px 4px rgba(255,59,59,.2)}}
+      footer{text-align:center;margin-top:2.5rem;font-size:.75rem;color:var(--txt3)}
     </style>
   </head>
   <body>
+    <!-- Toast container — confirmed accidents only -->
+    <div class="toast-container" id="toast-container"></div>
+
     <nav class="topbar">
       <div class="logo">
         <div class="logo-mark">U</div>
         <div>
           <div class="logo-text">UYIR Road Safety</div>
-          <div class="logo-sub">
-            Accident Detection System · Tamil Nadu Police Pilot
-          </div>
+          <div class="logo-sub">Accident Detection System · Tamil Nadu Police Pilot</div>
         </div>
       </div>
       <div class="status-pill">System Online</div>
@@ -1569,12 +305,7 @@
       <div class="upload-grid">
         <div class="upload-card">
           <div class="upload-head">
-            <div
-              class="tag"
-              style="background: var(--blue-dim); color: var(--blue)"
-            >
-              IMG
-            </div>
+            <div class="tag" style="background:var(--blue-dim);color:var(--blue)">IMG</div>
             <h2>Analyse Image</h2>
           </div>
           <div class="drop-zone" id="img-zone">
@@ -1584,178 +315,101 @@
             <input type="file" id="img-inp" accept="image/*" />
           </div>
           <div class="preview-wrap" id="img-pw">
-            <button class="rm-btn" onclick="clearImg()">✕</button
-            ><img id="img-prev" src="" alt="" />
+            <button class="rm-btn" onclick="clearImg()">✕</button>
+            <img id="img-prev" src="" alt="" />
           </div>
-          <button class="btn" id="img-btn" onclick="runImage()" disabled>
-            Analyse Image
-          </button>
+          <button class="btn" id="img-btn" onclick="runImage()" disabled>Analyse Image</button>
         </div>
         <div class="upload-card">
           <div class="upload-head">
-            <div
-              class="tag"
-              style="background: var(--cyan-dim); color: var(--cyan)"
-            >
-              VID
-            </div>
+            <div class="tag" style="background:var(--cyan-dim);color:var(--cyan)">VID</div>
             <h2>Analyse Video / IP Stream</h2>
           </div>
           <div class="drop-zone" id="vid-zone">
             <div class="drop-icon">🎥</div>
             <div class="drop-txt">Drop video here or <span>browse</span></div>
-            <div class="drop-sub">
-              MP4 · AVI · MOV — live results shown frame-by-frame
-            </div>
+            <div class="drop-sub">MP4 · AVI · MOV — live results shown frame-by-frame</div>
             <input type="file" id="vid-inp" accept="video/*" />
           </div>
           <div class="preview-wrap" id="vid-pw">
-            <button class="rm-btn" onclick="clearVid()">✕</button
-            ><video id="vid-prev" controls></video>
+            <button class="rm-btn" onclick="clearVid()">✕</button>
+            <video id="vid-prev" controls></video>
           </div>
-          <button class="btn" id="vid-btn" onclick="runVideo()" disabled>
-            Analyse Video
-          </button>
+          <button class="btn" id="vid-btn" onclick="runVideo()" disabled>Analyse Video</button>
         </div>
       </div>
 
       <!-- LIVE PANEL -->
       <div class="card" id="live-panel">
         <div class="card-head">
-          <div
-            class="tag"
-            style="background: var(--red-dim); color: var(--red)"
-          >
-            LIVE
-          </div>
+          <div class="tag" style="background:var(--red-dim);color:var(--red)">LIVE</div>
           <h2>Live Detection Feed</h2>
-          <div style="margin-left: auto" id="live-det-badge">
+          <div style="margin-left:auto" id="live-det-badge">
             <span class="det-badge det-scanning">● Scanning</span>
           </div>
         </div>
         <div class="live-layout">
           <div class="live-video-wrap no-signal" id="live-vw">
-            <img
-              id="live-feed"
-              style="
-                display: none;
-                width: 100%;
-                max-height: 460px;
-                object-fit: contain;
-              "
-            />
+            <img id="live-feed" style="display:none;width:100%;max-height:460px;object-fit:contain" />
             <div class="scan-line" id="scan-line"></div>
-            <div class="corner tl"></div>
-            <div class="corner tr"></div>
-            <div class="corner bl"></div>
-            <div class="corner br"></div>
+            <div class="corner tl"></div><div class="corner tr"></div>
+            <div class="corner bl"></div><div class="corner br"></div>
           </div>
           <div class="live-sidebar">
-            <div class="ls-label">Processing Metrics</div>
+            <div class="ls-label">Processing</div>
             <div class="ls-group">
-              <div class="lm">
-                <div class="lm-l">Processing FPS</div>
-                <div class="lm-v" id="lv-fps">—</div>
-              </div>
-              <div class="lm">
-                <div class="lm-l">Frame</div>
-                <div class="lm-v" id="lv-frame">—</div>
-              </div>
-              <div class="lm">
-                <div class="lm-l">Elapsed</div>
-                <div class="lm-v" id="lv-elapsed">—</div>
-              </div>
-              <div class="lm">
-                <div class="lm-l">Tracked Vehicles</div>
-                <div class="lm-v" id="lv-tracks">—</div>
-              </div>
+              <div class="lm"><div class="lm-l">FPS</div><div class="lm-v" id="lv-fps">—</div></div>
+              <div class="lm"><div class="lm-l">Frame</div><div class="lm-v" id="lv-frame">—</div></div>
+              <div class="lm"><div class="lm-l">Elapsed</div><div class="lm-v" id="lv-elapsed">—</div></div>
+              <div class="lm"><div class="lm-l">Tracks</div><div class="lm-v" id="lv-tracks">—</div></div>
             </div>
             <div class="ls-label">Scene State</div>
             <div class="ls-group">
-              <div class="lm">
-                <div class="lm-l">Traffic Density</div>
-                <div class="lm-v" id="lv-density">—</div>
-              </div>
-              <div class="lm">
-                <div class="lm-l">Avg Speed (px/f)</div>
-                <div class="lm-v" id="lv-speed">—</div>
-              </div>
-              <div class="lm">
-                <div class="lm-l">Stopped Ratio</div>
-                <div class="lm-v" id="lv-stopped">—</div>
-              </div>
+              <div class="lm"><div class="lm-l">Density</div><div class="lm-v" id="lv-density">—</div></div>
+              <div class="lm"><div class="lm-l">Avg Speed</div><div class="lm-v" id="lv-speed">—</div></div>
+              <div class="lm"><div class="lm-l">Stopped</div><div class="lm-v" id="lv-stopped">—</div></div>
             </div>
-            <div class="ls-label">Detection Pipeline</div>
+            <div class="ls-label">Detection</div>
             <div class="ls-group">
               <div class="lm">
-                <div class="lm-l">DL Model Score</div>
+                <div class="lm-l">DL Score (Frame)</div>
                 <div class="lm-v" id="lv-dl">—</div>
               </div>
               <div class="lm">
-                <div class="lm-l">Phase Votes</div>
-                <div class="lm-v" id="lv-votes">—</div>
+                <div class="lm-l">DL Gate (Peak ≥0.55)</div>
+                <div class="lm-v" id="lv-dl-gate">—</div>
               </div>
-              <div class="lm">
-                <div class="lm-l">Fused Score</div>
-                <div class="lm-v" id="lv-score">—</div>
-              </div>
+              <div class="lm"><div class="lm-l">Phase Votes</div><div class="lm-v" id="lv-votes">—</div></div>
+              <div class="lm"><div class="lm-l">Fused Score</div><div class="lm-v" id="lv-score">—</div></div>
             </div>
-            <div class="ls-label">Phase Scores</div>
+            <div class="ls-label">Phase Bars</div>
             <div class="mini-bar-wrap" id="lv-phase-bars">
               <div class="mini-bar-row">
                 <div class="mini-bar-l">Phase A</div>
-                <div class="mini-bar-track">
-                  <div
-                    class="mini-bar-fill bar-a"
-                    id="lb-a"
-                    style="width: 0%"
-                  ></div>
-                </div>
+                <div class="mini-bar-track"><div class="mini-bar-fill bar-a" id="lb-a" style="width:0%"></div></div>
                 <div class="mini-bar-v" id="lv-a">0.00</div>
               </div>
               <div class="mini-bar-row">
                 <div class="mini-bar-l">Phase B</div>
-                <div class="mini-bar-track">
-                  <div
-                    class="mini-bar-fill bar-b"
-                    id="lb-b"
-                    style="width: 0%"
-                  ></div>
-                </div>
+                <div class="mini-bar-track"><div class="mini-bar-fill bar-b" id="lb-b" style="width:0%"></div></div>
                 <div class="mini-bar-v" id="lv-b">0.00</div>
               </div>
               <div class="mini-bar-row">
                 <div class="mini-bar-l">Phase C</div>
-                <div class="mini-bar-track">
-                  <div
-                    class="mini-bar-fill bar-c"
-                    id="lb-c"
-                    style="width: 0%"
-                  ></div>
-                </div>
+                <div class="mini-bar-track"><div class="mini-bar-fill bar-c" id="lb-c" style="width:0%"></div></div>
                 <div class="mini-bar-v" id="lv-c">0.00</div>
               </div>
               <div class="mini-bar-row">
-                <div class="mini-bar-l">DL Peak</div>
-                <div class="mini-bar-track">
-                  <div
-                    class="mini-bar-fill bar-dl"
-                    id="lb-dl"
-                    style="width: 0%"
-                  ></div>
-                </div>
+                <div class="mini-bar-l">DL Frame</div>
+                <div class="mini-bar-track"><div class="mini-bar-fill bar-dl" id="lb-dl" style="width:0%"></div></div>
                 <div class="mini-bar-v" id="lv-dl2">0.00</div>
               </div>
             </div>
           </div>
         </div>
         <div class="prog-wrap">
-          <div class="prog-row">
-            <span id="prog-label">Uploading…</span><span id="prog-pct">0%</span>
-          </div>
-          <div class="prog-track">
-            <div class="prog-fill" id="prog-fill"></div>
-          </div>
+          <div class="prog-row"><span id="prog-label">Uploading…</span><span id="prog-pct">0%</span></div>
+          <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
         </div>
       </div>
 
@@ -1765,10 +419,7 @@
           <div class="verdict-top">
             <div class="verdict-left">
               <div class="v-icon" id="v-icon">⚠️</div>
-              <div class="v-text">
-                <h2 id="v-text">—</h2>
-                <p id="v-sub">—</p>
-              </div>
+              <div class="v-text"><h2 id="v-text">—</h2><p id="v-sub">—</p></div>
             </div>
             <div class="conf-right">
               <div class="conf-num" id="conf-num">—</div>
@@ -1776,54 +427,31 @@
               <div class="conf-bar-wrap">
                 <div class="conf-track">
                   <div class="conf-fill" id="conf-fill"></div>
-                  <div
-                    class="thr-marker"
-                    id="thr-marker"
-                    style="left: 55%"
-                  ></div>
+                  <div class="thr-marker" id="thr-marker" style="left:55%"></div>
                 </div>
-                <div class="conf-labels">
-                  <span>0%</span><span id="thr-label">Threshold: 55%</span
-                  ><span>100%</span>
-                </div>
+                <div class="conf-labels"><span>0%</span><span id="thr-label">Threshold: 55%</span><span>100%</span></div>
               </div>
             </div>
           </div>
           <div class="trigger-bar">
-            <span style="color: var(--txt2); font-weight: 600">Trigger:</span
-            ><span id="trig-txt" style="font-weight: 600">—</span>
+            <span style="color:var(--txt2);font-weight:600">Trigger:</span>
+            <span id="trig-txt" style="font-weight:600">—</span>
           </div>
           <div class="thr-row">
-            <span class="thr-info"
-              >Alarm threshold: <span id="thr-val">55%</span></span
-            >
-            <input
-              type="range"
-              id="thr-slider"
-              min="10"
-              max="95"
-              value="55"
-              step="1"
-            />
-            <span
-              class="thr-info"
-              style="color: var(--txt3); font-size: 0.72rem"
-              >Drag to tune sensitivity</span
-            >
+            <span class="thr-info">Alarm threshold: <span id="thr-val">55%</span></span>
+            <input type="range" id="thr-slider" min="10" max="95" value="55" step="1" />
+            <span class="thr-info" style="color:var(--txt3);font-size:.72rem">Drag to tune sensitivity</span>
           </div>
         </div>
 
-        <!-- Pipeline status -->
-        <div class="card" style="margin-bottom: 1.2rem">
+        <div class="card" style="margin-bottom:1.2rem">
           <div class="card-head"><h2>🔬 Detection Pipeline</h2></div>
           <div class="pipeline-steps">
             <div class="pipe-step">
               <div class="step-circle" id="sc-dl">🧠</div>
               <div class="step-name">DL Gate</div>
               <div class="step-val" id="sv-dl">—</div>
-              <div class="step-sub">
-                EfficientNet+BiLSTM<br />Must be ≥ 0.55
-              </div>
+              <div class="step-sub">EfficientNet+BiLSTM<br />Peak must be ≥ 0.55</div>
             </div>
             <div class="pipe-step">
               <div class="step-circle" id="sc-a">A</div>
@@ -1852,150 +480,56 @@
           </div>
         </div>
 
-        <!-- Scene telemetry -->
         <div class="sec-label">Scene Telemetry</div>
         <div class="metrics3">
-          <div class="met-tile">
-            <div class="met-label">Traffic Density</div>
-            <div class="met-val" id="r-density" style="color: var(--cyan)">
-              —
-            </div>
-            <div class="met-sub">Vehicles / max</div>
-          </div>
-          <div class="met-tile">
-            <div class="met-label">Avg Scene Speed</div>
-            <div class="met-val" id="r-speed" style="color: #a5b4fc">—</div>
-            <div class="met-sub">Pixels per frame</div>
-          </div>
-          <div class="met-tile">
-            <div class="met-label">Stopped Ratio</div>
-            <div class="met-val" id="r-stopped" style="color: var(--warn)">
-              —
-            </div>
-            <div class="met-sub">% of tracked vehicles</div>
-          </div>
+          <div class="met-tile"><div class="met-label">Traffic Density</div><div class="met-val" id="r-density" style="color:var(--cyan)">—</div><div class="met-sub">Vehicles / max</div></div>
+          <div class="met-tile"><div class="met-label">Avg Scene Speed</div><div class="met-val" id="r-speed" style="color:#a5b4fc">—</div><div class="met-sub">Pixels per frame</div></div>
+          <div class="met-tile"><div class="met-label">Stopped Ratio</div><div class="met-val" id="r-stopped" style="color:var(--warn)">—</div><div class="met-sub">% of tracked vehicles</div></div>
         </div>
 
-        <!-- Phase scores -->
         <div class="sec-label">Phase Scores</div>
         <div class="phases4">
           <div class="phase-tile">
-            <div class="pt-head">
-              <div>
-                <div class="pt-chip ch-a">PHASE A</div>
-                <div class="pt-name" style="margin-top: 0.35rem">
-                  Proximity / TTC
-                </div>
-              </div>
-              <div class="pt-dot" id="dot-a"></div>
-            </div>
+            <div class="pt-head"><div><div class="pt-chip ch-a">PHASE A</div><div class="pt-name" style="margin-top:.35rem">Proximity / TTC</div></div><div class="pt-dot" id="dot-a"></div></div>
             <div class="pt-score s-a" id="ps-a">0.00</div>
             <div class="pt-bar"><div class="pt-fill f-a" id="pb-a"></div></div>
           </div>
           <div class="phase-tile">
-            <div class="pt-head">
-              <div>
-                <div class="pt-chip ch-b">PHASE B</div>
-                <div class="pt-name" style="margin-top: 0.35rem">
-                  Trajectory Stop
-                </div>
-              </div>
-              <div class="pt-dot" id="dot-b"></div>
-            </div>
+            <div class="pt-head"><div><div class="pt-chip ch-b">PHASE B</div><div class="pt-name" style="margin-top:.35rem">Trajectory Stop</div></div><div class="pt-dot" id="dot-b"></div></div>
             <div class="pt-score s-b" id="ps-b">0.00</div>
             <div class="pt-bar"><div class="pt-fill f-b" id="pb-b"></div></div>
           </div>
           <div class="phase-tile">
-            <div class="pt-head">
-              <div>
-                <div class="pt-chip ch-c">PHASE C</div>
-                <div class="pt-name" style="margin-top: 0.35rem">
-                  Optical Flow
-                </div>
-              </div>
-              <div class="pt-dot" id="dot-c"></div>
-            </div>
+            <div class="pt-head"><div><div class="pt-chip ch-c">PHASE C</div><div class="pt-name" style="margin-top:.35rem">Optical Flow</div></div><div class="pt-dot" id="dot-c"></div></div>
             <div class="pt-score s-c" id="ps-c">0.00</div>
             <div class="pt-bar"><div class="pt-fill f-c" id="pb-c"></div></div>
           </div>
           <div class="phase-tile">
-            <div class="pt-head">
-              <div>
-                <div class="pt-chip ch-dl">CNN-LSTM DL</div>
-                <div class="pt-name" style="margin-top: 0.35rem">
-                  EfficientNet Peak
-                </div>
-              </div>
-              <div class="pt-dot" id="dot-dl"></div>
-            </div>
+            <div class="pt-head"><div><div class="pt-chip ch-dl">CNN-LSTM DL</div><div class="pt-name" style="margin-top:.35rem">EfficientNet Peak</div></div><div class="pt-dot" id="dot-dl"></div></div>
             <div class="pt-score s-dl" id="ps-dl">0.00</div>
-            <div class="pt-bar">
-              <div class="pt-fill f-dl" id="pb-dl"></div>
-            </div>
+            <div class="pt-bar"><div class="pt-fill f-dl" id="pb-dl"></div></div>
           </div>
         </div>
 
-        <!-- Sub-signals -->
         <div class="sec-label">Sub-Signal Breakdown</div>
         <div class="sigs8">
-          <div class="sig-tile">
-            <div class="sig-l">Occlusion</div>
-            <div class="sig-v" id="sig-occl">0.00</div>
-          </div>
-          <div class="sig-tile">
-            <div class="sig-l">BBox Merge</div>
-            <div class="sig-v" id="sig-merge">0.00</div>
-          </div>
-          <div class="sig-tile">
-            <div class="sig-l">Kinetic Drop</div>
-            <div class="sig-v" id="sig-ke">0.00</div>
-          </div>
-          <div class="sig-tile">
-            <div class="sig-l">Scene Interrupt</div>
-            <div class="sig-v" id="sig-scene">0.00</div>
-          </div>
-          <div class="sig-tile">
-            <div class="sig-l">Emerg. Stop</div>
-            <div class="sig-v" id="sig-emerg">0.00</div>
-          </div>
-          <div class="sig-tile">
-            <div class="sig-l">Traj. Stop</div>
-            <div class="sig-v" id="sig-trajstop">0.00</div>
-          </div>
-          <div class="sig-tile">
-            <div class="sig-l">Rel. Velocity</div>
-            <div class="sig-v" id="sig-relvel">0.00</div>
-          </div>
-          <div class="sig-tile">
-            <div class="sig-l">Spin / Chaos</div>
-            <div class="sig-v" id="sig-spin">0.00</div>
-          </div>
+          <div class="sig-tile"><div class="sig-l">Occlusion</div><div class="sig-v" id="sig-occl">0.00</div></div>
+          <div class="sig-tile"><div class="sig-l">BBox Merge</div><div class="sig-v" id="sig-merge">0.00</div></div>
+          <div class="sig-tile"><div class="sig-l">Kinetic Drop</div><div class="sig-v" id="sig-ke">0.00</div></div>
+          <div class="sig-tile"><div class="sig-l">Scene Interrupt</div><div class="sig-v" id="sig-scene">0.00</div></div>
+          <div class="sig-tile"><div class="sig-l">Emerg. Stop</div><div class="sig-v" id="sig-emerg">0.00</div></div>
+          <div class="sig-tile"><div class="sig-l">Traj. Stop</div><div class="sig-v" id="sig-trajstop">0.00</div></div>
+          <div class="sig-tile"><div class="sig-l">Rel. Velocity</div><div class="sig-v" id="sig-relvel">0.00</div></div>
+          <div class="sig-tile"><div class="sig-l">Spin / Chaos</div><div class="sig-v" id="sig-spin">0.00</div></div>
         </div>
 
-        <!-- Video + LLM -->
         <div class="media-grid">
           <div class="media-card">
             <div class="media-head">Processed Visual Output</div>
             <div class="media-body">
-              <video
-                id="proc-vid"
-                controls
-                autoplay
-                loop
-                muted
-                playsinline
-              ></video>
+              <video id="proc-vid" controls autoplay loop muted playsinline></video>
               <img id="proc-img" alt="Processed frame" />
-              <div class="vid-fallback" id="vid-fallback">
-                Video could not load in browser.
-                <a
-                  id="vid-dl"
-                  href="#"
-                  target="_blank"
-                  style="color: var(--cyan)"
-                  >Download clip</a
-                >
-              </div>
+              <div class="vid-fallback" id="vid-fallback">Video could not load. <a id="vid-dl" href="#" target="_blank" style="color:var(--cyan)">Download clip</a></div>
             </div>
           </div>
           <div class="media-card">
@@ -2005,192 +539,150 @@
               <img id="llm-frame" class="llm-frame-img" src="" alt="" />
               <div class="llm-text" id="llm-txt">Analysis loading…</div>
             </div>
-            <div class="llm-empty" id="llm-empty">
-              Scene assessment will appear here when an accident is confirmed.
-            </div>
+            <div class="llm-empty" id="llm-empty">Scene assessment will appear here when an accident is confirmed.</div>
           </div>
         </div>
 
-        <!-- Log -->
         <div class="log-panel">
-          <div class="log-left">
-            <h3>Log for Model Improvement</h3>
-            <p>Label this result to train the XGBoost refinement model</p>
-          </div>
-          <div
-            style="
-              display: flex;
-              flex-direction: column;
-              align-items: flex-end;
-              gap: 0.45rem;
-            "
-          >
+          <div class="log-left"><h3>Log for Model Improvement</h3><p>Label this result to train the XGBoost refinement model</p></div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.45rem">
             <div class="log-btns">
-              <button class="log-btn lb-no" onclick="logFeature(0)">
-                ✓ No Incident
-              </button>
-              <button class="log-btn lb-yes" onclick="logFeature(1)">
-                ⚠ Mark Incident
-              </button>
+              <button class="log-btn lb-no" onclick="logFeature(0)">✓ No Incident</button>
+              <button class="log-btn lb-yes" onclick="logFeature(1)">⚠ Mark Incident</button>
             </div>
             <div id="log-msg"></div>
           </div>
         </div>
       </div>
 
-      <!-- INCIDENT HISTORY — 3 TABS -->
-      <div
-        style="
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          flex-wrap: wrap;
-          gap: 0.75rem;
-          margin-bottom: 1rem;
-        "
-      >
-        <h2 style="font-size: 1.1rem; font-weight: 800">Incident History</h2>
-        <button class="btn btn-sm" onclick="loadHistory()">↻ Refresh</button>
+      <!-- INCIDENT HISTORY -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem">
+        <h2 style="font-size:1.1rem;font-weight:800">Incident History</h2>
+        <div style="display:flex;gap:.65rem">
+          <button class="btn btn-sm" onclick="loadHistory()">↻ Refresh</button>
+          <button class="btn btn-sm" id="clear-all-btn" onclick="clearAllIncidents()"
+            style="background:transparent;border:1px solid rgba(255,59,59,.4);color:var(--red)">
+            🗑 Clear All
+          </button>
+        </div>
       </div>
-      <p style="font-size: 0.78rem; color: var(--txt2); margin-bottom: 1.1rem">
-        Each detected event with 5-second clip before and after. Confirmed = all
-        pipeline stages passed. Suspicious = DL confirmed but only 1 phase.
-        Suppressed = DL triggered but 0 phases confirmed.
+      <p style="font-size:.78rem;color:var(--txt2);margin-bottom:1.1rem">
+        Confirmed = DL gate + 2 phases + 3 consecutive frames + fusion score passed. Suspicious = DL + 1 phase. Suppressed = DL + 0 phases.
       </p>
       <div class="tab-bar">
-        <button
-          class="tab-btn active"
-          id="tab-conf"
-          onclick="switchTab('confirmed')"
-        >
-          🚨 Confirmed <span class="tab-count" id="cnt-conf">0</span>
-        </button>
-        <button class="tab-btn" id="tab-susp" onclick="switchTab('suspicious')">
-          ⚠ Suspicious <span class="tab-count" id="cnt-susp">0</span>
-        </button>
-        <button class="tab-btn" id="tab-supp" onclick="switchTab('suppressed')">
-          🔇 Suppressed <span class="tab-count" id="cnt-supp">0</span>
-        </button>
+        <button class="tab-btn active" id="tab-conf" onclick="switchTab('confirmed')">🚨 Confirmed <span class="tab-count" id="cnt-conf">0</span></button>
+        <button class="tab-btn" id="tab-susp" onclick="switchTab('suspicious')">⚠ Suspicious <span class="tab-count" id="cnt-susp">0</span></button>
+        <button class="tab-btn" id="tab-supp" onclick="switchTab('suppressed')">🔇 Suppressed <span class="tab-count" id="cnt-supp">0</span></button>
       </div>
-      <div class="tab-content active" id="tc-confirmed">
-        <div class="empty-state">No confirmed incidents yet.</div>
-      </div>
-      <div class="tab-content" id="tc-suspicious">
-        <div class="empty-state">No suspicious events yet.</div>
-      </div>
-      <div class="tab-content" id="tc-suppressed">
-        <div class="empty-state">No suppressed events yet.</div>
-      </div>
+      <div class="tab-content active" id="tc-confirmed"><div class="empty-state">No confirmed incidents yet.</div></div>
+      <div class="tab-content" id="tc-suspicious"><div class="empty-state">No suspicious events yet.</div></div>
+      <div class="tab-content" id="tc-suppressed"><div class="empty-state">No suppressed events yet.</div></div>
 
       <!-- XGBOOST -->
-      <div class="card" style="margin-top: 2rem">
-        <div class="card-head">
-          <div
-            class="tag"
-            style="background: var(--blue-dim); color: var(--blue)"
-          >
-            ML
-          </div>
-          <h2>XGBoost Refinement Model</h2>
-        </div>
+      <div class="card" style="margin-top:2rem">
+        <div class="card-head"><div class="tag" style="background:var(--blue-dim);color:var(--blue)">ML</div><h2>XGBoost Refinement Model</h2></div>
         <div class="xgb-body">
           <div>
             <div class="sec-label">Dataset Status</div>
-            <div class="stat-row">
-              <span class="sk">Total Rows Logged</span
-              ><span class="sv" id="ds-total">—</span>
-            </div>
-            <div class="stat-row">
-              <span class="sk">Incident Rows (label 1)</span
-              ><span class="sv" id="ds-acc">—</span>
-            </div>
-            <div class="stat-row">
-              <span class="sk">No-Incident Rows (label 0)</span
-              ><span class="sv" id="ds-nor">—</span>
-            </div>
-            <div class="stat-row">
-              <span class="sk">Model Status</span
-              ><span class="sv" id="ds-status" style="color: var(--txt2)"
-                >—</span
-              >
-            </div>
-            <div class="stat-row">
-              <span class="sk">Rows needed per class</span
-              ><span class="sv">50</span>
-            </div>
+            <div class="stat-row"><span class="sk">Total Rows</span><span class="sv" id="ds-total">—</span></div>
+            <div class="stat-row"><span class="sk">Incident Rows (1)</span><span class="sv" id="ds-acc">—</span></div>
+            <div class="stat-row"><span class="sk">No-Incident Rows (0)</span><span class="sv" id="ds-nor">—</span></div>
+            <div class="stat-row"><span class="sk">Model Status</span><span class="sv" id="ds-status" style="color:var(--txt2)">—</span></div>
+            <div class="stat-row"><span class="sk">Rows needed per class</span><span class="sv">50</span></div>
           </div>
-          <div style="display: flex; flex-direction: column; gap: 0.85rem">
+          <div style="display:flex;flex-direction:column;gap:.85rem">
             <div class="sec-label">Train Model</div>
-            <p style="font-size: 0.8rem; color: var(--txt2)">
-              Requires ≥ 50 labeled rows per class. XGBoost only refines — it
-              cannot override a DL+phase confirmed detection.
-            </p>
-            <button class="btn-outline" id="xgb-train-btn" onclick="trainXGB()">
-              Train XGBoost Classifier
-            </button>
-            <div
-              id="xgb-result"
-              style="font-size: 0.78rem; color: var(--txt2)"
-            ></div>
+            <p style="font-size:.8rem;color:var(--txt2)">Requires ≥ 50 labeled rows per class. XGBoost only refines — it cannot override a DL+phase confirmed detection.</p>
+            <button class="btn-outline" id="xgb-train-btn" onclick="trainXGB()">Train XGBoost Classifier</button>
+            <div id="xgb-result" style="font-size:.78rem;color:var(--txt2)"></div>
           </div>
         </div>
       </div>
 
-      <footer>
-        UYIR Foundation · Road Accident Detection System · Tamil Nadu Police
-        Pilot Programme
-      </footer>
+      <footer>UYIR Foundation · Road Accident Detection System · Tamil Nadu Police Pilot Programme</footer>
     </div>
 
     <script>
       // ── State ──────────────────────────────────────────────────────
-      const $ = (id) => document.getElementById(id);
-      let selImg = null,
-        selVid = null,
-        curFeatures = null,
-        lastConf = 0,
-        sseConn = null;
+      const $ = id => document.getElementById(id);
+      let selImg = null, selVid = null, curFeatures = null, lastConf = 0, sseConn = null;
       let incidentStore = { confirmed: [], suspicious: [], suppressed: [] };
-      const TAB_BTN_IDS = {
-        confirmed: "tab-conf",
-        suspicious: "tab-susp",
-        suppressed: "tab-supp",
-      };
+      const TAB_BTN_IDS = { confirmed: "tab-conf", suspicious: "tab-susp", suppressed: "tab-supp" };
       let curTab = "confirmed";
-      let liveStartTime = null;
+
+      // ── Toast notification (confirmed accidents only) ──────────────
+      function showToast(title, body) {
+        const container = $("toast-container");
+        if (!container) return;
+        const toast = document.createElement("div");
+        toast.className = "toast";
+        toast.innerHTML =
+          `<div class="toast-head">🚨 ${title}</div>` +
+          `<div class="toast-body">${body}</div>` +
+          `<div class="toast-prog"></div>`;
+        container.appendChild(toast);
+        setTimeout(() => {
+          toast.classList.add("removing");
+          setTimeout(() => { try { toast.remove(); } catch(e){} }, 300);
+        }, 5000);
+      }
+
+      // ── Update incident card clip when background extraction finishes ──
+      function updateIncidentClip(incidentId, clipUrl) {
+        // Update in-memory store
+        ["confirmed","suspicious","suppressed"].forEach(bucket => {
+          const item = (incidentStore[bucket]||[]).find(i => i.id === incidentId);
+          if (item) item.clip_url = clipUrl;
+        });
+        // Update DOM card
+        const card = document.querySelector(`.inc-card[data-iid="${incidentId}"]`);
+        if (!card) return;
+        const mediaSection = card.querySelector(".inc-media");
+        if (!mediaSection) return;
+        const clipDiv = mediaSection.children[0];
+        if (clipDiv) {
+          clipDiv.innerHTML =
+            `<div class="inc-media-label">Incident Clip (±5s)</div>` +
+            `<video controls preload="metadata" src="${clipUrl}?t=${Date.now()}"></video>`;
+        }
+      }
+
+      // ── Clear all incidents ────────────────────────────────────────
+      async function clearAllIncidents() {
+        if (!confirm("Delete ALL incident history? This cannot be undone.")) return;
+        const btn = $("clear-all-btn");
+        if (btn) { btn.disabled = true; btn.textContent = "Clearing…"; }
+        try {
+          const res = await fetch("/api/incidents", { method: "DELETE" });
+          if (res.ok) {
+            incidentStore = { confirmed: [], suspicious: [], suppressed: [] };
+            ["confirmed","suspicious","suppressed"].forEach(b => renderTab(b));
+            updateTabCounts();
+          }
+        } catch(e) { console.error("clearAllIncidents:", e); }
+        finally { if (btn) { btn.disabled = false; btn.textContent = "🗑 Clear All"; } }
+      }
 
       // ── Drop zones ─────────────────────────────────────────────────
       function setupDrop(zoneId, inputId, handler) {
-        const zone = $(zoneId),
-          inp = $(inputId);
+        const zone = $(zoneId), inp = $(inputId);
         zone.addEventListener("click", () => inp.click());
-        zone.addEventListener("dragover", (e) => {
-          e.preventDefault();
-          zone.classList.add("over");
-        });
+        zone.addEventListener("dragover", e => { e.preventDefault(); zone.classList.add("over"); });
         zone.addEventListener("dragleave", () => zone.classList.remove("over"));
-        zone.addEventListener("drop", (e) => {
-          e.preventDefault();
-          zone.classList.remove("over");
-          if (e.dataTransfer.files.length) {
-            inp.files = e.dataTransfer.files;
-            handler(e.dataTransfer.files[0]);
-          }
+        zone.addEventListener("drop", e => {
+          e.preventDefault(); zone.classList.remove("over");
+          if (e.dataTransfer.files.length) { inp.files = e.dataTransfer.files; handler(e.dataTransfer.files[0]); }
         });
-        inp.addEventListener("change", () => {
-          if (inp.files.length) handler(inp.files[0]);
-        });
+        inp.addEventListener("change", () => { if (inp.files.length) handler(inp.files[0]); });
       }
-      setupDrop("img-zone", "img-inp", handleImg);
-      setupDrop("vid-zone", "vid-inp", handleVid);
+      setupDrop("img-zone","img-inp",handleImg);
+      setupDrop("vid-zone","vid-inp",handleVid);
 
       function handleImg(f) {
-        if (!f.type.startsWith("image/"))
-          return showErr("Please select an image file.");
-        selImg = f;
-        hideErr();
+        if (!f.type.startsWith("image/")) return showErr("Please select an image file.");
+        selImg = f; hideErr();
         const r = new FileReader();
-        r.onload = (e) => {
+        r.onload = e => {
           $("img-prev").src = e.target.result;
           $("img-zone").style.display = "none";
           $("img-pw").style.display = "block";
@@ -2199,130 +691,78 @@
         r.readAsDataURL(f);
       }
       function handleVid(f) {
-        if (!f.type.startsWith("video/"))
-          return showErr("Please select a video file.");
-        selVid = f;
-        hideErr();
+        if (!f.type.startsWith("video/")) return showErr("Please select a video file.");
+        selVid = f; hideErr();
         $("vid-prev").src = URL.createObjectURL(f);
         $("vid-zone").style.display = "none";
         $("vid-pw").style.display = "block";
         $("vid-btn").disabled = false;
       }
       function clearImg() {
-        selImg = null;
-        $("img-inp").value = "";
-        $("img-zone").style.display = "flex";
-        $("img-pw").style.display = "none";
-        $("img-prev").src = "";
-        $("img-btn").disabled = true;
-        hideResult();
+        selImg = null; $("img-inp").value = "";
+        $("img-zone").style.display = "flex"; $("img-pw").style.display = "none";
+        $("img-prev").src = ""; $("img-btn").disabled = true; hideResult();
       }
       function clearVid() {
-        selVid = null;
-        $("vid-inp").value = "";
-        $("vid-zone").style.display = "flex";
-        $("vid-pw").style.display = "none";
-        $("vid-prev").src = "";
-        $("vid-btn").disabled = true;
-        hideResult();
+        selVid = null; $("vid-inp").value = "";
+        $("vid-zone").style.display = "flex"; $("vid-pw").style.display = "none";
+        $("vid-prev").src = ""; $("vid-btn").disabled = true; hideResult();
       }
 
-      // ── Alerts ─────────────────────────────────────────────────────
-      function showErr(m) {
-        $("err-alert").textContent = m;
-        $("err-alert").style.display = "block";
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      }
-      function hideErr() {
-        $("err-alert").style.display = "none";
-      }
-      function hideResult() {
-        $("result-panel").style.display = "none";
-      }
+      function showErr(m) { $("err-alert").textContent = m; $("err-alert").style.display = "block"; window.scrollTo({top:0,behavior:"smooth"}); }
+      function hideErr() { $("err-alert").style.display = "none"; }
+      function hideResult() { $("result-panel").style.display = "none"; }
 
       // ── Image analysis ─────────────────────────────────────────────
       async function runImage() {
         if (!selImg) return;
-        hideErr();
-        hideResult();
-        $("img-btn").disabled = true;
-        $("img-btn").textContent = "Analysing…";
-        const fd = new FormData();
-        fd.append("file", selImg);
+        hideErr(); hideResult();
+        $("img-btn").disabled = true; $("img-btn").textContent = "Analysing…";
+        const fd = new FormData(); fd.append("file", selImg);
         const thr = parseFloat($("thr-slider").value) / 100;
         try {
-          const res = await fetch(`/predict-image?threshold=${thr}`, {
-            method: "POST",
-            body: fd,
-          });
+          const res = await fetch(`/predict-image?threshold=${thr}`, { method:"POST", body:fd });
           if (!res.ok) throw new Error(`Server error HTTP ${res.status}`);
-          const data = await res.json();
-          showResult(data, "image");
-        } catch (e) {
-          showErr(e.message || "Prediction failed.");
-        } finally {
-          $("img-btn").disabled = false;
-          $("img-btn").textContent = "Analyse Image";
-        }
+          showResult(await res.json(), "image");
+        } catch(e) { showErr(e.message||"Prediction failed."); }
+        finally { $("img-btn").disabled = false; $("img-btn").textContent = "Analyse Image"; }
       }
 
       // ── Video analysis — SSE streaming ────────────────────────────
       async function runVideo() {
         if (!selVid) return;
-        hideErr();
-        hideResult();
-        $("vid-btn").disabled = true;
-        $("vid-btn").textContent = "Processing…";
-        if (sseConn) {
-          sseConn.close();
-          sseConn = null;
-        }
+        hideErr(); hideResult();
+        $("vid-btn").disabled = true; $("vid-btn").textContent = "Processing…";
+        if (sseConn) { sseConn.close(); sseConn = null; }
 
-        // Show live panel
         $("live-panel").style.display = "block";
         resetLivePanel();
-        liveStartTime = Date.now();
 
-        // Start background job
-        const fd = new FormData();
-        fd.append("file", selVid);
+        const fd = new FormData(); fd.append("file", selVid);
         const thr = parseFloat($("thr-slider").value) / 100;
         let jobId;
         try {
-          const res = await fetch(`/start-stream?threshold=${thr}`, {
-            method: "POST",
-            body: fd,
-          });
+          const res = await fetch(`/start-stream?threshold=${thr}`, { method:"POST", body:fd });
           if (!res.ok) throw new Error(`Upload failed HTTP ${res.status}`);
-          const data = await res.json();
-          jobId = data.job_id;
-        } catch (e) {
-          showErr(e.message || "Failed to start processing.");
-          $("vid-btn").disabled = false;
-          $("vid-btn").textContent = "Analyse Video";
+          jobId = (await res.json()).job_id;
+        } catch(e) {
+          showErr(e.message||"Failed to start processing.");
+          $("vid-btn").disabled = false; $("vid-btn").textContent = "Analyse Video";
           $("live-panel").style.display = "none";
           return;
         }
 
-        // Connect SSE
         $("prog-label").textContent = "Processing video…";
         sseConn = new EventSource(`/stream/${jobId}`);
-        sseConn.onmessage = (e) => {
+
+        sseConn.onmessage = e => {
           let msg;
-          try {
-            msg = JSON.parse(e.data);
-          } catch {
-            return;
-          }
+          try { msg = JSON.parse(e.data); } catch { return; }
 
-          if (msg.error) {
-            showErr(msg.error);
-            endLive();
-            return;
-          }
+          if (msg.error) { showErr(msg.error); endLive(); return; }
 
+          // Annotated frame
           if (msg.frame) {
-            // Show annotated frame
             const img = $("live-feed");
             if (img.style.display === "none") {
               img.style.display = "block";
@@ -2331,80 +771,89 @@
             img.src = "data:image/jpeg;base64," + msg.frame;
           }
 
+          // Per-frame metrics
           if (msg.metrics) {
             const m = msg.metrics;
-            // Progress
+
+            // Progress bar
             $("prog-fill").style.width = m.progress + "%";
             $("prog-pct").textContent = m.progress + "%";
-            if (m.progress > 5)
-              $("prog-label").textContent = "Running detection pipeline…";
+            if (m.progress > 5) $("prog-label").textContent = "Running detection pipeline…";
             if (m.progress > 80) $("prog-label").textContent = "Finalising…";
 
-            // Live sidebar
+            // Processing metrics
             $("lv-fps").textContent = (m.fps || 0) + " fps";
             $("lv-frame").textContent = m.frame + " / " + m.total_frames;
             $("lv-elapsed").textContent = (m.elapsed || 0) + "s";
             $("lv-tracks").textContent = m.tracks || 0;
+
+            // Scene state
             $("lv-density").textContent = (m.density || 0).toFixed(2);
             $("lv-speed").textContent = (m.speed || 0).toFixed(2);
-            $("lv-stopped").textContent =
-              Math.round((m.stopped || 0) * 100) + "%";
-            $("lv-dl").textContent =
-              (m.dl || 0).toFixed(3) + (m.dl_confirmed ? " ✓" : " ✗");
-            $("lv-dl").className = "lm-v " + (m.dl_confirmed ? "ok" : "");
+            $("lv-stopped").textContent = Math.round((m.stopped || 0) * 100) + "%";
+
+            // DL scores — show per-frame actual score, not the rolling max
+            const dlRaw = m.dl_raw !== undefined ? m.dl_raw : (m.dl || 0);
+            const dlPeak = m.dl_peak !== undefined ? m.dl_peak : dlRaw;
+            $("lv-dl").textContent = dlRaw.toFixed(3);
+            $("lv-dl").className = "lm-v " + (dlRaw >= 0.55 ? "warn" : "");
+
+            // DL gate — shows rolling peak and whether gate is open
+            $("lv-dl-gate").textContent = dlPeak.toFixed(3) + (m.dl_confirmed ? " OPEN ✓" : " CLOSED ✗");
+            $("lv-dl-gate").className = "lm-v " + (m.dl_confirmed ? "ok" : "bad");
+
             $("lv-votes").textContent = (m.votes || 0) + " / 3";
-            $("lv-score").textContent = (m.score || 0).toFixed(3);
 
-            // Phase bars
-            const pa = m.phase_a || 0,
-              pb = m.phase_b || 0,
-              pc = m.phase_c || 0,
-              dl = m.dl || 0;
-            $("lb-a").style.width = pa * 100 + "%";
-            $("lv-a").textContent = pa.toFixed(2);
-            $("lb-b").style.width = pb * 100 + "%";
-            $("lv-b").textContent = pb.toFixed(2);
-            $("lb-c").style.width = pc * 100 + "%";
-            $("lv-c").textContent = pc.toFixed(2);
-            $("lb-dl").style.width = dl * 100 + "%";
-            $("lv-dl2").textContent = dl.toFixed(2);
+            // Fused score for current frame
+            const fusedScore = m.fused_score !== undefined ? m.fused_score : (m.score || 0);
+            $("lv-score").textContent = fusedScore.toFixed(3);
+            $("lv-score").className = "lm-v " + (fusedScore >= 0.55 ? "bad" : fusedScore >= 0.35 ? "warn" : "");
 
-            // Detection badge
+            // Phase bars (use per-frame DL raw for DL bar)
+            const pa = m.phase_a||0, pb = m.phase_b||0, pc = m.phase_c||0;
+            $("lb-a").style.width = pa*100+"%"; $("lv-a").textContent = pa.toFixed(2);
+            $("lb-b").style.width = pb*100+"%"; $("lv-b").textContent = pb.toFixed(2);
+            $("lb-c").style.width = pc*100+"%"; $("lv-c").textContent = pc.toFixed(2);
+            $("lb-dl").style.width = dlRaw*100+"%"; $("lv-dl2").textContent = dlRaw.toFixed(2);
+
+            // Badge — "confirmed" only when the full pipeline fires, otherwise show pipeline state
             const badgeEl = $("live-det-badge");
             const s = m.status || "scanning";
             const badges = {
-              confirmed:
-                '<span class="det-badge det-confirmed">🚨 ACCIDENT DETECTED</span>',
-              suspicious:
-                '<span class="det-badge det-suspicious">⚠ Suspicious</span>',
-              suppressed:
-                '<span class="det-badge det-suppressed">🔇 Suppressed</span>',
-              scanning:
-                '<span class="det-badge det-scanning">● Scanning</span>',
+              confirmed:  '<span class="det-badge det-confirmed">🚨 ACCIDENT CONFIRMED</span>',
+              pending:    '<span class="det-badge det-pending">⚡ Detecting… Building Confirmation</span>',
+              suspicious: '<span class="det-badge det-suspicious">⚠ Suspicious</span>',
+              suppressed: '<span class="det-badge det-suppressed">🔇 Suppressed</span>',
+              scanning:   '<span class="det-badge det-scanning">● Scanning</span>',
             };
             badgeEl.innerHTML = badges[s] || badges.scanning;
           }
 
+          // New confirmed/suspicious/suppressed incident from SSE
           if (msg.incident) {
-            // A new incident arrived — add to live history immediately
-            const inc = msg.incident;
-            addLiveIncident(inc);
+            addLiveIncident(msg.incident);
           }
 
+          // Background clip extraction finished — update the card in place
+          if (msg.clip_ready) {
+            const { incident_id, clip_url } = msg.clip_ready;
+            updateIncidentClip(incident_id, clip_url);
+          }
+
+          // Processing done
           if (msg.done) {
             const result = msg.result || {};
-            sseConn.close();
-            sseConn = null;
+            sseConn.close(); sseConn = null;
             endLive();
             if (result.class) showResult(result, "video");
             loadHistory();
           }
         };
+
         sseConn.onerror = () => {
           if (sseConn && sseConn.readyState === EventSource.CLOSED) {
             endLive();
-            $("vid-btn").disabled = false;
-            $("vid-btn").textContent = "Analyse Video";
+            $("vid-btn").disabled = false; $("vid-btn").textContent = "Analyse Video";
           }
         };
       }
@@ -2412,75 +861,78 @@
       function resetLivePanel() {
         $("live-feed").style.display = "none";
         $("live-vw").classList.add("no-signal");
-        $("prog-fill").style.width = "0%";
-        $("prog-pct").textContent = "0%";
+        $("prog-fill").style.width = "0%"; $("prog-pct").textContent = "0%";
         $("prog-label").textContent = "Uploading…";
-        $("lv-fps").textContent = "—";
-        $("lv-frame").textContent = "—";
-        $("lv-elapsed").textContent = "—";
-        $("lv-tracks").textContent = "—";
-        $("lv-density").textContent = "—";
-        $("lv-speed").textContent = "—";
-        $("lv-stopped").textContent = "—";
-        $("lv-dl").textContent = "—";
-        $("lv-votes").textContent = "—";
-        $("lv-score").textContent = "—";
-        $("lb-a").style.width = "0%";
-        $("lb-b").style.width = "0%";
-        $("lb-c").style.width = "0%";
-        $("lb-dl").style.width = "0%";
-        $("lv-a").textContent = "0.00";
-        $("lv-b").textContent = "0.00";
-        $("lv-c").textContent = "0.00";
-        $("lv-dl2").textContent = "0.00";
-        $("live-det-badge").innerHTML =
-          '<span class="det-badge det-scanning">● Scanning</span>';
+        $("lv-fps").textContent="—"; $("lv-frame").textContent="—";
+        $("lv-elapsed").textContent="—"; $("lv-tracks").textContent="—";
+        $("lv-density").textContent="—"; $("lv-speed").textContent="—";
+        $("lv-stopped").textContent="—";
+        $("lv-dl").textContent="—"; $("lv-dl").className="lm-v";
+        $("lv-dl-gate").textContent="—"; $("lv-dl-gate").className="lm-v";
+        $("lv-votes").textContent="—"; $("lv-score").textContent="—";
+        $("lv-score").className="lm-v";
+        $("lb-a").style.width="0%"; $("lb-b").style.width="0%";
+        $("lb-c").style.width="0%"; $("lb-dl").style.width="0%";
+        $("lv-a").textContent="0.00"; $("lv-b").textContent="0.00";
+        $("lv-c").textContent="0.00"; $("lv-dl2").textContent="0.00";
+        $("live-det-badge").innerHTML = '<span class="det-badge det-scanning">● Scanning</span>';
       }
 
       function endLive() {
-        $("prog-fill").style.width = "100%";
-        $("prog-pct").textContent = "100%";
+        $("prog-fill").style.width = "100%"; $("prog-pct").textContent = "100%";
         $("prog-label").textContent = "Done";
-        $("vid-btn").disabled = false;
-        $("vid-btn").textContent = "Analyse Video";
+        $("vid-btn").disabled = false; $("vid-btn").textContent = "Analyse Video";
       }
 
+      // ── Add live incident to history ───────────────────────────────
       function addLiveIncident(inc) {
         const bucket = inc.status || "confirmed";
-        // Dedupe: skip if same bucket + frame already shown
-        const existing = (incidentStore[bucket] || []).some(
-          (item) =>
-            item.frame_number === inc.frame &&
-            item.time_in_video_sec === inc.time_sec,
+
+        // Deduplicate by id or frame number
+        const existing = (incidentStore[bucket]||[]).some(item =>
+          (inc.id && item.id === inc.id) ||
+          (item.frame_number === inc.frame && item.time_in_video_sec === inc.time_sec)
         );
         if (existing) return;
 
         const fake = {
-          id: "live-" + Date.now(),
-          source: "web",
-          location: "Live feed",
+          id:               inc.id || ("live-" + Date.now()),  // use real id when provided
+          source:           "web",
+          location:         "Live feed",
           time_in_video_sec: inc.time_sec,
-          frame_number: inc.frame,
-          confidence: inc.confidence,
-          dl_confidence: inc.dl_confidence,
-          trigger_phase: inc.trigger_phase,
-          details: inc.details || {},
-          status: bucket,
-          clip_url: null,
-          snapshot_url: null,
-          llm_analysis: null,
-          _live: true,
+          frame_number:     inc.frame,
+          confidence:       inc.confidence,
+          dl_confidence:    inc.dl_confidence,
+          trigger_phase:    inc.trigger_phase,
+          details:          inc.details || {},
+          status:           bucket,
+          clip_url:         inc.clip_url || null,
+          snapshot_url:     inc.snapshot_url || null,
+          llm_analysis:     null,
+          _live:            true,
         };
+
         if (!incidentStore[bucket]) incidentStore[bucket] = [];
         incidentStore[bucket].unshift(fake);
         renderTab(bucket);
         updateTabCounts();
-        const tabEl = $(TAB_BTN_IDS[bucket]);
-        if (tabEl) {
-          tabEl.style.color = "var(--red)";
-          setTimeout(() => {
-            tabEl.style.color = "";
-          }, 1500);
+
+        // Toast and tab switch — ONLY for fully confirmed accidents
+        if (bucket === "confirmed") {
+          const conf = ((inc.confidence || 0) * 100).toFixed(1);
+          const ts   = inc.time_sec ? ` at t=${inc.time_sec}s` : "";
+          showToast(
+            "ACCIDENT CONFIRMED",
+            `Confidence: ${conf}%${ts}<br>${inc.trigger_phase || ""}`
+          );
+          switchTab("confirmed");
+        } else {
+          // Briefly highlight the tab for suspicious/suppressed
+          const tabEl = $(TAB_BTN_IDS[bucket]);
+          if (tabEl) {
+            tabEl.style.color = "var(--warn)";
+            setTimeout(() => { tabEl.style.color = ""; }, 1500);
+          }
         }
       }
 
@@ -2490,8 +942,7 @@
         $("thr-val").textContent = t + "%";
         $("thr-label").textContent = "Threshold: " + t + "%";
         $("thr-marker").style.left = t + "%";
-        if ($("result-panel").style.display !== "none")
-          applyThreshold(lastConf, t);
+        if ($("result-panel").style.display !== "none") applyThreshold(lastConf, t);
       });
 
       function applyThreshold(conf, thr) {
@@ -2511,14 +962,10 @@
 
       // ── Show results ───────────────────────────────────────────────
       function sv(d, ...keys) {
-        for (const k of keys) {
-          if (d && d[k] != null) return Number(d[k]) || 0;
-        }
+        for (const k of keys) if (d && d[k] != null) return Number(d[k]) || 0;
         return 0;
       }
-      function clr(v) {
-        return v >= 0.6 ? "hi" : v >= 0.3 ? "md" : "";
-      }
+      function clr(v) { return v >= 0.6 ? "hi" : v >= 0.3 ? "md" : ""; }
 
       function showResult(data, type) {
         const conf = parseFloat(data.confidence || 0);
@@ -2526,18 +973,17 @@
         const d = data.details || {};
         const thr = parseInt($("thr-slider").value);
 
-        // Save features for logging
         curFeatures = {
-          proximity: sv(d, "proximity_score", "ttc_score"),
-          trajectory: sv(d, "trajectory_score"),
-          anomaly: sv(d, "flow_score"),
-          cnn: sv(d, "lstm_peak", "cnn_lstm_prob"),
-          occlusion: sv(d, "occlusion_score"),
-          merge: sv(d, "merge_score"),
-          kinetic: sv(d, "energy_drop", "emergency_stop_score"),
-          density: sv(d, "traffic_density"),
-          avg_speed: sv(d, "avg_speed"),
-          stopped_ratio: sv(d, "stopped_ratio"),
+          proximity: sv(d,"proximity_score","ttc_score"),
+          trajectory: sv(d,"trajectory_score"),
+          anomaly: sv(d,"flow_score"),
+          cnn: sv(d,"lstm_peak","cnn_lstm_prob"),
+          occlusion: sv(d,"occlusion_score"),
+          merge: sv(d,"merge_score"),
+          kinetic: sv(d,"energy_drop","emergency_stop_score"),
+          density: sv(d,"traffic_density"),
+          avg_speed: sv(d,"avg_speed"),
+          stopped_ratio: sv(d,"stopped_ratio"),
         };
 
         applyThreshold(conf, thr);
@@ -2545,181 +991,94 @@
         $("thr-marker").style.left = thr + "%";
         $("thr-label").textContent = "Threshold: " + thr + "%";
         $("thr-val").textContent = thr + "%";
-        setTimeout(() => {
-          $("conf-fill").style.width = Math.min(conf, 100) + "%";
-        }, 50);
+        setTimeout(() => { $("conf-fill").style.width = Math.min(conf, 100) + "%"; }, 50);
         $("trig-txt").textContent = data.trigger_phase || "—";
         $("log-msg").textContent = "";
 
-        // Pipeline
-        const dlPeak = sv(d, "lstm_peak", "cnn_lstm_prob");
+        // Pipeline steps
+        const dlPeak = sv(d,"lstm_peak","cnn_lstm_prob");
         const dlC = d.dl_confirmed;
         const votes = d.phases_signalling || 0;
-        const aC = d.phase_a_confirmed;
-        const bC = d.phase_b_confirmed;
-        const cC = d.phase_c_confirmed;
+        const aC = d.phase_a_confirmed, bC = d.phase_b_confirmed, cC = d.phase_c_confirmed;
+
         function setStep(cId, vId, pass, val, neutral) {
-          $(cId).className =
-            "step-circle" + (neutral ? "" : pass ? " pass" : " fail");
-          $(vId).className =
-            "step-val" + (neutral ? "" : pass ? " pass" : " fail");
+          $(cId).className = "step-circle" + (neutral ? "" : pass ? " pass" : " fail");
+          $(vId).className = "step-val" + (neutral ? "" : pass ? " pass" : " fail");
           if (val !== undefined) $(vId).textContent = val;
         }
-        setStep(
-          "sc-dl",
-          "sv-dl",
-          dlC,
-          dlPeak != null ? dlPeak.toFixed(2) + (dlC ? " ✓" : " ✗") : undefined,
-          dlC === undefined,
-        );
-        setStep(
-          "sc-a",
-          "sv-a",
-          aC,
-          sv(d, "proximity_score").toFixed(2),
-          aC === undefined,
-        );
-        setStep(
-          "sc-b",
-          "sv-b",
-          bC,
-          sv(d, "trajectory_score").toFixed(2),
-          bC === undefined,
-        );
-        setStep(
-          "sc-c",
-          "sv-c",
-          cC,
-          sv(d, "flow_score").toFixed(2),
-          cC === undefined,
-        );
+        setStep("sc-dl","sv-dl", dlC, dlPeak!=null ? dlPeak.toFixed(2)+(dlC?" ✓":" ✗") : undefined, dlC===undefined);
+        setStep("sc-a","sv-a", aC, sv(d,"proximity_score").toFixed(2), aC===undefined);
+        setStep("sc-b","sv-b", bC, sv(d,"trajectory_score").toFixed(2), bC===undefined);
+        setStep("sc-c","sv-c", cC, sv(d,"flow_score").toFixed(2), cC===undefined);
         if (dlC === undefined) {
-          $("sc-vote").className = "step-circle";
-          $("sv-vote").className = "step-val";
-          $("sv-vote").textContent = "—";
+          $("sc-vote").className="step-circle"; $("sv-vote").className="step-val"; $("sv-vote").textContent="—";
         } else if (votes >= 2) {
-          $("sc-vote").className = "step-circle pass";
-          $("sv-vote").className = "step-val pass";
-          $("sv-vote").textContent = votes + "/3 ✓";
+          $("sc-vote").className="step-circle pass"; $("sv-vote").className="step-val pass"; $("sv-vote").textContent=votes+"/3 ✓";
         } else {
-          $("sc-vote").className = "step-circle fail";
-          $("sv-vote").className = "step-val fail";
-          $("sv-vote").textContent = votes + "/3 ✗";
+          $("sc-vote").className="step-circle fail"; $("sv-vote").className="step-val fail"; $("sv-vote").textContent=votes+"/3 ✗";
         }
 
-        // Scene
-        $("r-density").textContent = sv(d, "traffic_density").toFixed(2);
-        $("r-speed").textContent = sv(d, "avg_speed").toFixed(2) + " px/f";
-        $("r-stopped").textContent =
-          Math.round(sv(d, "stopped_ratio") * 100) + "%";
+        $("r-density").textContent = sv(d,"traffic_density").toFixed(2);
+        $("r-speed").textContent = sv(d,"avg_speed").toFixed(2) + " px/f";
+        $("r-stopped").textContent = Math.round(sv(d,"stopped_ratio") * 100) + "%";
 
-        // Phases
         function setPhase(sId, bId, dId, v) {
           $(sId).textContent = v.toFixed(2);
-          setTimeout(() => {
-            $(bId).style.width = v * 100 + "%";
-          }, 80);
-          $(dId).className =
-            "pt-dot" + (v >= 0.3 ? " on" : v > 0 ? " off" : "");
+          setTimeout(() => { $(bId).style.width = v*100+"%"; }, 80);
+          $(dId).className = "pt-dot" + (v >= 0.3 ? " on" : v > 0 ? " off" : "");
         }
-        setPhase(
-          "ps-a",
-          "pb-a",
-          "dot-a",
-          sv(d, "proximity_score", "ttc_score"),
-        );
-        setPhase(
-          "ps-b",
-          "pb-b",
-          "dot-b",
-          sv(d, "trajectory_score", "trajectory_stop_score"),
-        );
-        setPhase("ps-c", "pb-c", "dot-c", sv(d, "flow_score"));
-        setPhase("ps-dl", "pb-dl", "dot-dl", dlPeak);
+        setPhase("ps-a","pb-a","dot-a", sv(d,"proximity_score","ttc_score"));
+        setPhase("ps-b","pb-b","dot-b", sv(d,"trajectory_score","trajectory_stop_score"));
+        setPhase("ps-c","pb-c","dot-c", sv(d,"flow_score"));
+        setPhase("ps-dl","pb-dl","dot-dl", dlPeak);
 
-        // Sub-signals
-        function setSig(id, v) {
-          $(id).textContent = v.toFixed(2);
-          $(id).className = "sig-v " + clr(v);
-        }
-        setSig("sig-occl", sv(d, "occlusion_score"));
-        setSig("sig-merge", sv(d, "merge_score"));
-        setSig("sig-ke", sv(d, "energy_drop", "emergency_stop_score"));
-        setSig("sig-scene", sv(d, "scene_interruption"));
-        setSig("sig-emerg", sv(d, "emergency_stop_score"));
-        setSig("sig-trajstop", sv(d, "trajectory_stop_score"));
-        setSig("sig-relvel", sv(d, "relative_velocity_score"));
-        setSig("sig-spin", sv(d, "spin_score"));
+        function setSig(id, v) { $(id).textContent = v.toFixed(2); $(id).className = "sig-v " + clr(v); }
+        setSig("sig-occl", sv(d,"occlusion_score"));
+        setSig("sig-merge", sv(d,"merge_score"));
+        setSig("sig-ke", sv(d,"energy_drop","emergency_stop_score"));
+        setSig("sig-scene", sv(d,"scene_interruption"));
+        setSig("sig-emerg", sv(d,"emergency_stop_score"));
+        setSig("sig-trajstop", sv(d,"trajectory_stop_score"));
+        setSig("sig-relvel", sv(d,"relative_velocity_score"));
+        setSig("sig-spin", sv(d,"spin_score"));
 
-        // Video
-        const vid = $("proc-vid"),
-          img = $("proc-img"),
-          fb = $("vid-fallback");
-        vid.style.display = "none";
-        img.style.display = "none";
-        fb.style.display = "none";
+        const vid = $("proc-vid"), img = $("proc-img"), fb = $("vid-fallback");
+        vid.style.display = "none"; img.style.display = "none"; fb.style.display = "none";
         if (type === "video" && data.processed_video_url) {
           const url = data.processed_video_url + "?t=" + Date.now();
-          vid.onerror = () => {
-            vid.style.display = "none";
-            $("vid-dl").href = url;
-            fb.style.display = "block";
-          };
-          vid.src = url;
-          vid.style.display = "block";
-          vid.load();
-          vid.play().catch(() => {});
+          vid.onerror = () => { vid.style.display="none"; $("vid-dl").href=url; fb.style.display="block"; };
+          vid.src = url; vid.style.display = "block"; vid.load(); vid.play().catch(()=>{});
         } else if (type === "image" && data.processed_image_url) {
           img.src = data.processed_image_url + "?t=" + Date.now();
           img.style.display = "block";
         }
 
-        // LLM
         if (data.accident_frame_url) {
           $("llm-frame").src = data.accident_frame_url + "?t=" + Date.now();
-          $("llm-txt").textContent =
-            data.llm_analysis || "No analysis provided.";
-          $("llm-body").style.display = "flex";
-          $("llm-empty").style.display = "none";
+          $("llm-txt").textContent = data.llm_analysis || "No analysis provided.";
+          $("llm-body").style.display = "flex"; $("llm-empty").style.display = "none";
         } else {
-          $("llm-body").style.display = "none";
-          $("llm-empty").style.display = "block";
+          $("llm-body").style.display = "none"; $("llm-empty").style.display = "block";
         }
 
         $("result-panel").style.display = "block";
-        setTimeout(
-          () =>
-            $("result-panel").scrollIntoView({
-              behavior: "smooth",
-              block: "start",
-            }),
-          120,
-        );
+        setTimeout(() => $("result-panel").scrollIntoView({ behavior:"smooth", block:"start" }), 120);
       }
 
       // ── Feature logging ────────────────────────────────────────────
       async function logFeature(label) {
         if (!curFeatures) return;
-        $("log-msg").style.color = "var(--txt2)";
-        $("log-msg").textContent = "Logging…";
+        $("log-msg").style.color = "var(--txt2)"; $("log-msg").textContent = "Logging…";
         try {
-          const res = await fetch("/log-feature", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...curFeatures, label }),
-          });
+          const res = await fetch("/log-feature", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({...curFeatures, label}) });
           if (!res.ok) throw new Error("Failed");
           const data = await res.json();
           $("log-msg").style.color = "var(--green)";
           $("log-msg").textContent = `Logged ✓ (${data.total_rows} total rows)`;
           refreshDS();
-        } catch {
-          $("log-msg").style.color = "var(--red)";
-          $("log-msg").textContent = "Log failed.";
-        }
+        } catch { $("log-msg").style.color = "var(--red)"; $("log-msg").textContent = "Log failed."; }
       }
 
-      // ── Dataset status ─────────────────────────────────────────────
       async function refreshDS() {
         try {
           const res = await fetch("/dataset-status");
@@ -2730,40 +1089,27 @@
           $("ds-nor").textContent = (d.class_0 ?? "—") + " / 200";
           const s = $("ds-status");
           if (d.xgboost_active) {
-            s.textContent = "Active — Refining detections";
-            s.style.color = "var(--green)";
+            s.textContent = "Active — Refining detections"; s.style.color = "var(--green)";
           } else {
-            const n = Math.max(
-              0,
-              50 - Math.min(d.class_0 || 0, d.class_1 || 0),
-            );
-            s.textContent =
-              n > 0
-                ? `Inactive — Need ${n} more rows per class`
-                : "Inactive — Ready to train";
+            const n = Math.max(0, 50 - Math.min(d.class_0||0, d.class_1||0));
+            s.textContent = n > 0 ? `Inactive — Need ${n} more rows per class` : "Inactive — Ready to train";
             s.style.color = "var(--txt2)";
           }
         } catch {}
       }
+
       async function trainXGB() {
-        const btn = $("xgb-train-btn"),
-          r = $("xgb-result");
-        btn.disabled = true;
-        r.style.color = "var(--txt2)";
-        r.textContent = "Training…";
+        const btn = $("xgb-train-btn"), r = $("xgb-result");
+        btn.disabled = true; r.style.color = "var(--txt2)"; r.textContent = "Training…";
         try {
-          const res = await fetch("/train-model", { method: "POST" });
+          const res = await fetch("/train-model", { method:"POST" });
           const d = await res.json();
           if (!res.ok) throw new Error(d.error || "Training failed.");
           r.style.color = "var(--green)";
-          r.innerHTML = `Done. Accuracy: ${(d.accuracy * 100).toFixed(1)}% · ${d.total_rows} rows`;
+          r.innerHTML = `Done. Accuracy: ${(d.accuracy*100).toFixed(1)}% · ${d.total_rows} rows`;
           refreshDS();
-        } catch (e) {
-          r.style.color = "var(--red)";
-          r.textContent = e.message;
-        } finally {
-          btn.disabled = false;
-        }
+        } catch(e) { r.style.color = "var(--red)"; r.textContent = e.message; }
+        finally { btn.disabled = false; }
       }
 
       // ── Incident history ───────────────────────────────────────────
@@ -2776,62 +1122,70 @@
       function incCard(inc) {
         const d = inc.details || {};
         const bucket = inc.status || "confirmed";
-        const fused = ((inc.confidence || 0) * 100).toFixed(1);
-        const dlPct = (
-          (inc.dl_confidence || sv(d, "lstm_peak", "cnn_lstm_prob")) * 100
-        ).toFixed(1);
-        const src = inc.source === "stream" ? "stream" : "web";
+        const fused  = ((inc.confidence || 0) * 100).toFixed(1);
+        const dlPct  = ((inc.dl_confidence || sv(d,"lstm_peak","cnn_lstm_prob")) * 100).toFixed(1);
+        const src    = inc.source === "stream" ? "stream" : "web";
         const isLive = !!inc._live;
-        const iid = inc.id || "";
-        const canDelete = iid && !isLive;
-        const clip = inc.clip_url
-          ? `<video controls preload="metadata" src="${inc.clip_url}?t=${Date.now()}"></video>`
-          : `<div class="inc-media-empty">${isLive ? "Clip will appear after processing completes" : "Clip unavailable"}</div>`;
+        const iid    = inc.id || "";
+        const canDel = iid && !isLive;
+
+        // Clip: if clip_url is available show video; if incident is confirmed and clip not yet ready show loading
+        let clipHtml;
+        if (inc.clip_url) {
+          clipHtml = `<video controls preload="metadata" src="${inc.clip_url}?t=${Date.now()}"></video>`;
+        } else if (bucket === "confirmed") {
+          clipHtml = `<div class="inc-media-loading">⏳ Extracting clip in background…</div>`;
+        } else {
+          clipHtml = `<div class="inc-media-empty">Clip unavailable</div>`;
+        }
+
         const snap = inc.snapshot_url
           ? `<img src="${inc.snapshot_url}?t=${Date.now()}" alt="Accident frame">`
-          : `<div class="inc-media-empty">${isLive ? "Frame captured at t=" + inc.time_in_video_sec + "s" : "Frame unavailable"}</div>`;
-        const llmHtml = inc.llm_analysis
-          ? `<div class="inc-llm">${inc.llm_analysis}</div>`
-          : "";
-        const mi = (l, v) =>
-          `<div class="mini-score"><div class="ms-l">${l}</div><div class="ms-v">${typeof v === "number" ? v.toFixed(2) : v}</div></div>`;
-        const locLine = `${inc.location || "Upload"}${inc.time_in_video_sec != null ? ` · t=${inc.time_in_video_sec}s` : ""}${inc.frame_number != null ? ` · frame ${inc.frame_number}` : ""}`;
-        const deleteBtn = canDelete
-          ? `<button type="button" class="inc-delete" title="Delete incident" aria-label="Delete incident" onclick="deleteIncident('${iid}','${bucket}',event)">✕</button>`
-          : `<button type="button" class="inc-delete" disabled title="Delete after processing completes">✕</button>`;
+          : `<div class="inc-media-empty">${isLive ? `Frame at t=${inc.time_in_video_sec}s` : "Frame unavailable"}</div>`;
+
+        const llmHtml = inc.llm_analysis ? `<div class="inc-llm">${inc.llm_analysis}</div>` : "";
+        const mi = (l, v) => `<div class="mini-score"><div class="ms-l">${l}</div><div class="ms-v">${typeof v==="number"?v.toFixed(2):v}</div></div>`;
+        const locLine = `${inc.location||"Upload"}${inc.time_in_video_sec!=null?` · t=${inc.time_in_video_sec}s`:""}${inc.frame_number!=null?` · frame ${inc.frame_number}`:""}`;
+        const delBtn = canDel
+          ? `<button type="button" class="inc-delete" title="Delete incident" onclick="deleteIncident('${iid}','${bucket}',event)">✕</button>`
+          : `<button type="button" class="inc-delete" disabled title="Cannot delete">✕</button>`;
+
         return `<article class="inc-card collapsed ${bucket}" data-iid="${iid}" data-bucket="${bucket}">
-    <div class="inc-head" onclick="toggleIncidentCard('${iid}')">
-      <span class="inc-toggle" aria-hidden="true">▶</span>
-      <div class="inc-head-main">
-        <div class="inc-time">${fmtTime(inc.timestamp) || fmtTime(new Date().toISOString())}</div>
-        <div class="inc-loc">${locLine}</div>
-      </div>
-      <div class="inc-head-meta">
-        <span class="inc-status-badge ${bucket}">${bucket}</span>
-        <span class="inc-conf-chip">${fused}%</span>
-        <span class="inc-src src-${src}">${src === "stream" ? inc.camera_id || "Camera" : "Upload"}</span>
-        ${deleteBtn}
-      </div>
+  <div class="inc-head" onclick="toggleIncidentCard('${iid}')">
+    <span class="inc-toggle" aria-hidden="true">▶</span>
+    <div class="inc-head-main">
+      <div class="inc-time">${fmtTime(inc.timestamp) || fmtTime(new Date().toISOString())}</div>
+      <div class="inc-loc">${locLine}</div>
     </div>
-    <div class="inc-body">
-      <div class="inc-media"><div><div class="inc-media-label">Incident Clip (±5s)</div>${clip}</div><div><div class="inc-media-label">Accident Frame</div>${snap}</div></div>
-      <div class="inc-conf-row">
-        <div class="inc-pill"><div class="inc-pill-l">Fused Confidence</div><div class="inc-pill-v" style="color:var(--red)">${fused}%</div></div>
-        <div class="inc-pill"><div class="inc-pill-l">CNN-LSTM DL</div><div class="inc-pill-v" style="color:var(--purple)">${dlPct}%</div></div>
-      </div>
-      <div class="inc-trigger"><strong>Trigger:</strong> ${inc.trigger_phase || "—"}</div>
-      <div class="inc-phases">
-        ${mi("Phase A", sv(d, "proximity_score", "ttc_score"))}
-        ${mi("Phase B", sv(d, "trajectory_score", "trajectory_stop_score"))}
-        ${mi("Phase C", sv(d, "flow_score"))}
-        ${mi("Occlusion", sv(d, "occlusion_score"))}
-        ${mi("Merge", sv(d, "merge_score"))}
-        ${mi("Kinetic", sv(d, "energy_drop", "emergency_stop_score"))}
-        ${mi("Scene", sv(d, "scene_interruption"))}
-      </div>
-      ${llmHtml}
+    <div class="inc-head-meta">
+      <span class="inc-status-badge ${bucket}">${bucket}</span>
+      <span class="inc-conf-chip">${fused}%</span>
+      <span class="inc-src src-${src}">${src==="stream"?(inc.camera_id||"Camera"):"Upload"}</span>
+      ${delBtn}
     </div>
-  </article>`;
+  </div>
+  <div class="inc-body">
+    <div class="inc-media">
+      <div><div class="inc-media-label">Incident Clip (±5s)</div>${clipHtml}</div>
+      <div><div class="inc-media-label">Accident Frame</div>${snap}</div>
+    </div>
+    <div class="inc-conf-row">
+      <div class="inc-pill"><div class="inc-pill-l">Fused Confidence</div><div class="inc-pill-v" style="color:var(--red)">${fused}%</div></div>
+      <div class="inc-pill"><div class="inc-pill-l">CNN-LSTM DL</div><div class="inc-pill-v" style="color:var(--purple)">${dlPct}%</div></div>
+    </div>
+    <div class="inc-trigger"><strong>Trigger:</strong> ${inc.trigger_phase||"—"}</div>
+    <div class="inc-phases">
+      ${mi("Phase A", sv(d,"proximity_score","ttc_score"))}
+      ${mi("Phase B", sv(d,"trajectory_score","trajectory_stop_score"))}
+      ${mi("Phase C", sv(d,"flow_score"))}
+      ${mi("Occlusion", sv(d,"occlusion_score"))}
+      ${mi("Merge", sv(d,"merge_score"))}
+      ${mi("Kinetic", sv(d,"energy_drop","emergency_stop_score"))}
+      ${mi("Scene", sv(d,"scene_interruption"))}
+    </div>
+    ${llmHtml}
+  </div>
+</article>`;
       }
 
       function toggleIncidentCard(iid) {
@@ -2840,40 +1194,18 @@
       }
 
       async function deleteIncident(iid, bucket, ev) {
-        if (ev) {
-          ev.stopPropagation();
-          ev.preventDefault();
-        }
-        if (!iid) return;
-        if (!confirm("Delete this incident from history? This cannot be undone.")) return;
-
+        if (ev) { ev.stopPropagation(); ev.preventDefault(); }
+        if (!iid || !confirm("Delete this incident? This cannot be undone.")) return;
         if (iid.startsWith("live-")) {
-          incidentStore[bucket] = (incidentStore[bucket] || []).filter(
-            (inc) => inc.id !== iid,
-          );
-          renderTab(bucket);
-          updateTabCounts();
-          return;
+          incidentStore[bucket] = (incidentStore[bucket]||[]).filter(i => i.id !== iid);
+          renderTab(bucket); updateTabCounts(); return;
         }
-
         try {
-          const res = await fetch(`/api/incidents/${encodeURIComponent(iid)}`, {
-            method: "DELETE",
-          });
-          if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            alert(data.error || "Failed to delete incident.");
-            return;
-          }
-          incidentStore[bucket] = (incidentStore[bucket] || []).filter(
-            (inc) => inc.id !== iid,
-          );
-          renderTab(bucket);
-          updateTabCounts();
-        } catch (e) {
-          console.error("deleteIncident:", e);
-          alert("Network error while deleting incident.");
-        }
+          const res = await fetch(`/api/incidents/${encodeURIComponent(iid)}`, { method:"DELETE" });
+          if (!res.ok) { const d = await res.json().catch(()=>({})); alert(d.error||"Failed to delete."); return; }
+          incidentStore[bucket] = (incidentStore[bucket]||[]).filter(i => i.id !== iid);
+          renderTab(bucket); updateTabCounts();
+        } catch(e) { console.error("deleteIncident:", e); alert("Network error."); }
       }
 
       function renderTab(bucket) {
@@ -2885,26 +1217,15 @@
       }
 
       function updateTabCounts() {
-        ["confirmed", "suspicious", "suppressed"].forEach((b) => {
-          $(
-            "cnt-" +
-              b.substring(0, 4).replace("susp", "susp").replace("supp", "supp"),
-          ).textContent = (incidentStore[b] || []).length;
-        });
-        // Fix id mapping
-        $("cnt-conf").textContent = (incidentStore.confirmed || []).length;
-        $("cnt-susp").textContent = (incidentStore.suspicious || []).length;
-        $("cnt-supp").textContent = (incidentStore.suppressed || []).length;
+        $("cnt-conf").textContent = (incidentStore.confirmed||[]).length;
+        $("cnt-susp").textContent = (incidentStore.suspicious||[]).length;
+        $("cnt-supp").textContent = (incidentStore.suppressed||[]).length;
       }
 
       function switchTab(bucket) {
         curTab = bucket;
-        document
-          .querySelectorAll(".tab-btn")
-          .forEach((b) => b.classList.remove("active"));
-        document
-          .querySelectorAll(".tab-content")
-          .forEach((c) => c.classList.remove("active"));
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
         const tabBtn = $(TAB_BTN_IDS[bucket]);
         if (tabBtn) tabBtn.classList.add("active");
         $("tc-" + bucket).classList.add("active");
@@ -2917,25 +1238,19 @@
           const data = await res.json();
           const items = data.incidents || [];
           incidentStore = { confirmed: [], suspicious: [], suppressed: [] };
-          items.forEach((inc) => {
+          items.forEach(inc => {
             const bucket = inc.status || "confirmed";
             if (!incidentStore[bucket]) incidentStore[bucket] = [];
             incidentStore[bucket].push(inc);
           });
-          renderTab("confirmed");
-          renderTab("suspicious");
-          renderTab("suppressed");
-          updateTabCounts();
-          switchTab(curTab);
-        } catch (e) {
-          console.error("loadHistory:", e);
-        }
+          renderTab("confirmed"); renderTab("suspicious"); renderTab("suppressed");
+          updateTabCounts(); switchTab(curTab);
+        } catch(e) { console.error("loadHistory:", e); }
       }
 
       // ── Init ──────────────────────────────────────────────────────
       window.addEventListener("DOMContentLoaded", () => {
-        refreshDS();
-        loadHistory();
+        refreshDS(); loadHistory();
         $("thr-marker").style.left = "55%";
       });
     </script>

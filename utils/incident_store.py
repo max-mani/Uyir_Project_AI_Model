@@ -67,6 +67,47 @@ def save_incident(record):
         return record
 
 
+def update_incident(incident_id, updates: dict) -> bool:
+    """
+    Partially update an existing incident record in the index.
+    Used to set clip_url and llm_analysis after async background processing.
+    Returns True if the record was found and updated.
+    """
+    with _lock:
+        records = _load_index()
+        found = False
+        for record in records:
+            if record.get("id") == incident_id:
+                record.update(updates)
+                found = True
+                break
+        if found:
+            _save_index(records)
+    return found
+
+
+def clear_all_incidents() -> bool:
+    """
+    Delete every incident from the index and remove their media files from disk.
+    Used by the dashboard 'Clear All' button.
+    """
+    with _lock:
+        records = _load_index()
+        for record in records:
+            iid = record.get("id")
+            if not iid:
+                continue
+            clip_fs, snap_fs, _, _ = build_incident_paths(iid)
+            for path in (clip_fs, snap_fs):
+                try:
+                    if os.path.exists(path):
+                        os.remove(path)
+                except OSError:
+                    pass
+        _save_index([])
+    return True
+
+
 def list_incidents(limit=50):
     with _lock:
         records = _load_index()
