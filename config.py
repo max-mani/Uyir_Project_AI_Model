@@ -61,6 +61,12 @@ TRAJECTORY_STOP_FRAMES = 5
 REL_VEL_PREV_DIFF_MIN = 8.0
 REL_VEL_CURR_DIFF_MAX = 2.0
 
+# ── Phase B — Recent-motion guard ───────────────────────────
+# A track that had peak speed > this in the last N frames is
+# considered "recently moving" (post-crash stop ≠ parked car).
+RECENTLY_MOVING_FRAMES = 15
+RECENTLY_MOVING_MIN_SPEED = 3.0   # px/frame
+
 # ── Phase C — Anomaly Confirmation ──────────────────────────
 OPTICAL_FLOW_SPIKE = 2.5
 BBOX_DEFORM_RATIO = 0.25
@@ -71,17 +77,25 @@ CONSECUTIVE_FRAMES = 3
 COOLDOWN_SECONDS = 20.0
 FUSION_THRESHOLD = 0.55
 
+# ── DL Gate ──────────────────────────────────────────────────
+DL_GATE_THRESHOLD = 0.55   # lstm_peak must reach this to open the gate
+DL_PHASE_SIGNAL_MIN = 0.30  # a phase must reach this to count as a vote
+DL_WARMUP_FRAMES = 16       # SEQUENCE_LEN // 2 — don't trust rolling peak before this
+
 # ── Fusion Weights ────────────────────────────────────────────
+# CNN-LSTM acts as a HARD GATE only — its weight is 0.
+# The weight that was on cnn_lstm (0.25) is redistributed to
+# trajectory_stop (+0.15) and emergency_stop (+0.05) and optical_flow (+0.05).
 FUSION_WEIGHTS = {
-    "trajectory_stop": 0.30,
-    "ttc_critical": 0.15,
-    "emergency_stop": 0.20,
-    "cnn_lstm": 0.25,
-    "optical_flow": 0.05,
+    "trajectory_stop": 0.45,
+    "emergency_stop":  0.25,
+    "ttc_critical":    0.15,
+    "optical_flow":    0.10,
     "flow_dispersion": 0.05,
+    "cnn_lstm":        0.0,   # gate only — not a weighted contributor
 }
 
-# Legacy score weights for stream pipeline phase gating
+# Legacy score weights for stream pipeline phase gating (kept for compatibility)
 SCORE_PHASE_A = 3
 SCORE_PHASE_B = 2
 SCORE_PHASE_C = 1

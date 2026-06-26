@@ -52,6 +52,29 @@ def is_stationary(track, frames=10, speed_thresh=1.2, displacement_thresh=8.0):
     return False
 
 
+def was_recently_moving(track,
+                        frames=None,
+                        min_peak_speed=None):
+    """
+    Returns True if the track had significant speed at any point in its
+    recent history — distinguishing a post-crash stationary vehicle from
+    a permanently parked / background object.
+
+    Uses config.RECENTLY_MOVING_FRAMES and config.RECENTLY_MOVING_MIN_SPEED
+    as defaults so the threshold is tunable without touching this file.
+    """
+    if frames is None:
+        frames = config.RECENTLY_MOVING_FRAMES      # default 15
+    if min_peak_speed is None:
+        min_peak_speed = config.RECENTLY_MOVING_MIN_SPEED  # default 3.0 px/frame
+
+    if not track.speed_history:
+        return False
+
+    check = track.speed_history[-min(frames, len(track.speed_history)):]
+    return max(check) > min_peak_speed
+
+
 def is_emergency_stop(track, baseline_frames=None, recent_frames=None):
     """
     Emergency stop = 75%+ drop from long baseline in under 3 frames.
@@ -188,12 +211,34 @@ def check_spin(track):
 
 
 def analyze_trajectory_conflict(track1, track2):
-    if is_stationary(track1) and is_stationary(track2):
+    """
+    Evaluate kinematic evidence of a collision between two tracks.
+
+    FIX: The original code returned _empty_result("Normal") immediately when
+    both vehicles were stationary or slow.  This silently killed Phase B for
+    every post-crash frame where both vehicles have already stopped.
+
+    Now we only skip the pair when NEITHER track was recently moving —
+    meaning they are permanently parked objects, not crash-stopped vehicles.
+    A post-crash vehicle will have high peak speed in its recent history even
+    though its current speed is 0.
+    """
+    both_stationary = is_stationary(track1) and is_stationary(track2)
+    recently_moving_1 = was_recently_moving(track1)
+    recently_moving_2 = was_recently_moving(track2)
+    either_recently_moving = recently_moving_1 or recently_moving_2
+
+    # Both are permanently static objects (parked cars, roadside objects) — skip.
+    if both_stationary and not either_recently_moving:
         return _empty_result("Normal")
 
     s1 = math.sqrt(track1.velocities[-1][0] ** 2 + track1.velocities[-1][1] ** 2) if track1.velocities else 0.0
     s2 = math.sqrt(track2.velocities[-1][0] ** 2 + track2.velocities[-1][1] ** 2) if track2.velocities else 0.0
-    if max(s1, s2) < 2.5:
+
+    # Both currently slow AND neither was recently moving → background objects.
+    # If at least one was recently moving (now stopped), fall through to evaluate
+    # emergency stop / trajectory stop which are the key post-crash signals.
+    if max(s1, s2) < 2.5 and not either_recently_moving:
         return _empty_result("Normal", score=0.05)
 
     hist1 = track1.history[-15:]
@@ -211,10 +256,14 @@ def analyze_trajectory_conflict(track1, track2):
             if intersected:
                 break
 
+    # trajectory_stop only makes sense if paths have crossed
     trajectory_stop = False
     if intersected:
         trajectory_stop = check_trajectory_stop_after_intersection(track1, track2)
 
+    # Emergency stop is evaluated INDEPENDENTLY of intersection —
+    # a rear-end or side-swipe collision never produces path intersection
+    # from a fixed CCTV angle, but the struck vehicle still brakes hard.
     emergency_a = is_emergency_stop(track1)
     emergency_b = is_emergency_stop(track2)
     emergency_stop = emergency_a or emergency_b
